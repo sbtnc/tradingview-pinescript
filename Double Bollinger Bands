@@ -1,0 +1,51 @@
+//@version=3
+//
+// @mrSebastienC
+// 2018-10-5
+study(title="Double Bollinger Bands", shorttitle="DBB", overlay=true)
+
+//------------------------------ Inputs ------------------------------
+
+length = input(20, title="length")
+src = input(close, type=source, title="source")
+std_dev_1 = input(1, title="BB1 stdDev")
+std_dev_2 = input(2, title="BB2 stdDev")
+offset = input(0, title="offset")
+
+//------------------------------ Colors ------------------------------
+
+color_gray = #eeeeee
+color_green = #3fbe53
+color_red = #ff4e3e
+
+//------------------------------- Logic ------------------------------
+
+median = sma(src, length)
+standard_deviation = stdev(src, length)
+
+standard_deviation_1 = standard_deviation * std_dev_1
+upper_1 = median + standard_deviation_1
+lower_1 = median - standard_deviation_1
+
+standard_deviation_2 = standard_deviation * std_dev_2
+upper_2 = median + standard_deviation_2
+lower_2 = median - standard_deviation_2
+
+//------------------------- Plotting & styling ------------------------
+
+transp_bb_1 = 98
+transp_bb_2 = 94
+
+basis = plot(median, color=color_gray, transp=0, title="basis", offset=offset)
+
+upper_band_1 = plot(upper_1, color=color_red, transp=transp_bb_1, offset=offset, title="BB1 upper" )
+lower_band_1 = plot(lower_1, color=color_green, transp=transp_bb_1, offset=offset, title="BB1 lower")
+
+fill(basis, upper_band_1, color=color_red, transp=transp_bb_1, title="background BB1 upper")
+fill(basis, lower_band_1, color=color_green, transp=transp_bb_1, title="background BB1 lower")
+
+upper_band_2 = plot(upper_2, color=color_red, transp=transp_bb_2, offset=offset, title="BB2 upper")
+lower_band_2 = plot(lower_2, color=color_green, transp=transp_bb_2, offset=offset, title="BB2 lower")
+
+fill(upper_band_1, upper_band_2, color=color_red, transp=transp_bb_2, title="background BB2 upper")
+fill(lower_band_1, lower_band_2, color=color_green, transp=transp_bb_2, title="background BB2 lower")

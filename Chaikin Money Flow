@@ -1,0 +1,36 @@
+//@version=3
+//
+// @mrSebastienC
+// 2019-1-5
+study(title="Chaikin Money Flow", shorttitle="CMF")
+
+//------------------------------ Inputs ------------------------------
+
+length = input(20, minval=1)
+
+//------------------------------ Colors ------------------------------
+
+color_negative = #ff4e3e
+color_positive = #3fbe53
+color_neutral = #656565
+
+//------------------------------- Logic ------------------------------
+
+// orignal CMF logic
+ad = close==high and close==low or high==low ? 0 : ((2*close-low-high)/(high-low))*volume
+mf = sum(ad, length) / sum(volume, length)
+
+positive = mf > 0
+
+//------------------------- Plotting & styling ------------------------
+
+transp_area = 92
+transp_cmf = 20
+transp_zero = 100
+
+color = positive ? color_positive : color_negative
+
+zero = plot(0, color=color_neutral, transp=transp_zero, title="zero")
+cmf = plot(mf, color=color_neutral, transp=transp_cmf, title="CMF")
+
+fill(zero, cmf, color=color, transp=transp_area, title="area")
