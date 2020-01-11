@@ -1,0 +1,121 @@
+//@version=4
+//
+// @mrSebastienC
+// 2020-01-11
+study("Daily Weekly Monthly Opens", shorttitle = "DWM O", overlay = true)
+
+daily_time = security(syminfo.tickerid, 'D', time, lookahead = barmerge.lookahead_on)
+daily_open = security(syminfo.tickerid, 'D', open, lookahead = barmerge.lookahead_on)
+weekly_time = security(syminfo.tickerid, 'W', time, lookahead = barmerge.lookahead_on)
+weekly_open	= security(syminfo.tickerid, 'W', open, lookahead = barmerge.lookahead_on)
+monthly_time = security(syminfo.tickerid, 'M', time, lookahead = barmerge.lookahead_on)
+monthly_open = security(syminfo.tickerid, 'M', open, lookahead = barmerge.lookahead_on)
+
+//------------------------------ Inputs -------------------------------
+
+var is_daily_enabled = input(defval = true, title = "Daily Open", type = input.bool)
+var is_weekly_enabled = input(defval = true, title = "Weeky Open", type = input.bool)
+var is_monthly_enabled = input(defval = true, title = "Monthly Open", type = input.bool)
+
+//------------------------------ Styling ------------------------------
+
+var color_gray = #9598a1
+
+var DEFAULT_LINE_WIDTH = 1
+var DEFAULT_LINE_COLOR = color_gray
+var DEFAULT_LABEL_COLOR = color_gray
+var DEFAULT_LABEL_SIZE = size.small
+var DEFAULT_LABEL_STYLE = label.style_none
+var DEFAULT_EXTEND_RIGHT = 20
+
+var daily_line_color = DEFAULT_LINE_COLOR
+var daily_line_width = DEFAULT_LINE_WIDTH
+var daily_label_color = DEFAULT_LABEL_COLOR
+var daily_label_size = DEFAULT_LABEL_SIZE
+var daily_label_style = DEFAULT_LABEL_STYLE
+var daily_extend_right = DEFAULT_EXTEND_RIGHT
+
+var weekly_line_color = DEFAULT_LINE_COLOR
+var weekly_line_width = DEFAULT_LINE_WIDTH
+var weekly_label_color = DEFAULT_LABEL_COLOR
+var weekly_label_size = DEFAULT_LABEL_SIZE
+var weekly_label_style = DEFAULT_LABEL_STYLE
+var weekly_extend_right = DEFAULT_EXTEND_RIGHT
+
+var monthly_line_color = DEFAULT_LINE_COLOR
+var monthly_line_width = DEFAULT_LINE_WIDTH
+var monthly_label_color = DEFAULT_LABEL_COLOR
+var monthly_label_size = DEFAULT_LABEL_SIZE
+var monthly_label_style	= DEFAULT_LABEL_STYLE
+var monthly_extend_right = DEFAULT_EXTEND_RIGHT
+
+//------------------------------ Plotting ------------------------------
+
+var can_show_daily = is_daily_enabled and timeframe.isintraday
+var can_show_weekly = is_weekly_enabled and not timeframe.isweekly and not timeframe.ismonthly
+var can_show_monthly = is_monthly_enabled and not timeframe.ismonthly
+
+get_limit_right(bars) =>
+	timenow + (time - time[1]) * bars
+
+// the following code doesn't need to be processed on every candle
+if barstate.islast
+    is_weekly_open = dayofweek == dayofweek.monday
+    is_monthly_open	= dayofmonth == 1
+	can_draw_daily = (is_weekly_enabled ? not is_weekly_open : true) and (is_monthly_enabled ? not is_monthly_open : true)
+	can_draw_weekly = is_monthly_enabled ? not (is_monthly_open and is_weekly_open) : true
+
+    if can_show_daily and can_draw_daily
+		var daily_line = line.new(x1 = daily_time, x2 = get_limit_right(daily_extend_right), y1 = daily_open, y2 = daily_open, color = daily_line_color, width = daily_line_width, xloc = xloc.bar_time)
+        var daily_label = label.new(x = get_limit_right(daily_extend_right), y = daily_open, text = "DO    ", style = daily_label_style, textcolor = daily_label_color, size = daily_label_size, xloc = xloc.bar_time)
+
+    	line.set_x1(daily_line, daily_time)
+    	line.set_x2(daily_line, get_limit_right(daily_extend_right))
+    	line.set_y1(daily_line, daily_open)
+    	line.set_y2(daily_line, daily_open)
+    	label.set_x(daily_label, get_limit_right(daily_extend_right))
+    	label.set_y(daily_label, daily_open)
+
+    if can_show_weekly and can_draw_weekly
+        var weekly_line = line.new(x1 = weekly_time, x2 = get_limit_right(weekly_extend_right), y1 = weekly_open, y2 = weekly_open, color = weekly_line_color, width = weekly_line_width, xloc = xloc.bar_time)
+        var weekly_label = label.new(x = get_limit_right(weekly_extend_right), y = weekly_open, text = "WO    ", style = weekly_label_style, textcolor = weekly_label_color, size = monthly_label_size, xloc = xloc.bar_time)
+
+        line.set_x1(weekly_line, weekly_time)
+    	line.set_x2(weekly_line, get_limit_right(weekly_extend_right))
+    	line.set_y1(weekly_line, weekly_open)
+    	line.set_y2(weekly_line, weekly_open)
+    	label.set_x(weekly_label, get_limit_right(weekly_extend_right))
+    	label.set_y(weekly_label, weekly_open)
+
+    	// the weekly open can be the daily open too (monday)
+        // only the weekly will be draw, in these case we update its label
+	    if is_weekly_open and can_show_daily
+            label.set_text(weekly_label, "DO / WO            ")
+
+    if can_show_monthly
+        var monthlyLine = line.new(x1 = monthly_time, x2 = get_limit_right(monthly_extend_right), y1 = monthly_open, y2 = monthly_open, color = monthly_line_color, width = monthly_line_width, xloc = xloc.bar_time)
+        var monthlyLabel = label.new(x = get_limit_right(monthly_extend_right), y = monthly_open, text = "MO    ", style = monthly_label_style, textcolor = monthly_label_color, size = monthly_label_size, xloc = xloc.bar_time)
+
+        line.set_x1(monthlyLine, monthly_time)
+    	line.set_x2(monthlyLine, get_limit_right(monthly_extend_right))
+    	line.set_y1(monthlyLine, monthly_open)
+    	line.set_y2(monthlyLine, monthly_open)
+    	label.set_x(monthlyLabel, get_limit_right(monthly_extend_right))
+        label.set_y(monthlyLabel, monthly_open)
+
+        // the monthly open can be the weekly open (monday 1st) and/or daily open too
+        // only the monthly will be draw, in these case we update its label
+        if is_monthly_open
+            if can_show_daily
+                label.set_text(monthlyLabel, "DO / MO            ")
+            if is_weekly_open
+                if can_show_weekly
+                    label.set_text(monthlyLabel, "WO / MO            ")
+                if can_show_daily and can_show_weekly
+                    label.set_text(monthlyLabel, "DO / WO / MO                ")
+
+        // the start of the line is drew from the first week of the month
+        // if the first day of the weekly candle (monday) is the 2nd of the month
+        // we fix the start of the line position on the previous weekly candle
+        if timeframe.isweekly and dayofweek(monthly_time) != dayofweek.monday
+            line.set_x1(monthlyLine, monthly_time - (weekly_time - weekly_time[1]))
