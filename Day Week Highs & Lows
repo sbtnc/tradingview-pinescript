@@ -1,0 +1,66 @@
+//@version=4
+//
+// @mrSebastienC
+// 2020-01-12
+study("Day Week Highs & Lows", shorttitle = "DW HL", overlay = true)
+
+//------------------------------ Inputs ------------------------------
+
+days_loopback = input(defval = 2, minval = 0, title = "Previous Days")
+weeks_loopback = input(defval = 1, minval = 0, title = "Previous Weeks")
+
+//------------------------------ Styling ------------------------------
+
+var DEFAULT_COLOR = color.black
+var DEFAULT_TRANSP = 0
+
+var day_color = DEFAULT_COLOR
+var day_linewidth = 1
+var day_transparency = DEFAULT_TRANSP
+var day_style = plot.style_circles
+
+var week_color = DEFAULT_COLOR
+var week_linewidth = 2
+var week_transparency = DEFAULT_TRANSP
+var week_style = plot.style_cross
+
+//------------------------------ Logic -------------------------------
+
+// get highs, lows and timestamps from D1 and W1 timeframes
+day_start = security(syminfo.tickerid, 'D', time, lookahead = barmerge.lookahead_on)
+day_high = security(syminfo.tickerid, 'D', high, lookahead = barmerge.lookahead_on)
+day_low = security(syminfo.tickerid, 'D', low, lookahead = barmerge.lookahead_on)
+week_start = security(syminfo.tickerid, 'W', time, lookahead = barmerge.lookahead_on)
+week_high = security(syminfo.tickerid, 'W', high, lookahead = barmerge.lookahead_on)
+week_low = security(syminfo.tickerid, 'W', low, lookahead = barmerge.lookahead_on)
+
+var second_ms = 1000
+var minute_ms = second_ms * 60
+var hour_ms = minute_ms * 60
+var day_ms = hour_ms * 24
+var week_ms = day_ms * 7
+
+get_ms_from_today_start() =>
+	hour_ms * hour(timenow) + minute_ms * minute(timenow) + second_ms * second(timenow)
+get_ms_from_week_start() =>
+	day_ms * (dayofweek(timenow) == dayofweek.sunday ? 6 : (dayofweek(timenow) -2)) + get_ms_from_today_start()
+
+// calculate ranges in ms for time calculations
+from_day_start_to_now_range = get_ms_from_today_start()
+from_week_start_to_now_range = get_ms_from_week_start() // dayofweek returns 1 for sunday and 2 for monday
+from_candle_to_now_range = timenow - time
+
+day_limit_left = from_candle_to_now_range <  day_ms * days_loopback + from_day_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
+day_limit_right = from_candle_to_now_range > from_day_start_to_now_range
+week_limit_left = from_candle_to_now_range <  week_ms * weeks_loopback + from_week_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
+week_limit_right = from_candle_to_now_range > from_week_start_to_now_range
+
+can_show_day = day_limit_left and day_limit_right and timeframe.isintraday
+can_show_week = week_limit_left and week_limit_right and not timeframe.isweekly and not timeframe.ismonthly
+
+//------------------------- Plotting ---------------------------------
+
+plot(can_show_day ? day_high : na, title = "Day Highs", linewidth = day_linewidth, color = day_color, transp = day_transparency, style = day_style)
+plot(can_show_day ? day_low : na, title = "Day Lows", linewidth = day_linewidth, color = day_color, transp = day_transparency, style = day_style)
+plot(can_show_week ? week_high : na, title = "Week Highs", linewidth = week_linewidth, color = day_color, transp = week_transparency, style = week_style)
+plot(can_show_week ? week_low : na, title = "Week Lows", linewidth = week_linewidth, color = day_color, transp = week_transparency, style = week_style)
