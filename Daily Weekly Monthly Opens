@@ -28,7 +28,7 @@ var DEFAULT_LABEL_COLOR = color_gray
 var DEFAULT_LABEL_SIZE = size.small
 var DEFAULT_LABEL_STYLE = label.style_none
 var DEFAULT_TAIL_WIDTH = 1
-var DEFAULT_TAIL_COLOR = color.new(color_gray, 50)
+var DEFAULT_TAIL_COLOR = color_gray
 var DEFAULT_TAIL_STYLE = line.style_dotted
 var DEFAULT_EXTEND_RIGHT = 20
 
