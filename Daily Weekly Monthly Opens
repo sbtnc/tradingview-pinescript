@@ -17,18 +17,37 @@ var is_daily_enabled = input(defval = true, title = "Daily Open", type = input.b
 var is_weekly_enabled = input(defval = true, title = "Weeky Open", type = input.bool)
 var is_monthly_enabled = input(defval = true, title = "Monthly Open", type = input.bool)
 var show_tails = input(defval = false, title = "Show Tails", type = input.bool)
+var color_input = input(defval = "Gray",
+   title = "Color",
+   options = ["Aqua", "Black", "Blue", "Fuchsia", "Gray", "Green", "Lime", "Maroon", "Navy", "Olive", "Purple", "Red", "Silver", "Teal", "White", "Yellow"],
+   type = input.string)
 
 //------------------------------ Styling ------------------------------
 
-var color_gray = #9598a1
+var user_color = color_input == "Aqua" ? color.aqua :
+   color_input == "Black" ? color.black :
+   color_input == "Blue" ? color.blue :
+   color_input == "Fuchsia" ? color.fuchsia :
+   color_input == "Green" ? color.green :
+   color_input == "Lime" ? color.lime :
+   color_input == "Maroon" ? color.maroon :
+   color_input == "Navy" ? color.navy :
+   color_input == "Olive" ? color.olive :
+   color_input == "Purple" ? color.purple :
+   color_input == "Red" ? color.red :
+   color_input == "Silver" ? color.silver :
+   color_input == "Teal" ? color.teal :
+   color_input == "White" ? color.white :
+   color_input == "Yellow" ? color.yellow :
+   color.gray
 
 var DEFAULT_LINE_WIDTH = 1
-var DEFAULT_LINE_COLOR = color_gray
-var DEFAULT_LABEL_COLOR = color_gray
+var DEFAULT_TAIL_WIDTH = 1
+var DEFAULT_LINE_COLOR = user_color
+var DEFAULT_LABEL_COLOR = user_color
+var DEFAULT_TAIL_COLOR = user_color
 var DEFAULT_LABEL_SIZE = size.small
 var DEFAULT_LABEL_STYLE = label.style_none
-var DEFAULT_TAIL_WIDTH = 1
-var DEFAULT_TAIL_COLOR = color_gray
 var DEFAULT_TAIL_STYLE = line.style_dotted
 var DEFAULT_EXTEND_RIGHT = 20
 
