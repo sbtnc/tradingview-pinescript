@@ -113,6 +113,8 @@ if barstate.islast
                xloc = xloc.bar_time)
             line.set_x1(daily_tail, time)
             line.set_x2(daily_tail, daily_limit_right)
+            line.set_y1(daily_tail, daily_open)
+            line.set_y2(daily_tail, daily_open)
 
         var daily_line = line.new(x1 = daily_time,
            x2 = daily_limit_right,
@@ -137,7 +139,7 @@ if barstate.islast
         label.set_y(daily_label, daily_open)
 
     if can_show_weekly and can_draw_weekly
-        var weekly_limit_right = get_limit_right(weekly_extend_right)
+        weekly_limit_right = get_limit_right(weekly_extend_right)
         
         if show_tails
             var weekly_tail = line.new(x1 = time,
@@ -151,6 +153,8 @@ if barstate.islast
                xloc = xloc.bar_time)
             line.set_x1(weekly_tail, time)
             line.set_x2(weekly_tail, weekly_limit_right)
+            line.set_y1(weekly_tail, weekly_open)
+            line.set_y2(weekly_tail, weekly_open)
 
         var weekly_line = line.new(x1 = weekly_time,
            x2 = weekly_limit_right,
@@ -180,7 +184,7 @@ if barstate.islast
             label.set_text(weekly_label, "DO / WO            ")
 
     if can_show_monthly
-        var monthly_limit_right = get_limit_right(monthly_extend_right)
+        monthly_limit_right = get_limit_right(monthly_extend_right)
         
         if show_tails
             var monthly_tail = line.new(x1 = time,
@@ -194,6 +198,8 @@ if barstate.islast
                xloc = xloc.bar_time)
             line.set_x1(monthly_tail, time)
             line.set_x2(monthly_tail, monthly_limit_right)
+            line.set_y1(monthly_tail, monthly_open)
+            line.set_y2(monthly_tail, monthly_open)
         
         var monthlyLine = line.new(x1 = monthly_time,
            x2 = monthly_limit_right,
