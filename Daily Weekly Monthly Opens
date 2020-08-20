@@ -4,12 +4,9 @@
 // 2020-01-11
 study("Daily Weekly Monthly Opens", shorttitle = "DWM O", overlay = true)
 
-daily_time = security(syminfo.tickerid, 'D', time, lookahead = barmerge.lookahead_on)
-daily_open = security(syminfo.tickerid, 'D', open, lookahead = barmerge.lookahead_on)
-weekly_time = security(syminfo.tickerid, 'W', time, lookahead = barmerge.lookahead_on)
-weekly_open = security(syminfo.tickerid, 'W', open, lookahead = barmerge.lookahead_on)
-monthly_time = security(syminfo.tickerid, 'M', time, lookahead = barmerge.lookahead_on)
-monthly_open = security(syminfo.tickerid, 'M', open, lookahead = barmerge.lookahead_on)
+[daily_time, daily_open] = security(syminfo.tickerid, 'D', [time, open], lookahead = barmerge.lookahead_on)
+[weekly_time, weekly_open] = security(syminfo.tickerid, 'W', [time, open], lookahead = barmerge.lookahead_on)
+[monthly_time, monthly_open] = security(syminfo.tickerid, 'M', [time, open], lookahead = barmerge.lookahead_on)
 
 //------------------------------ Inputs -------------------------------
 
