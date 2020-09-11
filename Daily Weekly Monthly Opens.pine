@@ -1,7 +1,8 @@
-//@version=4
-//
-// @mrSebastienC
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
 // 2020-01-11
+
+//@version=4
 study("Daily Weekly Monthly Opens", shorttitle = "DWM O", overlay = true)
 
 [daily_time, daily_open] = security(syminfo.tickerid, 'D', [time, open], lookahead = barmerge.lookahead_on)

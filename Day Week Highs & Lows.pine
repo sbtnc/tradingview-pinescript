@@ -1,7 +1,8 @@
-//@version=4
-//
-// @mrSebastienC
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
 // 2020-01-12
+
+//@version=4
 study("Day Week Highs & Lows", shorttitle = "DW HL", overlay = true)
 
 //------------------------------ Inputs ------------------------------

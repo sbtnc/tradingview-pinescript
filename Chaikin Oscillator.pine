@@ -1,7 +1,8 @@
-//@version=3
-//
-// @mrSebastienC
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
 // 2019-5-19
+
+//@version=3
 study(title="Chaikin Oscillator", shorttitle="Chaikin Osc")
 
 //------------------------------ Inputs ------------------------------
