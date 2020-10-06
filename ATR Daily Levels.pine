@@ -17,23 +17,26 @@ var DEFAULT_LABEL_COLOR = color(na)
 
 //------------------------------ Inputs -------------------------------
 
-var atr_period_input = input(defval = 20, title = "Length", type = input.integer)
-var atr_start_offset = input(defval = true, title = "Show Start Offset", type = input.bool)
+var i_period = input(defval = 20, title = "Length")
+var i_value = input(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
+var i_color = input(defval = DEFAULT_COLOR, title = "Color")
+var i_overflow_color = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
+var i_start_offset = input(defval = true, title = "Show Start Offset")
 
 //----------------------- Variables declarations ----------------------
 
 [day_high, day_low, day_time, day_atr] = security(syminfo.tickerid,
      'D',
-     [high, low, time, atr(atr_period_input)[1]],
+     [high, low, time, atr(i_period), atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
      lookahead = barmerge.lookahead_on)
 
 //------------------------- Functions helpers -------------------------
 
-// truncates a given number per symbol's default precision
-truncatePerSymbolPrecision(number) =>
-    decimals = abs(log10(syminfo.mintick))
-    factor = pow(10, decimals)
-    int(number * factor) / factor
+// rounds a given number per symbol's miniumum tick precision
+f_round(number) =>
+    exponent = abs(log10(syminfo.mintick))
+    factor = pow(10, exponent)
+    round(number * factor) / factor
 
 //----------------------------- Plotting ------------------------------
     
@@ -50,14 +53,15 @@ if barstate.islast and can_display_timeframe
     
     var bar = time - time[1]
     offset = time + bar * DEFAULT_OFFSET_START
-    level_start = atr_start_offset ? offset : day_time
-    level_end = atr_start_offset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
+    level_start = i_start_offset ? offset : day_time
+    level_end = i_start_offset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
     
-    // when price is passed a ATR, the level is highlighted
-    level_high_color = day_high > atr_high ? DEFAULT_HIGHLIGHT_COLOR : DEFAULT_COLOR
-    level_low_color = day_low < atr_low ? DEFAULT_HIGHLIGHT_COLOR : DEFAULT_COLOR
+    // when price is passed the upper or lower, this last gets highlighted
+    level_high_color = day_high > atr_high ? i_overflow_color : i_color
+    level_low_color = day_low < atr_low ? i_overflow_color : i_color
     
-    // drawings
+    // levels
+
     atr_high_line := line.new(x1 = level_start,
      x2 = level_end,
      y1 = atr_high,
@@ -76,8 +80,10 @@ if barstate.islast and can_display_timeframe
      color = level_low_color,
      width = DEFAULT_LINE_WIDTH)
 
-    atr_high_text = tostring(truncatePerSymbolPrecision(atr_high)) + " (" + tostring(truncatePerSymbolPrecision(day_atr)) + ")"
-    atr_low_text = tostring(truncatePerSymbolPrecision(atr_low))
+    atr_high_text = tostring(f_round(atr_high)) + " (" + tostring(f_round(day_atr)) + ")"
+    atr_low_text = tostring(f_round(atr_low))
+
+    // labels
 
     atr_high_label := label.new(x = level_end,
      y = atr_high,
