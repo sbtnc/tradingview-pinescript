@@ -27,7 +27,7 @@ var i_start_offset = input(defval = true, title = "Show Start Offset")
 
 [day_high, day_low, day_time, day_atr] = security(syminfo.tickerid,
      'D',
-     [high, low, time, atr(i_period), atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
+     [high, low, time, atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
      lookahead = barmerge.lookahead_on)
 
 //------------------------- Functions helpers -------------------------
