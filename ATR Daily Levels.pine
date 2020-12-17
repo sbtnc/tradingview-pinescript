@@ -6,28 +6,29 @@ study("ATR Daily Levels", shorttitle = "D ATR", overlay = true)
 
 //------------------------------ Config -------------------------------
 
-var DEFAULT_COLOR = color.gray
+var DEFAULT_COLOR           = color.gray
 var DEFAULT_HIGHLIGHT_COLOR = color.new(DEFAULT_COLOR, 60)
-var DEFAULT_OFFSET_START = 1
-var DEFAULT_LINE_STYLE = line.style_dotted
-var DEFAULT_LINE_WIDTH = 2
-var DEFAULT_LINE_LENGTH = 8
-var DEFAULT_LABEL_STYLE = label.style_label_left
-var DEFAULT_LABEL_COLOR = color(na)
+var DEFAULT_OFFSET_START    = 1
+var DEFAULT_LINE_STYLE      = line.style_dotted
+var DEFAULT_LINE_WIDTH      = 2
+var DEFAULT_LINE_LENGTH     = 8
+var DEFAULT_LABEL_STYLE     = label.style_label_left
+var DEFAULT_LABEL_COLOR     = color(na)
 
 //------------------------------ Inputs -------------------------------
 
-var i_period = input(defval = 20, title = "Length")
-var i_value = input(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
-var i_color = input(defval = DEFAULT_COLOR, title = "Color")
-var i_overflow_color = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
-var i_start_offset = input(defval = true, title = "Show Start Offset")
+var i_period            = input(defval = 20, title = "Length")
+var i_value             = input(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
+var i_color             = input(defval = DEFAULT_COLOR, title = "Color")
+var i_overflow_color    = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
+var i_start_offset      = input(defval = true, title = "Show Start Offset")
 
 //----------------------- Variables declarations ----------------------
 
-[day_high, day_low, day_time, day_atr] = security(syminfo.tickerid,
+[day_high, day_low, day_time, day_atr, day_open, prev_day_close] = security(
+     syminfo.tickerid,
      'D',
-     [high, low, time, atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
+     [high, low, time, atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
      lookahead = barmerge.lookahead_on)
 
 //------------------------- Functions helpers -------------------------
@@ -38,68 +39,82 @@ f_round(number) =>
     factor = pow(10, exponent)
     round(number * factor) / factor
 
-//----------------------------- Plotting ------------------------------
-    
-can_display_timeframe = not (timeframe.isweekly or timeframe.ismonthly)
+// for including gaps in level computations 
+f_hasGapped()       => day_open != prev_day_close
+f_getTopPrice()     => f_hasGapped() ? prev_day_close > day_high ? prev_day_close : day_high : day_high
+f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close : day_low : day_low
 
-var line atr_high_line = na
-var line atr_low_line = na
-var label atr_high_label = na
-var label atr_low_label = na
+// get consistent bar time difference (ignoring weekends and holidays)
+f_getMinTimeDiff() => min(time - time[1], time[1] - time[2])
+
+//----------------------------- Plotting ------------------------------
+
+var line atr_high_line      = na
+var line atr_low_line       = na
+var label atr_high_label    = na
+var label atr_low_label     = na
+
+can_display_timeframe = not (timeframe.isweekly or timeframe.ismonthly)
+bar = nz(f_getMinTimeDiff())
 
 if barstate.islast and can_display_timeframe
-    atr_high = day_low + day_atr
-    atr_low = day_high - day_atr
-    
-    var bar = time - time[1]
-    offset = time + bar * DEFAULT_OFFSET_START
-    level_start = i_start_offset ? offset : day_time
-    level_end = i_start_offset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
-    
+    // ATR computing
+    atr_high            = f_getBottomPrice() + day_atr
+    atr_low             = f_getTopPrice() - day_atr
+
+    // levels positioning
+    offset              = time + bar * DEFAULT_OFFSET_START
+    level_start         = i_start_offset ? offset : day_time
+    level_end           = i_start_offset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
+
     // when price is passed the upper or lower, this last gets highlighted
-    level_high_color = day_high > atr_high ? i_overflow_color : i_color
-    level_low_color = day_low < atr_low ? i_overflow_color : i_color
+    level_high_color    = day_high > atr_high ? i_overflow_color : i_color
+    level_low_color     = day_low < atr_low ? i_overflow_color : i_color
     
     // levels
 
-    atr_high_line := line.new(x1 = level_start,
-     x2 = level_end,
-     y1 = atr_high,
-     y2 = atr_high,
-     xloc = xloc.bar_time,
-     style = DEFAULT_LINE_STYLE,
-     color = level_high_color,
-     width = DEFAULT_LINE_WIDTH)
+    atr_high_line := line.new(
+     x1     = level_start,
+     x2     = level_end,
+     y1     = atr_high,
+     y2     = atr_high,
+     xloc   = xloc.bar_time,
+     style  = DEFAULT_LINE_STYLE,
+     color  = level_high_color,
+     width  = DEFAULT_LINE_WIDTH)
     
-    atr_low_line := line.new(x1 = level_start,
-     x2 = level_end,
-     y1 = atr_low,
-     y2 = atr_low,
-     xloc = xloc.bar_time,
-     style = DEFAULT_LINE_STYLE,
-     color = level_low_color,
-     width = DEFAULT_LINE_WIDTH)
+    atr_low_line := line.new(
+     x1     = level_start,
+     x2     = level_end,
+     y1     = atr_low,
+     y2     = atr_low,
+     xloc   = xloc.bar_time,
+     style  = DEFAULT_LINE_STYLE,
+     color  = level_low_color,
+     width  = DEFAULT_LINE_WIDTH)
 
     atr_high_text = tostring(f_round(atr_high)) + " (" + tostring(f_round(day_atr)) + ")"
     atr_low_text = tostring(f_round(atr_low))
 
     // labels
 
-    atr_high_label := label.new(x = level_end,
-     y = atr_high,
-     text = atr_high_text,
-     xloc = xloc.bar_time,
-     color = DEFAULT_LABEL_COLOR,
-     style = DEFAULT_LABEL_STYLE,
-     textcolor = level_high_color)
+    atr_high_label := label.new(
+     x          = level_end,
+     y          = atr_high,
+     text       = atr_high_text,
+     xloc       = xloc.bar_time,
+     color      = DEFAULT_LABEL_COLOR,
+     style      = DEFAULT_LABEL_STYLE,
+     textcolor  = level_high_color)
     
-    atr_low_label := label.new(x = level_end,
-     y = atr_low,
-     text = atr_low_text,
-     xloc = xloc.bar_time,
-     color = DEFAULT_LABEL_COLOR,
-     style = DEFAULT_LABEL_STYLE,
-     textcolor = level_low_color)
+    atr_low_label := label.new(
+     x          = level_end,
+     y          = atr_low,
+     text       = atr_low_text,
+     xloc       = xloc.bar_time,
+     color      = DEFAULT_LABEL_COLOR,
+     style      = DEFAULT_LABEL_STYLE,
+     textcolor  = level_low_color)
     
     // fix multiple drawings on the current candle update
     line.delete(atr_high_line[1])
