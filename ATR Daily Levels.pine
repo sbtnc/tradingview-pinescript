@@ -58,7 +58,6 @@ var line atr_low_line       = na
 var label atr_high_label    = na
 var label atr_low_label     = na
 can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
-bar                         = nz(f_getMinTimeDiff())
 
 //------------------------- Functions helpers -------------------------
 
@@ -77,6 +76,8 @@ f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close
 f_getMinTimeDiff() => min(time - time[1], time[1] - time[2])
 
 //----------------------------- Plotting ------------------------------
+
+bar = nz(f_getMinTimeDiff())
 
 if barstate.islast and can_display_timeframe
     // ATR computing
