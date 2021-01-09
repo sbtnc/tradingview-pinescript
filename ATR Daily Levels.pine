@@ -25,11 +25,39 @@ var i_start_offset      = input(defval = true, title = "Show Start Offset")
 
 //----------------------- Variables declarations ----------------------
 
-[day_high, day_low, day_time, day_atr, day_open, prev_day_close] = security(
+[d1_high, d1_low, d1_atr, d1_open, prev_d1_close] = security(
      syminfo.tickerid,
      'D',
-     [high, low, time, atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
+     [high, low, atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
      lookahead = barmerge.lookahead_on)
+[intraday_high, intraday_low, intraday_time, intraday_open, prev_intraday_close] = security(
+     syminfo.tickerid,
+     '1440',
+     [high, low, time, open, close[1]],
+     lookahead = barmerge.lookahead_on)
+
+// daily data might be inconsistent between intradays and D1 charts
+// we ensure the data is relevant per the displayed chart, so when user is on:
+//  - an intraday chart we requests daily data as "1440 minutes";
+//  - D1 chart we request daily data as "1 day".
+isIntraday      = timeframe.isintraday
+day_high        = isIntraday ? intraday_high : d1_high
+day_low         = isIntraday ? intraday_low : d1_low
+day_open        = isIntraday ? intraday_open : d1_open
+prev_day_close  = isIntraday ? prev_intraday_close : prev_d1_close
+// intraday time is accurate when extra hours available on
+// otherwise it's consistent with D1 time
+day_time        = intraday_time
+// an expection is made for the ATR data: a user expects
+// the `Daily ATR Levels' ATR value to be the same as on the D1 timeframe one when plotting the built-in `ATR` value
+day_atr         = d1_atr 
+
+var line atr_high_line      = na
+var line atr_low_line       = na
+var label atr_high_label    = na
+var label atr_low_label     = na
+can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
+bar                         = nz(f_getMinTimeDiff())
 
 //------------------------- Functions helpers -------------------------
 
@@ -48,14 +76,6 @@ f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close
 f_getMinTimeDiff() => min(time - time[1], time[1] - time[2])
 
 //----------------------------- Plotting ------------------------------
-
-var line atr_high_line      = na
-var line atr_low_line       = na
-var label atr_high_label    = na
-var label atr_low_label     = na
-
-can_display_timeframe = not (timeframe.isweekly or timeframe.ismonthly)
-bar = nz(f_getMinTimeDiff())
 
 if barstate.islast and can_display_timeframe
     // ATR computing
