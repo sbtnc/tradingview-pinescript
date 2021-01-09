@@ -45,11 +45,12 @@ day_high        = isIntraday ? intraday_high : d1_high
 day_low         = isIntraday ? intraday_low : d1_low
 day_open        = isIntraday ? intraday_open : d1_open
 prev_day_close  = isIntraday ? prev_intraday_close : prev_d1_close
-// intraday time is accurate when extra hours available on
-// otherwise it's consistent with D1 time
+// intraday time is accurate when extra hours are available and on
+// otherwise it's always consistent with D1 time
 day_time        = intraday_time
-// an expection is made for the ATR data: a user expects
-// the `Daily ATR Levels' ATR value to be the same as on the D1 timeframe one when plotting the built-in `ATR` value
+// an exception is made for the ATR data:
+// a user expects the `Daily ATR Levels' ATR value
+// to be the same as the the built-in `ATR` value one plotted on D1 timeframe 
 day_atr         = d1_atr 
 
 var line atr_high_line      = na
