@@ -103,6 +103,7 @@ f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
 
     line.set_xy1(_line, _x1, _y)
     line.set_xy2(_line, _x2, _y)
+    _line
 
 f_drawLine(_x1, _x2, _y, _color, _width) =>
     var _line = line.new(
@@ -117,6 +118,7 @@ f_drawLine(_x1, _x2, _y, _color, _width) =>
 
     line.set_xy1(_line, _x1, _y)
     line.set_xy2(_line, _x2, _y)
+    _line
 
 f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
     var _label = label.new(
@@ -131,6 +133,7 @@ f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
     
     label.set_x(_label, _x)
     label.set_y(_label, _y)
+    _label
     
 
 // the following code doesn't need to be processed on every candle
@@ -139,6 +142,10 @@ if barstate.islast
     is_monthly_open	= dayofmonth == 1
 	can_draw_daily = (is_weekly_enabled ? not is_weekly_open : true) and (is_monthly_enabled ? not is_monthly_open : true)
 	can_draw_weekly = is_monthly_enabled ? not (is_monthly_open and is_weekly_open) : true
+
+    //
+    // Daily
+    //
 
     if can_show_daily and can_draw_daily
         daily_limit_right = get_limit_right(daily_extend_right)
@@ -149,6 +156,10 @@ if barstate.islast
         f_drawLine(daily_time, daily_limit_right, daily_open, daily_line_color, daily_line_width)
         f_drawLabel(daily_limit_right, daily_open, "DO    ", daily_label_color, daily_label_style, daily_label_size)
 
+    //
+    // Weekly
+    //
+
     if can_show_weekly and can_draw_weekly
         weekly_limit_right = get_limit_right(weekly_extend_right)
         
@@ -156,12 +167,16 @@ if barstate.islast
             f_drawTail(time, weekly_limit_right, weekly_open, weekly_tail_color, weekly_tail_style, weekly_tail_width)
 
         f_drawLine(weekly_time, weekly_limit_right, weekly_open, weekly_line_color, weekly_line_width)
-        f_drawLabel(weekly_limit_right, weekly_open, "WO    ", weekly_label_color, weekly_label_style, weekly_label_size)
+        weekly_label = f_drawLabel(weekly_limit_right, weekly_open, "WO    ", weekly_label_color, weekly_label_style, weekly_label_size)
 
     	// the weekly open can be the daily open too (monday)
         // only the weekly will be draw, in these case we update its label
-	    //if is_weekly_open and can_show_daily
-        //    label.set_text(weekly_label, "DO / WO            ")
+	    if is_weekly_open and can_show_daily
+            label.set_text(weekly_label, "DO / WO            ")
+
+    //
+    // Monthly
+    //
 
     if can_show_monthly
         monthly_limit_right = get_limit_right(monthly_extend_right)
@@ -169,22 +184,22 @@ if barstate.islast
         if show_tails
             f_drawTail(time, monthly_limit_right, monthly_open, monthly_tail_color, monthly_tail_style, monthly_tail_width)
         
-        f_drawLine(monthly_time, monthly_limit_right, monthly_open, monthly_line_color, monthly_line_width)
-        f_drawLabel(monthly_limit_right, monthly_open, "MO    ", monthly_label_color, monthly_label_style, monthly_label_size)
+        monthlyLine = f_drawLine(monthly_time, monthly_limit_right, monthly_open, monthly_line_color, monthly_line_width)
+        monthlyLabel = f_drawLabel(monthly_limit_right, monthly_open, "MO    ", monthly_label_color, monthly_label_style, monthly_label_size)
 
         // the monthly open can be the weekly open (monday 1st) and/or daily open too
         // only the monthly will be draw, in these case we update its label
-        //if is_monthly_open
-        //    if can_show_daily
-        //        label.set_text(monthlyLabel, "DO / MO            ")
-        //    if is_weekly_open
-        //        if can_show_weekly
-        //            label.set_text(monthlyLabel, "WO / MO            ")
-        //        if can_show_daily and can_show_weekly
-        //            label.set_text(monthlyLabel, "DO / WO / MO                ")
+        if is_monthly_open
+            if can_show_daily
+                label.set_text(monthlyLabel, "DO / MO            ")
+            if is_weekly_open
+                if can_show_weekly
+                    label.set_text(monthlyLabel, "WO / MO            ")
+                if can_show_daily and can_show_weekly
+                    label.set_text(monthlyLabel, "DO / WO / MO                ")
 
         // the start of the line is drew from the first week of the month
         // if the first day of the weekly candle (monday) is the 2nd of the month
         // we fix the start of the line position on the previous weekly candle
-        //if timeframe.isweekly and dayofweek(monthly_time) != dayofweek.monday
-        //    line.set_x1(monthlyLine, monthly_time - (weekly_time - weekly_time[1]))
+        if timeframe.isweekly and dayofweek(monthly_time) != dayofweek.monday
+            line.set_x1(monthlyLine, monthly_time - (weekly_time - weekly_time[1]))
