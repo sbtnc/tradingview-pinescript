@@ -79,31 +79,7 @@ var monthly_tail_color = DEFAULT_TAIL_COLOR
 var monthly_tail_style = DEFAULT_TAIL_STYLE
 var monthly_extend_right = DEFAULT_EXTEND_RIGHT
 
-//------------------------------ Plotting ------------------------------
-
-var can_show_daily = is_daily_enabled and timeframe.isintraday
-var can_show_weekly = is_weekly_enabled and not timeframe.isweekly and not timeframe.ismonthly
-var can_show_monthly = is_monthly_enabled and not timeframe.ismonthly
-
-get_limit_right(bars) =>
-	timenow + (time - time[1]) * bars
-
-f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
-    var _line = line.new(
-     x1     = _x1,
-     x2     = _x2,
-     y1     = _y,
-     y2     = _y,
-     color  = _color,
-     style  = _style,
-     width  = _width,
-     extend = extend.left,
-     xloc   = xloc.bar_time
-     )
-
-    line.set_xy1(_line, _x1, _y)
-    line.set_xy2(_line, _x2, _y)
-    _line
+//--------------------------- Function helpers -------------------------
 
 f_drawLine(_x1, _x2, _y, _color, _width) =>
     var _line = line.new(
@@ -134,8 +110,32 @@ f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
     label.set_x(_label, _x)
     label.set_y(_label, _y)
     _label
-    
 
+f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
+    var _line = line.new(
+     x1     = _x1,
+     x2     = _x2,
+     y1     = _y,
+     y2     = _y,
+     color  = _color,
+     style  = _style,
+     width  = _width,
+     extend = extend.left,
+     xloc   = xloc.bar_time
+     )
+
+    line.set_xy1(_line, _x1, _y)
+    line.set_xy2(_line, _x2, _y)
+    _line
+
+get_limit_right(bars) => timenow + (time - time[1]) * bars
+
+//------------------------------ Plotting ------------------------------
+
+var can_show_daily = is_daily_enabled and timeframe.isintraday
+var can_show_weekly = is_weekly_enabled and not timeframe.isweekly and not timeframe.ismonthly
+var can_show_monthly = is_monthly_enabled and not timeframe.ismonthly
+  
 // the following code doesn't need to be processed on every candle
 if barstate.islast
     is_weekly_open = dayofweek == dayofweek.monday
