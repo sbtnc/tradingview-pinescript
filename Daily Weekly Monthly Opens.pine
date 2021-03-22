@@ -28,7 +28,7 @@ var i_projectionOffset      = input(defval = 20,            title = "Offset",   
 
 //----------------------------- Securities -----------------------------
 
-[dailyTime, dailyOpen]      = security(syminfo.tickerid, '1440', [time, open], lookahead = barmerge.lookahead_on)
+[dailyTime, dailyOpen]      = security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open], lookahead = barmerge.lookahead_on)
 [weeklyTime, weeklyOpen]    = security(syminfo.tickerid, 'W', [time, open], lookahead = barmerge.lookahead_on)
 [monthlyTime, monthlyOpen]  = security(syminfo.tickerid, 'M', [time, open], lookahead = barmerge.lookahead_on)
 [yearlyTime, yearlyOpen]    = security(syminfo.tickerid, '12M', [time, open], lookahead = barmerge.lookahead_on)
