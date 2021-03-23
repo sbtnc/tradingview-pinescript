@@ -22,7 +22,7 @@ var i_weeklyColor           = input(defval = color.orange,  title = "",         
 var i_isMonthlyEnabled      = input(defval = true,          title = "Monthly",      group = "Opens",    inline = "Monthly")
 var i_monthlyColor          = input(defval = color.red,     title = "",             group = "Opens",    inline = "Monthly")
 var i_isYearlyEnabled       = input(defval = true,          title = "Yearly",       group = "Opens",    inline = "Yearly")
-var i_yearlyColor           = input(defval = color.yellow,  title = "",             group = "Opens",    inline = "Yearly")
+var i_yearlyColor           = input(defval = color.blue,    title = "",             group = "Opens",    inline = "Yearly")
 var i_isTailsEnabled        = input(defval = false,         title = "Show Tails",   group = "Settings")
 var i_projectionOffset      = input(defval = 20,            title = "Offset",       group = "Settings", minval = 1)
 
@@ -48,7 +48,6 @@ f_drawLine(_x1, _x2, _y, _color, _width) =>
 
     line.set_xy1(_line, _x1, _y)
     line.set_xy2(_line, _x2, _y)
-    _line
 
 f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
     var _label = label.new(
@@ -62,7 +61,6 @@ f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
      )
     
     label.set_xy(_label, _x, _y)
-    _label
 
 f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
     var _line = line.new(
@@ -79,7 +77,6 @@ f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
 
     line.set_xy1(_line, _x1, _y)
     line.set_xy2(_line, _x2, _y)
-    _line
 
 f_getRightOffset(_margin) =>
     _padding = 4
@@ -93,14 +90,51 @@ var canShowWeekly   = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.i
 var canShowMonthly  = i_isMonthlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly)
 var canShowYearly   = i_isYearlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly or (timeframe.ismonthly and timeframe.multiplier < 12))
 
-// On the weekly timeframe, pinescript draws lines from the first weekly candle whose start date belongs to a given year/month
-// E.g. if the first weekly candle of the year whose start date is the 6th of January, then the yearly open line is drawn from this candle
-// In such case, we visually want it to be anchored on the previous week which start date is the 31st December instead
+_weeklyOpen     = weeklyOpen
+_weeklyTime     = weeklyTime
+_monthlyOpen    = monthlyOpen
+_monthlyTime    = monthlyTime
+_yearlyOpen     = yearlyOpen
+_yearlyTime     = yearlyTime
 
-var int weeklyTimeOnYearChange = na
-var int x1YearlyAnchor = na
+// Markets with extended sessions (e.g. TSLA) are available for intradays charts only
+// As the yearly, monthly and weekly data come respectively from the 12M, 1M, 1W timeframes, extended hours are excluded
+// When the chart option "ext" is toggled on, opens' price and time don't match
+// In such case, we visually want to use the extended hour open and time
+
+var float _extWeeklyOpen   = na
+var float _extMonthlyOpen  = na
+var float _extYearlyOpen   = na
+var int _extWeeklyTime     = na
+var int _extMonthlyTime    = na
+var int _extYearlyTime     = na
+
+if timeframe.isintraday and syminfo.session == session.extended
+    if weekofyear != weekofyear[1]
+        _extWeeklyOpen := dailyOpen
+        _extWeeklyTime := dailyTime
+    if month != month[1]
+        _extMonthlyOpen := dailyOpen
+        _extMonthlyTime := dailyTime
+    if year != year[1]
+        _extYearlyOpen := dailyOpen
+        _extYearlyTime := dailyTime
+
+    _weeklyOpen     := _extWeeklyOpen
+    _weeklyTime     := _extWeeklyTime
+    _monthlyOpen    := _extMonthlyOpen
+    _monthlyTime    := _extMonthlyTime
+    _yearlyOpen     := _extYearlyOpen
+    _yearlyTime     := _extYearlyTime
+
+// On the weekly timeframe, pinescript draws lines from the first weekly candle whose start date belongs to a given month/year
+// E.g. if the first weekly candle of the month whose start date is the 3rd of Feb, then the monthly open line is drawn from this candle
+// In such case, we visually want it to be anchored on the previous week which contains the 1st Feb
+
+var int weeklyTimeOnYearChange  = na
+var int x1YearlyAnchor          = na
 var int weeklyTimeOnMonthChange = na
-var int x1MonthlyAnchor = na
+var int x1MonthlyAnchor         = na
 
 if timeframe.isweekly
     if yearlyTime != yearlyTime[1]
@@ -110,90 +144,78 @@ if timeframe.isweekly
         weeklyTimeOnMonthChange := weeklyTime
         x1MonthlyAnchor := weeklyTime[1]
 
+    // Theorically we would adjust the position if the weekly start date is different than the 1st
+    // Which pratically result actually of the first day of the month/year considering holidays
+    if dayofmonth(weeklyTimeOnYearChange) != dayofmonth(_yearlyTime)
+        _yearlyTime := x1YearlyAnchor
+    if dayofmonth(weeklyTimeOnMonthChange) != dayofmonth(_monthlyTime)
+        _monthlyTime := x1MonthlyAnchor
+
 if barstate.islast
     //
     // Yearly
     //
     if canShowYearly
         _margin = 0
-        if canShowDaily and dailyOpen == yearlyOpen
+        if canShowDaily and dailyOpen == _yearlyOpen
+            _margin := 1
+        if canShowWeekly and _weeklyOpen == _yearlyOpen
             _margin := _margin + 1
-        if canShowWeekly and weeklyOpen == yearlyOpen
+        if canShowMonthly and _monthlyOpen == _yearlyOpen
             _margin := _margin + 1
-        if canShowMonthly and monthlyOpen == yearlyOpen
-            _margin := _margin + 1
-        _yearlyRightOffset = f_getRightOffset(_margin)
+        _rightOffset = f_getRightOffset(_margin)
         
         if i_isTailsEnabled
-            f_drawTail(time, _yearlyRightOffset, yearlyOpen, i_yearlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+            f_drawTail(time, _rightOffset, _yearlyOpen, i_yearlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
         
-        f_drawLine(time, _yearlyRightOffset, yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
-        yearlyLine = f_drawLine(yearlyTime, time, yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_yearlyRightOffset, yearlyOpen, "Y   ", i_yearlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
-
-        // When the weekly candle start date is equal or greater than the 2nd day of the year, obviously the yearly open should be anchored on previous weekly candle
-        // Basically, we adjust the x1 position if the weekly start date is different than the 1st day the year
-        if timeframe.isweekly
-            // Exception is made for overnight markets (e.g. EURUSD) as the market actually opens on prior Sunday
-            if dayofweek == dayofweek.sunday
-                line.set_x1(yearlyLine, x1YearlyAnchor)
-            // Considering holidays as the first day of the year isn't necessarily the 1st 
-            else if dayofmonth(weeklyTimeOnYearChange) != dayofmonth(yearlyTime)
-                line.set_x1(yearlyLine, x1YearlyAnchor)
+        f_drawLine(time, _rightOffset, _yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(_yearlyTime, time, _yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, _yearlyOpen, "Y   ", i_yearlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
         
     //
     // Monthly
     //
     if canShowMonthly
         _margin = 0
-        if canShowDaily and dailyOpen == monthlyOpen
+        if canShowDaily and dailyOpen == _monthlyOpen
+            _margin := 1
+        if canShowWeekly and _weeklyOpen == _monthlyOpen
             _margin := _margin + 1
-        if canShowWeekly and weeklyOpen == monthlyOpen
-            _margin := _margin + 1
-        _monthlyRightOffset = f_getRightOffset(_margin)
+        _rightOffset = f_getRightOffset(_margin)
         
         if i_isTailsEnabled
-            f_drawTail(time, _monthlyRightOffset, monthlyOpen, i_monthlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+            f_drawTail(time, _rightOffset, _monthlyOpen, i_monthlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
         
-        f_drawLine(time, _monthlyRightOffset, monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
-        monthlyLine = f_drawLine(monthlyTime, time, monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_monthlyRightOffset, monthlyOpen, "M   ", i_monthlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)       
-        
-        // When the weekly candle start date is equal or greater than the 2nd day of the month, obviously the monthly open should be anchored on previous weekly candle
-        // Basically, we adjust the x1 position if the weekly start date is different than the 1st day the month
-        if timeframe.isweekly
-            // Exception is made for overnight markets (e.g. EURUSD) as the market actually opens on prior Sunday
-            if dayofweek == dayofweek.sunday
-                line.set_x1(monthlyLine, x1MonthlyAnchor)
-            // Considering holidays as the first day of the month isn't necessarily the 1st 
-            else if dayofmonth(weeklyTimeOnMonthChange) != dayofmonth(monthlyTime)
-                line.set_x1(monthlyLine, x1MonthlyAnchor)
+        f_drawLine(time, _rightOffset, _monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(_monthlyTime, time, _monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, _monthlyOpen, "M   ", i_monthlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)  
 
     //
     // Weekly
     //
     if canShowWeekly
         _margin = 0
-        if canShowDaily and dailyOpen == weeklyOpen
-            _margin := _margin +1
-        _weeklyRightOffset = f_getRightOffset(_margin)
+        if canShowDaily and dailyOpen == _weeklyOpen
+            _margin := 1
+        _rightOffset = f_getRightOffset(_margin)
         
         if i_isTailsEnabled
-            f_drawTail(time, _weeklyRightOffset, weeklyOpen, i_weeklyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+            f_drawTail(time, _rightOffset, _weeklyOpen, i_weeklyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
 
-        f_drawLine(time, _weeklyRightOffset, weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
-        f_drawLine(weeklyTime, time, weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_weeklyRightOffset, weeklyOpen, "W   ", i_weeklyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
-
+        f_drawLine(time, _rightOffset, _weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(_weeklyTime, time, _weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, _weeklyOpen, "W   ", i_weeklyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+            
     //
     // Daily
     //
     if canShowDaily
-        _dailyRightOffset = f_getRightOffset(0)
+        _rightOffset = f_getRightOffset(0)
         
         if i_isTailsEnabled
-            f_drawTail(time, _dailyRightOffset, dailyOpen, i_dailyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+            f_drawTail(time, _rightOffset, dailyOpen, i_dailyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
         
-        f_drawLine(time, _dailyRightOffset, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(time, _rightOffset, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
         f_drawLine(dailyTime, time, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_dailyRightOffset, dailyOpen, "D   ", i_dailyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+        f_drawLabel(_rightOffset, dailyOpen, "D   ", i_dailyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+        
