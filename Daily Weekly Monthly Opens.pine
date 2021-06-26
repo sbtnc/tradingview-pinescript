@@ -3,236 +3,219 @@
 // 2020-01-11
 
 //@version=4
-study("Daily Weekly Monthly Opens", shorttitle = "DWM O", overlay = true)
+study("Daily Weekly Monthly Yearly Opens", shorttitle = "DWMY O", overlay = true)
 
-[daily_time, daily_open] = security(syminfo.tickerid, 'D', [time, open], lookahead = barmerge.lookahead_on)
-[weekly_time, weekly_open] = security(syminfo.tickerid, 'W', [time, open], lookahead = barmerge.lookahead_on)
-[monthly_time, monthly_open] = security(syminfo.tickerid, 'M', [time, open], lookahead = barmerge.lookahead_on)
+//---------------------------- Constants ------------------------------
+
+var DEFAULT_LINE_WIDTH      = 1
+var DEFAULT_TAIL_WIDTH      = 1
+var DEFAULT_TAIL_STYLE      = line.style_dotted
+var DEFAULT_LABEL_SIZE      = size.small
+var DEFAULT_LABEL_STYLE     = label.style_none
 
 //------------------------------ Inputs -------------------------------
 
-var is_daily_enabled = input(defval = true, title = "Daily Open", type = input.bool)
-var is_weekly_enabled = input(defval = true, title = "Weeky Open", type = input.bool)
-var is_monthly_enabled = input(defval = true, title = "Monthly Open", type = input.bool)
-var show_tails = input(defval = false, title = "Show Tails", type = input.bool)
-var color_input = input(defval = "Gray",
-   title = "Color",
-   options = ["Aqua", "Black", "Blue", "Fuchsia", "Gray", "Green", "Lime", "Maroon", "Navy", "Olive", "Purple", "Red", "Silver", "Teal", "White", "Yellow"],
-   type = input.string)
+var i_isDailyEnabled        = input(defval = true,          title = "Daily",        group = "Opens",    inline = "Daily")
+var i_dailyColor            = input(defval = color.green,   title = "",             group = "Opens",    inline = "Daily")
+var i_isWeeklyEnabled       = input(defval = true,          title = "Weekly",       group = "Opens",    inline = "Weekly")
+var i_weeklyColor           = input(defval = color.orange,  title = "",             group = "Opens",    inline = "Weekly")
+var i_isMonthlyEnabled      = input(defval = true,          title = "Monthly",      group = "Opens",    inline = "Monthly")
+var i_monthlyColor          = input(defval = color.red,     title = "",             group = "Opens",    inline = "Monthly")
+var i_isYearlyEnabled       = input(defval = true,          title = "Yearly",       group = "Opens",    inline = "Yearly")
+var i_yearlyColor           = input(defval = color.blue,    title = "",             group = "Opens",    inline = "Yearly")
+var i_isTailsEnabled        = input(defval = false,         title = "Show Tails",   group = "Settings")
+var i_projectionOffset      = input(defval = 20,            title = "Offset",       group = "Settings", minval = 1)
 
-//------------------------------ Styling ------------------------------
+//----------------------------- Securities -----------------------------
 
-var user_color = color_input == "Aqua" ? color.aqua :
-   color_input == "Black" ? color.black :
-   color_input == "Blue" ? color.blue :
-   color_input == "Fuchsia" ? color.fuchsia :
-   color_input == "Green" ? color.green :
-   color_input == "Lime" ? color.lime :
-   color_input == "Maroon" ? color.maroon :
-   color_input == "Navy" ? color.navy :
-   color_input == "Olive" ? color.olive :
-   color_input == "Purple" ? color.purple :
-   color_input == "Red" ? color.red :
-   color_input == "Silver" ? color.silver :
-   color_input == "Teal" ? color.teal :
-   color_input == "White" ? color.white :
-   color_input == "Yellow" ? color.yellow :
-   color.gray
+[dailyTime, dailyOpen]      = security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open], lookahead = barmerge.lookahead_on)
+[weeklyTime, weeklyOpen]    = security(syminfo.tickerid, 'W', [time, open], lookahead = barmerge.lookahead_on)
+[monthlyTime, monthlyOpen]  = security(syminfo.tickerid, 'M', [time, open], lookahead = barmerge.lookahead_on)
+[yearlyTime, yearlyOpen]    = security(syminfo.tickerid, '12M', [time, open], lookahead = barmerge.lookahead_on)
 
-var DEFAULT_LINE_WIDTH = 1
-var DEFAULT_TAIL_WIDTH = 1
-var DEFAULT_LINE_COLOR = user_color
-var DEFAULT_LABEL_COLOR = user_color
-var DEFAULT_TAIL_COLOR = user_color
-var DEFAULT_LABEL_SIZE = size.small
-var DEFAULT_LABEL_STYLE = label.style_none
-var DEFAULT_TAIL_STYLE = line.style_dotted
-var DEFAULT_EXTEND_RIGHT = 20
+//--------------------------- Function helpers -------------------------
 
-var daily_line_color = DEFAULT_LINE_COLOR
-var daily_line_width = DEFAULT_LINE_WIDTH
-var daily_label_color = DEFAULT_LABEL_COLOR
-var daily_label_size = DEFAULT_LABEL_SIZE
-var daily_label_style = DEFAULT_LABEL_STYLE
-var daily_tail_width = DEFAULT_LINE_WIDTH
-var daily_tail_color = DEFAULT_TAIL_COLOR
-var daily_tail_style = DEFAULT_TAIL_STYLE
-var daily_extend_right = DEFAULT_EXTEND_RIGHT
+f_drawLine(_x1, _x2, _y, _color, _width) =>
+    var _line = line.new(
+     x1     = _x1,
+     x2     = _x2,
+     y1     = _y,
+     y2     = _y,
+     color  = _color,
+     width  = _width,
+     xloc   = xloc.bar_time
+     )
 
-var weekly_line_color = DEFAULT_LINE_COLOR
-var weekly_line_width = DEFAULT_LINE_WIDTH
-var weekly_label_color = DEFAULT_LABEL_COLOR
-var weekly_label_size = DEFAULT_LABEL_SIZE
-var weekly_label_style = DEFAULT_LABEL_STYLE
-var weekly_tail_width = DEFAULT_LINE_WIDTH
-var weekly_tail_color = DEFAULT_TAIL_COLOR
-var weekly_tail_style = DEFAULT_TAIL_STYLE
-var weekly_extend_right = DEFAULT_EXTEND_RIGHT
+    line.set_xy1(_line, _x1, _y)
+    line.set_xy2(_line, _x2, _y)
 
-var monthly_line_color = DEFAULT_LINE_COLOR
-var monthly_line_width = DEFAULT_LINE_WIDTH
-var monthly_label_color = DEFAULT_LABEL_COLOR
-var monthly_label_size = DEFAULT_LABEL_SIZE
-var monthly_label_style	= DEFAULT_LABEL_STYLE
-var monthly_tail_width = DEFAULT_LINE_WIDTH
-var monthly_tail_color = DEFAULT_TAIL_COLOR
-var monthly_tail_style = DEFAULT_TAIL_STYLE
-var monthly_extend_right = DEFAULT_EXTEND_RIGHT
+f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
+    var _label = label.new(
+     x          = _x,
+     y          = _y,
+     text       = _text,
+     textcolor  = _textcolor,
+     style      = _style,
+     size       = _size,
+     xloc       = xloc.bar_time
+     )
+    
+    label.set_xy(_label, _x, _y)
+
+f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
+    var _line = line.new(
+     x1     = _x1,
+     x2     = _x2,
+     y1     = _y,
+     y2     = _y,
+     color  = _color,
+     style  = _style,
+     width  = _width,
+     extend = extend.left,
+     xloc   = xloc.bar_time
+     )
+
+    line.set_xy1(_line, _x1, _y)
+    line.set_xy2(_line, _x2, _y)
+
+f_getRightOffset(_margin) =>
+    _padding = 4
+    _bar = min(time - time[1], time[1] - time[2])
+    time + _bar * (i_projectionOffset + _margin * _padding)
 
 //------------------------------ Plotting ------------------------------
 
-var can_show_daily = is_daily_enabled and timeframe.isintraday
-var can_show_weekly = is_weekly_enabled and not timeframe.isweekly and not timeframe.ismonthly
-var can_show_monthly = is_monthly_enabled and not timeframe.ismonthly
+var canShowDaily    = i_isDailyEnabled and timeframe.isintraday
+var canShowWeekly   = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
+var canShowMonthly  = i_isMonthlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly)
+var canShowYearly   = i_isYearlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly or (timeframe.ismonthly and timeframe.multiplier < 12))
 
-get_limit_right(bars) =>
-	timenow + (time - time[1]) * bars
+_weeklyOpen     = weeklyOpen
+_weeklyTime     = weeklyTime
+_monthlyOpen    = monthlyOpen
+_monthlyTime    = monthlyTime
+_yearlyOpen     = yearlyOpen
+_yearlyTime     = yearlyTime
 
-// the following code doesn't need to be processed on every candle
+// Markets with extended sessions (e.g. TSLA) are available for intradays charts only
+// As the yearly, monthly and weekly data come respectively from the 12M, 1M, 1W timeframes, extended hours are excluded
+// When the chart option "ext" is toggled on, opens' price and time don't match
+// In such case, we visually want to use the extended hour open and time
+
+var float _extWeeklyOpen   = na
+var float _extMonthlyOpen  = na
+var float _extYearlyOpen   = na
+var int _extWeeklyTime     = na
+var int _extMonthlyTime    = na
+var int _extYearlyTime     = na
+
+if timeframe.isintraday and syminfo.session == session.extended
+    if weekofyear != weekofyear[1]
+        _extWeeklyOpen := dailyOpen
+        _extWeeklyTime := dailyTime
+    if month != month[1]
+        _extMonthlyOpen := dailyOpen
+        _extMonthlyTime := dailyTime
+    if year != year[1]
+        _extYearlyOpen := dailyOpen
+        _extYearlyTime := dailyTime
+
+    _weeklyOpen     := _extWeeklyOpen
+    _weeklyTime     := _extWeeklyTime
+    _monthlyOpen    := _extMonthlyOpen
+    _monthlyTime    := _extMonthlyTime
+    _yearlyOpen     := _extYearlyOpen
+    _yearlyTime     := _extYearlyTime
+
+// On the weekly timeframe, pinescript draws lines from the first weekly candle whose start date belongs to a given month/year
+// E.g. if the first weekly candle of the month whose start date is the 3rd of Feb, then the monthly open line is drawn from this candle
+// In such case, we visually want it to be anchored on the previous week which contains the 1st Feb
+
+var int weeklyTimeOnYearChange  = na
+var int x1YearlyAnchor          = na
+var int weeklyTimeOnMonthChange = na
+var int x1MonthlyAnchor         = na
+
+if timeframe.isweekly
+    if yearlyTime != yearlyTime[1]
+        weeklyTimeOnYearChange := weeklyTime
+        x1YearlyAnchor := weeklyTime[1]
+    if monthlyTime != monthlyTime[1]
+        weeklyTimeOnMonthChange := weeklyTime
+        x1MonthlyAnchor := weeklyTime[1]
+
+    // Theorically we would adjust the position if the weekly start date is different than the 1st
+    // Which pratically result actually of the first day of the month/year considering holidays
+    if dayofmonth(weeklyTimeOnYearChange) != dayofmonth(_yearlyTime)
+        _yearlyTime := x1YearlyAnchor
+    if dayofmonth(weeklyTimeOnMonthChange) != dayofmonth(_monthlyTime)
+        _monthlyTime := x1MonthlyAnchor
+
 if barstate.islast
-    is_weekly_open = dayofweek == dayofweek.monday
-    is_monthly_open	= dayofmonth == 1
-	can_draw_daily = (is_weekly_enabled ? not is_weekly_open : true) and (is_monthly_enabled ? not is_monthly_open : true)
-	can_draw_weekly = is_monthly_enabled ? not (is_monthly_open and is_weekly_open) : true
-
-    if can_show_daily and can_draw_daily
-        daily_limit_right = get_limit_right(daily_extend_right)
+    //
+    // Yearly
+    //
+    if canShowYearly
+        _margin = 0
+        if canShowDaily and dailyOpen == _yearlyOpen
+            _margin := 1
+        if canShowWeekly and _weeklyOpen == _yearlyOpen
+            _margin := _margin + 1
+        if canShowMonthly and _monthlyOpen == _yearlyOpen
+            _margin := _margin + 1
+        _rightOffset = f_getRightOffset(_margin)
         
-        // draw tails before lines for better visual
-        if show_tails
-            var daily_tail = line.new(x1 = time,
-               x2 = daily_limit_right,
-               y1 = daily_open,
-               y2 = daily_open,
-               color = daily_tail_color,
-               style = daily_tail_style,
-               width = daily_tail_width,
-               extend = extend.left,
-               xloc = xloc.bar_time)
-            line.set_x1(daily_tail, time)
-            line.set_x2(daily_tail, daily_limit_right)
-            line.set_y1(daily_tail, daily_open)
-            line.set_y2(daily_tail, daily_open)
-
-        var daily_line = line.new(x1 = daily_time,
-           x2 = daily_limit_right,
-           y1 = daily_open,
-           y2 = daily_open,
-           color = daily_line_color,
-           width = daily_line_width,
-           xloc = xloc.bar_time)
-        var daily_label = label.new(x = daily_limit_right,
-           y = daily_open,
-           text = "DO    ",
-           style = daily_label_style,
-           textcolor = daily_label_color,
-           size = daily_label_size,
-           xloc = xloc.bar_time)
-
-    	line.set_x1(daily_line, daily_time)
-    	line.set_x2(daily_line, daily_limit_right)
-    	line.set_y1(daily_line, daily_open)
-    	line.set_y2(daily_line, daily_open)
-    	label.set_x(daily_label, daily_limit_right)
-        label.set_y(daily_label, daily_open)
-
-    if can_show_weekly and can_draw_weekly
-        weekly_limit_right = get_limit_right(weekly_extend_right)
+        if i_isTailsEnabled
+            f_drawTail(time, _rightOffset, _yearlyOpen, i_yearlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
         
-        if show_tails
-            var weekly_tail = line.new(x1 = time,
-               x2 = weekly_limit_right,
-               y1 = weekly_open,
-               y2 = weekly_open,
-               color = weekly_tail_color,
-               style = weekly_tail_style,
-               width = weekly_tail_width,
-               extend = extend.left,
-               xloc = xloc.bar_time)
-            line.set_x1(weekly_tail, time)
-            line.set_x2(weekly_tail, weekly_limit_right)
-            line.set_y1(weekly_tail, weekly_open)
-            line.set_y2(weekly_tail, weekly_open)
-
-        var weekly_line = line.new(x1 = weekly_time,
-           x2 = weekly_limit_right,
-           y1 = weekly_open,
-           y2 = weekly_open,
-           color = weekly_line_color,
-           width = weekly_line_width,
-           xloc = xloc.bar_time)
-        var weekly_label = label.new(x = weekly_limit_right,
-           y = weekly_open,
-           text = "WO    ",
-           style = weekly_label_style,
-           textcolor = weekly_label_color,
-           size = monthly_label_size,
-           xloc = xloc.bar_time)
-
-        line.set_x1(weekly_line, weekly_time)
-    	line.set_x2(weekly_line, weekly_limit_right)
-    	line.set_y1(weekly_line, weekly_open)
-    	line.set_y2(weekly_line, weekly_open)
-    	label.set_x(weekly_label, weekly_limit_right)
-    	label.set_y(weekly_label, weekly_open)
-
-    	// the weekly open can be the daily open too (monday)
-        // only the weekly will be draw, in these case we update its label
-	    if is_weekly_open and can_show_daily
-            label.set_text(weekly_label, "DO / WO            ")
-
-    if can_show_monthly
-        monthly_limit_right = get_limit_right(monthly_extend_right)
+        f_drawLine(time, _rightOffset, _yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(_yearlyTime, time, _yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, _yearlyOpen, "Y   ", i_yearlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
         
-        if show_tails
-            var monthly_tail = line.new(x1 = time,
-               x2 = monthly_limit_right,
-               y1 = monthly_open,
-               y2 = monthly_open,
-               color = monthly_tail_color,
-               style = monthly_tail_style,
-               width = monthly_tail_width,
-               extend = extend.left,
-               xloc = xloc.bar_time)
-            line.set_x1(monthly_tail, time)
-            line.set_x2(monthly_tail, monthly_limit_right)
-            line.set_y1(monthly_tail, monthly_open)
-            line.set_y2(monthly_tail, monthly_open)
+    //
+    // Monthly
+    //
+    if canShowMonthly
+        _margin = 0
+        if canShowDaily and dailyOpen == _monthlyOpen
+            _margin := 1
+        if canShowWeekly and _weeklyOpen == _monthlyOpen
+            _margin := _margin + 1
+        _rightOffset = f_getRightOffset(_margin)
         
-        var monthlyLine = line.new(x1 = monthly_time,
-           x2 = monthly_limit_right,
-           y1 = monthly_open,
-           y2 = monthly_open,
-           color = monthly_line_color,
-           width = monthly_line_width,
-           xloc = xloc.bar_time)
-        var monthlyLabel = label.new(x = monthly_limit_right,
-           y = monthly_open, text = "MO    ",
-           style = monthly_label_style,
-           textcolor = monthly_label_color,
-           size = monthly_label_size,
-           xloc = xloc.bar_time)
+        if i_isTailsEnabled
+            f_drawTail(time, _rightOffset, _monthlyOpen, i_monthlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+        
+        f_drawLine(time, _rightOffset, _monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(_monthlyTime, time, _monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, _monthlyOpen, "M   ", i_monthlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)  
 
-        line.set_x1(monthlyLine, monthly_time)
-    	line.set_x2(monthlyLine, monthly_limit_right)
-    	line.set_y1(monthlyLine, monthly_open)
-    	line.set_y2(monthlyLine, monthly_open)
-    	label.set_x(monthlyLabel, monthly_limit_right)
-        label.set_y(monthlyLabel, monthly_open)
+    //
+    // Weekly
+    //
+    if canShowWeekly
+        _margin = 0
+        if canShowDaily and dailyOpen == _weeklyOpen
+            _margin := 1
+        _rightOffset = f_getRightOffset(_margin)
+        
+        if i_isTailsEnabled
+            f_drawTail(time, _rightOffset, _weeklyOpen, i_weeklyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
 
-        // the monthly open can be the weekly open (monday 1st) and/or daily open too
-        // only the monthly will be draw, in these case we update its label
-        if is_monthly_open
-            if can_show_daily
-                label.set_text(monthlyLabel, "DO / MO            ")
-            if is_weekly_open
-                if can_show_weekly
-                    label.set_text(monthlyLabel, "WO / MO            ")
-                if can_show_daily and can_show_weekly
-                    label.set_text(monthlyLabel, "DO / WO / MO                ")
-
-        // the start of the line is drew from the first week of the month
-        // if the first day of the weekly candle (monday) is the 2nd of the month
-        // we fix the start of the line position on the previous weekly candle
-        if timeframe.isweekly and dayofweek(monthly_time) != dayofweek.monday
-            line.set_x1(monthlyLine, monthly_time - (weekly_time - weekly_time[1]))
+        f_drawLine(time, _rightOffset, _weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(_weeklyTime, time, _weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, _weeklyOpen, "W   ", i_weeklyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+            
+    //
+    // Daily
+    //
+    if canShowDaily
+        _rightOffset = f_getRightOffset(0)
+        
+        if i_isTailsEnabled
+            f_drawTail(time, _rightOffset, dailyOpen, i_dailyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+        
+        f_drawLine(time, _rightOffset, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
+        f_drawLine(dailyTime, time, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
+        f_drawLabel(_rightOffset, dailyOpen, "D   ", i_dailyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+        
