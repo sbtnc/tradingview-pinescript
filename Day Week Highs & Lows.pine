@@ -7,8 +7,8 @@ study("Day Week Highs & Lows", shorttitle = "DW HL", overlay = true)
 
 //------------------------------ Inputs ------------------------------
 
-days_loopback = input(defval = 2, minval = 0, title = "Previous Days")
-weeks_loopback = input(defval = 1, minval = 0, title = "Previous Weeks")
+days_lookback = input(defval = 2, minval = 0, title = "Previous Days")
+weeks_lookback = input(defval = 1, minval = 0, title = "Previous Weeks")
 
 //------------------------------ Styling ------------------------------
 
@@ -47,9 +47,9 @@ from_day_start_to_now_range = get_ms_from_today_start()
 from_week_start_to_now_range = get_ms_from_week_start() // dayofweek returns 1 for sunday and 2 for monday
 from_candle_to_now_range = timenow - time
 
-day_limit_left = from_candle_to_now_range <  day_ms * days_loopback + from_day_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
+day_limit_left = from_candle_to_now_range <  day_ms * days_lookback + from_day_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
 day_limit_right = from_candle_to_now_range > from_day_start_to_now_range
-week_limit_left = from_candle_to_now_range <  week_ms * weeks_loopback + from_week_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
+week_limit_left = from_candle_to_now_range <  week_ms * weeks_lookback + from_week_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
 week_limit_right = from_candle_to_now_range > from_week_start_to_now_range
 
 can_show_day = day_limit_left and day_limit_right and timeframe.isintraday
