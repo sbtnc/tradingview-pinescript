@@ -10,20 +10,20 @@ study("Day Week Highs & Lows", shorttitle = "DW HL", overlay = true)
 days_lookback = input(defval = 2, minval = 0, title = "Previous Days")
 weeks_lookback = input(defval = 1, minval = 0, title = "Previous Weeks")
 
-//------------------------------ Styling ------------------------------
+//----------------------------- Constants -----------------------------
 
 var DEFAULT_COLOR = color.black
 var DEFAULT_TRANSP = 0
 
-var day_color = DEFAULT_COLOR
-var day_linewidth = 1
-var day_transparency = DEFAULT_TRANSP
-var day_style = plot.style_circles
+//------------------------------ Styling ------------------------------
 
-var week_color = DEFAULT_COLOR
-var week_linewidth = 2
-var week_transparency = DEFAULT_TRANSP
-var week_style = plot.style_cross
+var day_color		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
+var day_linewidth	= 1
+var day_style		= plot.style_circles
+
+var week_color		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
+var week_linewidth	= 2
+var week_style		= plot.style_cross
 
 //------------------------------ Logic -------------------------------
 
@@ -57,7 +57,7 @@ can_show_week = week_limit_left and week_limit_right and not timeframe.isweekly 
 
 //------------------------- Plotting ---------------------------------
 
-plot(can_show_day ? day_high : na, title = "Day Highs", linewidth = day_linewidth, color = day_color, transp = day_transparency, style = day_style)
-plot(can_show_day ? day_low : na, title = "Day Lows", linewidth = day_linewidth, color = day_color, transp = day_transparency, style = day_style)
-plot(can_show_week ? week_high : na, title = "Week Highs", linewidth = week_linewidth, color = day_color, transp = week_transparency, style = week_style)
-plot(can_show_week ? week_low : na, title = "Week Lows", linewidth = week_linewidth, color = day_color, transp = week_transparency, style = week_style)
+plot(can_show_day ? day_high : na,		title = "Day Highs",	linewidth = day_linewidth,	color = day_color, style = day_style)
+plot(can_show_day ? day_low : na,		title = "Day Lows",		linewidth = day_linewidth,	color = day_color, style = day_style)
+plot(can_show_week ? week_high : na,	title = "Week Highs",	linewidth = week_linewidth,	color = day_color, style = week_style)
+plot(can_show_week ? week_low : na,		title = "Week Lows",	linewidth = week_linewidth,	color = day_color, style = week_style)
