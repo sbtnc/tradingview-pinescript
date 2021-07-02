@@ -28,8 +28,8 @@ var week_style		= plot.style_cross
 //------------------------------ Logic -------------------------------
 
 // get highs, lows and timestamps from D1 and W1 timeframes
-[day_start, day_high, day_low] = security(syminfo.tickerid, 'D', [time, high, low], lookahead = barmerge.lookahead_on)
-[week_start, week_high, week_low] = security(syminfo.tickerid, 'W', [time, high, low], lookahead = barmerge.lookahead_on)
+[day_start, day_high, day_low, isLastDay] = security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
+[week_start, week_high, week_low, isLastWeek] = security(syminfo.tickerid, 'W', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
 
 var second_ms = 1000
 var minute_ms = second_ms * 60
@@ -48,9 +48,10 @@ from_week_start_to_now_range = get_ms_from_week_start() // dayofweek returns 1 f
 from_candle_to_now_range = timenow - time
 
 day_limit_left = from_candle_to_now_range <  day_ms * days_lookback + from_day_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
-day_limit_right = from_candle_to_now_range > from_day_start_to_now_range
+day_limit_right = not isLastDay
+
 week_limit_left = from_candle_to_now_range <  week_ms * weeks_lookback + from_week_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
-week_limit_right = from_candle_to_now_range > from_week_start_to_now_range
+week_limit_right = not isLastWeek
 
 can_show_day = day_limit_left and day_limit_right and timeframe.isintraday
 can_show_week = week_limit_left and week_limit_right and not timeframe.isweekly and not timeframe.ismonthly
