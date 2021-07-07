@@ -3,12 +3,13 @@
 // 2020-01-12
 
 //@version=4
-study("Day Week Highs & Lows", shorttitle = "DW HL", overlay = true)
+study("Day Week Highs & Lows", shorttitle = "DWM HL", overlay = true)
 
 //------------------------------ Inputs ------------------------------
 
 i_dayLookback		= input(defval = 2, minval = 0, title = "Previous Days")
 i_weekLookback 		= input(defval = 1, minval = 0, title = "Previous Weeks")
+i_monthLookback		= input(defval = 1, minval = 0, title = "Previous Months")
 
 //----------------------------- Constants -----------------------------
 
@@ -25,33 +26,56 @@ var weekColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
 var weekLinewidth	= 2
 var weekStyle		= plot.style_cross
 
+var monthColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
+var monthLinewidth	= 3
+var monthStyle		= plot.style_cross
+
 //----------------------------- Functions -----------------------------
 
-// `dayofweek()` returns 1: sunday, 2: monday, 3: tuesday, 4: wednesday, 5: thursday, 6: friday and 7: saturday 
-
 // get the number of days passed since the start of the week
-// `f_daysSinceWeekStart()` returns 0: monday, 1: tuesday, 2: wednesday, 3: thursday, 4: friday, 5: saturday and 6: sunday 
 f_daysSinceWeekStart() => dayofweek(timenow) == dayofweek.sunday ? 6 : dayofweek(timenow) -2
 
 // get the day of the weeky position ordered from monday to sunday
-// `f_dayOfWeek()` returns 1: monday, 2: tuesday, 3: wednesday, 4: thursday, 5: friday, 6: saturday and 7: sunday 
 f_dayOfWeek(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
+
+// `dayofweek()` returns			1: sunday,	2: monday, 	3: tuesday, 	4: wednesday,	5: thursday,	6: friday,		7: saturday 
+// `f_dayOfWeek()` returns			1: monday, 	2: tuesday,	3: wednesday, 	4: thursday,	5: friday, 		6: saturday,	7: sunday 
+// `f_daysSinceWeekStart()` returns	0: monday, 	1: tuesday,	2: wednesday,	3: thursday, 	4: friday, 		5: saturday,	6: sunday 
+
+f_print(_txt, _x, _y) =>
+	var _label = label.new(_x, _y, _txt, style=label.style_label_left, xloc=xloc.bar_time)
+	if barstate.islast
+		label.set_xy(_label, _x, _y)
 
 //------------------------------- Logic -------------------------------
 
 [dayStart, dayHigh, dayLow, isLastDay] = security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
-[weekStart, weekHigh, weekLow, isLastWeek, lastWeekTradingDay] = security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
+[weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
+[monthStart, monthHigh, monthLow, isLastMonth] = security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
 
-// depending on the market session
-// if session 17: past 
-// the whole logic for the display in range is based on current date `timenow`
-// if the market is closed (e.g. on saturday for forex), the last bar's date is no more the current date which need to be adjusted
-adjustment = f_dayOfWeek(timenow) > f_dayOfWeek(lastWeekTradingDay) ? f_dayOfWeek(timenow) - f_dayOfWeek(lastWeekTradingDay) : 0
+// The calculation for the display range from right to left starts at current date `timenow`
+// On non 24x7 markets, there is an inherent problematic of missing bars when market are closed (holidays, weekends)
+// While it isn't possible to account for holidays we can consider weekends
+
+// When a trading session overlaps two days (e.g. forex 17:00 - 17:00), adjust at the first day
+isTradingOnSecondDay = hour(timenow) < hour(dayStart)
+adjustmentForDayStartTime = isTradingOnSecondDay ? 1 : 0
+
+// When trading into the week, adjust at the first weekday
+adjustmentForWeekStartDate = f_daysSinceWeekStart()
+
+// When previous x days overlap a weekend, adjust at the last trading day of previous week
+isMarket24x7 = f_dayOfWeek(lastTradingDayOfTheWeek) == 7
+isOverlapingWeekend = f_daysSinceWeekStart() - i_dayLookback < 0
+adjustmentForWeekendOverlap = not isMarket24x7 ? isOverlapingWeekend ? 2 : 0 : 0
+
+// When current date is on weekends, adjust to last trading day
+adjustmentForWeekend = f_dayOfWeek(timenow) > f_dayOfWeek(lastTradingDayOfTheWeek) ? f_dayOfWeek(timenow) - f_dayOfWeek(lastTradingDayOfTheWeek) : 0
 
 dayLimitLeft = timestamp(
  year(timenow),
  month(timenow),
- dayofmonth(timenow) - i_dayLookback - adjustment,
+ dayofmonth(timenow) - adjustmentForDayStartTime - adjustmentForWeekendOverlap - adjustmentForWeekend, i_dayLookback,
  hour(dayStart),
  minute(dayStart),
  second(dayStart))
@@ -59,35 +83,34 @@ dayLimitLeft = timestamp(
 weekLimitLeft = timestamp(
  year(timenow),
  month(timenow),
- dayofmonth(timenow) - i_weekLookback * 7 - f_daysSinceWeekStart() - adjustment,
+ dayofmonth(timenow) - adjustmentForDayStartTime - adjustmentForWeekStartDate - adjustmentForWeekend, i_weekLookback * 7,
  hour(weekStart),
  minute(weekStart),
  second(weekStart))
 
-canShowDay	= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
-canShowWeek = time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
+monthLimitLeft = timestamp(
+ year(timenow),
+ month(timenow) - i_monthLookback,
+ 1 - adjustmentForDayStartTime,
+ hour(monthStart),
+ minute(monthStart),
+ second(monthStart))
+
+canShowDay		= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
+canShowWeek 	= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
+canShowMonth	= time >= monthLimitLeft and not isLastMonth and not timeframe.ismonthly
 
 //------------------------- Plotting ---------------------------------
 
-plot(canShowDay ? dayHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor, style = dayStyle)
-plot(canShowDay ? dayLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor, style = dayStyle)
-plot(canShowWeek ? weekHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = dayColor, style = weekStyle)
-plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = dayColor, style = weekStyle)
+plot(canShowDay ? dayHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+plot(canShowDay ? dayLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+plot(canShowWeek ? weekHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+plot(canShowMonth ? monthHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
 
 //-------------------------- DEBUG ----------------------------------
 
-plotchar(f_daysSinceWeekStart(), "days to substract...", "", location = location.top)
-plotchar(dayofmonth(timenow), '...from date', "", location = location.top)
-plotchar(hour(weekStart), 'at hour', "", location = location.top)
-plotchar(na, '----', "", location = location.top)
-plotchar(f_dayOfWeek(lastWeekTradingDay), 'Last trading day', "", location = location.top)
-plotchar(f_dayOfWeek(timenow), 'Timenow', "", location = location.top)
-plotchar(adjustment, 'Adjustment', "", location = location.top)
+//f_print("daily right left", dayLimitLeft, close)
 
-bgcolor(time >= timestamp(
- year(timenow),
- month(timenow),
- dayofmonth(timenow) - f_daysSinceWeekStart(),
- hour(weekStart),
- minute(weekStart),
- second(weekStart)) ? color.yellow : color(na))
+//plotchar(hour(timenow), "hour now", "", location=location.top)
