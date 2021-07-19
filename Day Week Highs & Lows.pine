@@ -38,11 +38,11 @@ var monthStyle		= plot.style_cross
 
 //----------------------------- Functions -----------------------------
 
-// Get from a given date the weekday position ordered from Monday to Sunday
-f_dayOfWeek(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
+// Get from a given date the weekday position [1-7] ordered from Monday to Sunday
+f_getWeekday(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
 
-// Get current date weekday index ordered from Monday to Sunday
-f_daysSinceWeekStart() => f_dayOfWeek(timenow) -1
+// Get current date weekday index [0-6] ordered from Monday to Sunday
+f_getWeekdayIndex() => f_getWeekday(timenow) -1
 
 // Check if current date is on a given weekday
 f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
@@ -64,9 +64,9 @@ f_print(_txt, _x, _y) =>
 // On non 24x7 markets, there is an inherent problematic of missing bars when market are closed (holidays, weekends)
 // While it isn't possible to account for holidays we can adjust the range on weekends
 
-isMarket24x7 = f_dayOfWeek(lastTradingDayOfTheWeek) == 7
+isMarket24x7 = f_getWeekday(lastTradingDayOfTheWeek) == 7
 
-isOverlapingWeekend = f_daysSinceWeekStart() - i_dayLookback < 0
+isOverlapingWeekend = (f_isWeekday(dayofweek.sunday) and f_isLastSession()) ? 0 : f_getWeekdayIndex() - i_dayLookback < 0
 
 isSaturdaySession = (f_isWeekday(dayofweek.friday) and f_isLastSession()) or (f_isWeekday(dayofweek.saturday) and f_isFirstSession())
 
@@ -75,10 +75,10 @@ isSundaySession = (f_isWeekday(dayofweek.saturday) and f_isLastSession()) or (f_
 // Adjustments:
 
 // 1. If trading trading session overlaps two days (e.g. forex 17:00 - 17:00) we adjust at the first day
-adjustmentForOvernightSession = hour(timenow) < hour(dayStart) ? 1 : 0
+adjustmentForOvernightSession = f_isFirstSession() ? 1 : 0
 
 // 2. When trading into the week we adjust at the first weekday
-adjustmentForWeekStartDate = f_daysSinceWeekStart()
+adjustmentForWeekStartDate = f_getWeekdayIndex()
 
 // 3. When previous x days overlap a weekend and if market was closed we adjust at previous week last trading session
 adjustmentForWeekend = 0
