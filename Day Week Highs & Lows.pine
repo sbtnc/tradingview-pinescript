@@ -50,8 +50,8 @@ f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
 // Get from a given date the weekday count ordered from Monday to Sunday [1-7]
 f_getWeekday(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
 
-// Get current date session index ordered from Monday to Sunday [0-6]
-f_getSessionIndex() => f_isFirstSession() ? f_getWeekday(timenow) - 1 : not f_isWeekday(dayofweek.sunday) ? f_getWeekday(timenow) : 0
+// Get current weekday index ordered from Monday to Sunday [0-6]
+f_getWeekdayIndex() => f_getWeekday(timenow) - 1
 
 f_print(_txt, _x, _y) =>
 	var _label = label.new(_x, _y, _txt, style=label.style_label_left, xloc=xloc.bar_time)
@@ -64,9 +64,9 @@ f_print(_txt, _x, _y) =>
 // On non 24x7 markets, there is an inherent problematic of missing bars when market are closed (holidays, weekends)
 // While it isn't possible to account for holidays we can adjust the range on weekends
 
-currentSessionIdx = f_getSessionIndex()
-
 isMarket24x7 = f_getWeekday(lastTradingDayOfTheWeek) == 7
+
+currentSessionIdx = not isMarket24x7 and f_isLastSession() ? (f_isWeekday(dayofweek.sunday) ? 0 : f_getWeekdayIndex() + 1) : f_getWeekdayIndex()
 
 isOverlapingWeekend = currentSessionIdx - i_dayLookback < 0
 
@@ -136,5 +136,5 @@ plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewi
 plotchar(adjustmentForOvernightSession, "adjust session", "", location=location.top)
 plotchar(adjustmentForWeekend, "adjust weekend", "", location=location.top)
 plotchar(adjustmentForWeekendOverlap, "adjust weekend overlap", "", location=location.top)
-plotchar((f_isWeekday(dayofweek.saturday) and f_isLastSession()) ? 66 : 33, "is saturday", "", location=location.top)
+plotchar(adjustmentForWeekStartDate, "adjustment towards monday session", "", location=location.top)
 
