@@ -50,13 +50,8 @@ f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
 // Get from a given date the weekday count ordered from Monday to Sunday [1-7]
 f_getWeekday(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
 
-// Get current weekday index ordered from Monday to Sunday [0-6]
+// Get index of the current weekday ordered from Monday to Sunday [0-6]
 f_getWeekdayIndex() => f_getWeekday(timenow) - 1
-
-f_print(_txt, _x, _y) =>
-	var _label = label.new(_x, _y, _txt, style=label.style_label_left, xloc=xloc.bar_time)
-	if barstate.islast
-		label.set_xy(_label, _x, _y)
 
 //------------------------------- Logic -------------------------------
 
@@ -76,13 +71,13 @@ isSundaySession = currentSessionIdx == 6
 
 // Adjustments:
 
-// 1. If trading trading session overlaps two days (e.g. forex 17:00 - 17:00) we adjust at the first day
+// 1. If a trading session overlaps two days (e.g. forex 17:00 - 17:00) we adjust at the first day
 adjustmentForOvernightSession = f_isFirstSession() ? 1 : 0
 
 // 2. When trading into the week we adjust at the first trading session
 adjustmentForWeekStartDate = currentSessionIdx
 
-// 3. When previous x days overlap a weekend and if market was closed we adjust at previous week last trading session
+// 3. When previous x days overlap a weekend and if market was closed we adjust at previous week's last trading session
 adjustmentForWeekend = 0
 
 // 4. When current time is on a weekend, if market is closed we adjust at the last trading session
