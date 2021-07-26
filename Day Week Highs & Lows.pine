@@ -129,12 +129,3 @@ plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,
 plot(canShowMonth ? monthHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
 plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
 
-//-------------------------- DEBUG ----------------------------------
-
-//f_print("daily right left", dayLimitLeft, close)
-
-plotchar(adjustmentForOvernightSession, "adjust session", "", location=location.top)
-plotchar(adjustmentForWeekend, "adjust weekend", "", location=location.top)
-plotchar(adjustmentForWeekendOverlap, "adjust weekend overlap", "", location=location.top)
-plotchar(adjustmentForWeekStartDate, "adjustment towards monday session", "", location=location.top)
-
