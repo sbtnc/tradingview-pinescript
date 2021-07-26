@@ -8,7 +8,7 @@ study("Day Week Month Highs & Lows", shorttitle = "DWM HL", overlay = true)
 //------------------------------ Inputs ------------------------------
 
 i_dayLookback		= input(defval = 2, minval = 0, title = "Previous Days")
-i_weekLookback 		= input(defval = 1, minval = 0, title = "Previous Weeks")
+i_weekLookback		= input(defval = 1, minval = 0, title = "Previous Weeks")
 i_monthLookback		= input(defval = 1, minval = 0, title = "Previous Months")
 
 //----------------------------- Constants -----------------------------
@@ -84,8 +84,8 @@ adjustmentForWeekend = 0
 adjustmentForWeekendOverlap = 0
 
 if not isMarket24x7
-	adjustmentForWeekend 		:= isSaturdaySession ? 1 : isSundaySession ? 2 : 0
-	adjustmentForWeekendOverlap := isOverlapingWeekend ? 2 : 0
+	adjustmentForWeekend		:= isSaturdaySession ? 1 : isSundaySession ? 2 : 0
+	adjustmentForWeekendOverlap	:= isOverlapingWeekend ? 2 : 0
 
 dayLimitLeft = timestamp(
  year(timenow),
@@ -112,7 +112,7 @@ monthLimitLeft = timestamp(
  second(monthStart))
 
 canShowDay		= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
-canShowWeek 	= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
+canShowWeek		= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
 canShowMonth	= time >= monthLimitLeft and not isLastMonth and not timeframe.ismonthly
 
 //------------------------- Plotting ---------------------------------
