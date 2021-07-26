@@ -3,65 +3,124 @@
 // 2020-01-12
 
 //@version=4
-study("Day Week Highs & Lows", shorttitle = "DW HL", overlay = true)
+study("Day Week Month Highs & Lows", shorttitle = "DWM HL", overlay = true)
 
 //------------------------------ Inputs ------------------------------
 
-days_loopback = input(defval = 2, minval = 0, title = "Previous Days")
-weeks_loopback = input(defval = 1, minval = 0, title = "Previous Weeks")
+i_dayLookback		= input(defval = 2, minval = 0, title = "Previous Days")
+i_weekLookback		= input(defval = 1, minval = 0, title = "Previous Weeks")
+i_monthLookback		= input(defval = 1, minval = 0, title = "Previous Months")
+
+//----------------------------- Constants -----------------------------
+
+var DEFAULT_COLOR	= #434651
+var DEFAULT_TRANSP	= 0
 
 //------------------------------ Styling ------------------------------
 
-var DEFAULT_COLOR = color.black
-var DEFAULT_TRANSP = 0
+var dayColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
+var dayLinewidth	= 1
+var dayStyle		= plot.style_circles
 
-var day_color = DEFAULT_COLOR
-var day_linewidth = 1
-var day_transparency = DEFAULT_TRANSP
-var day_style = plot.style_circles
+var weekColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
+var weekLinewidth	= 2
+var weekStyle		= plot.style_cross
 
-var week_color = DEFAULT_COLOR
-var week_linewidth = 2
-var week_transparency = DEFAULT_TRANSP
-var week_style = plot.style_cross
+var monthColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
+var monthLinewidth	= 3
+var monthStyle		= plot.style_cross
 
-//------------------------------ Logic -------------------------------
+//----------------------------- Securities ----------------------------
 
-// get highs, lows and timestamps from D1 and W1 timeframes
-day_start = security(syminfo.tickerid, 'D', time, lookahead = barmerge.lookahead_on)
-day_high = security(syminfo.tickerid, 'D', high, lookahead = barmerge.lookahead_on)
-day_low = security(syminfo.tickerid, 'D', low, lookahead = barmerge.lookahead_on)
-week_start = security(syminfo.tickerid, 'W', time, lookahead = barmerge.lookahead_on)
-week_high = security(syminfo.tickerid, 'W', high, lookahead = barmerge.lookahead_on)
-week_low = security(syminfo.tickerid, 'W', low, lookahead = barmerge.lookahead_on)
+[dayStart, dayHigh, dayLow, isLastDay] = security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
+[weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
+[monthStart, monthHigh, monthLow, isLastMonth] = security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
 
-var second_ms = 1000
-var minute_ms = second_ms * 60
-var hour_ms = minute_ms * 60
-var day_ms = hour_ms * 24
-var week_ms = day_ms * 7
+//----------------------------- Functions -----------------------------
 
-get_ms_from_today_start() =>
-	hour_ms * hour(timenow) + minute_ms * minute(timenow) + second_ms * second(timenow)
-get_ms_from_week_start() =>
-	day_ms * (dayofweek(timenow) == dayofweek.sunday ? 6 : (dayofweek(timenow) -2)) + get_ms_from_today_start()
+// Check if current time is within the first session of the day (e.g. EURUSD Monday 00:00-16:59)
+f_isFirstSession() => hour(timenow) < hour(dayStart)
 
-// calculate ranges in ms for time calculations
-from_day_start_to_now_range = get_ms_from_today_start()
-from_week_start_to_now_range = get_ms_from_week_start() // dayofweek returns 1 for sunday and 2 for monday
-from_candle_to_now_range = timenow - time
+// Check if current time is within the last session of the day (e.g. EURUSD Monday 17:00-23:59)
+f_isLastSession() => hour(timenow) >= hour(dayStart)
 
-day_limit_left = from_candle_to_now_range <  day_ms * days_loopback + from_day_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
-day_limit_right = from_candle_to_now_range > from_day_start_to_now_range
-week_limit_left = from_candle_to_now_range <  week_ms * weeks_loopback + from_week_start_to_now_range + second_ms // add the minimal time unit to fix the first candle position
-week_limit_right = from_candle_to_now_range > from_week_start_to_now_range
+// Check if current date is on a given weekday
+f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
 
-can_show_day = day_limit_left and day_limit_right and timeframe.isintraday
-can_show_week = week_limit_left and week_limit_right and not timeframe.isweekly and not timeframe.ismonthly
+// Get from a given date the weekday count ordered from Monday to Sunday [1-7]
+f_getWeekday(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
+
+// Get index of the current weekday ordered from Monday to Sunday [0-6]
+f_getWeekdayIndex() => f_getWeekday(timenow) - 1
+
+//------------------------------- Logic -------------------------------
+
+// The calculation for the display in a range from right to left starts at current date `timenow`
+// On non 24x7 markets, there is an inherent problematic of missing bars when market are closed (holidays, weekends)
+// While it isn't possible to account for holidays we can adjust the range on weekends
+
+isMarket24x7 = f_getWeekday(lastTradingDayOfTheWeek) == 7
+
+currentSessionIdx = not isMarket24x7 and f_isLastSession() ? (f_isWeekday(dayofweek.sunday) ? 0 : f_getWeekdayIndex() + 1) : f_getWeekdayIndex()
+
+isOverlapingWeekend = currentSessionIdx - i_dayLookback < 0
+
+isSaturdaySession = currentSessionIdx == 5
+
+isSundaySession = currentSessionIdx == 6
+
+// Adjustments:
+
+// 1. If a trading session overlaps two days (e.g. forex 17:00 - 17:00) we adjust at the first day
+adjustmentForOvernightSession = f_isFirstSession() ? 1 : 0
+
+// 2. When trading into the week we adjust at the first trading session
+adjustmentForWeekStartDate = currentSessionIdx
+
+// 3. When previous x days overlap a weekend and if market was closed we adjust at previous week's last trading session
+adjustmentForWeekend = 0
+
+// 4. When current time is on a weekend, if market is closed we adjust at the last trading session
+adjustmentForWeekendOverlap = 0
+
+if not isMarket24x7
+	adjustmentForWeekend		:= isSaturdaySession ? 1 : isSundaySession ? 2 : 0
+	adjustmentForWeekendOverlap	:= isOverlapingWeekend ? 2 : 0
+
+dayLimitLeft = timestamp(
+ year(timenow),
+ month(timenow),
+ dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekendOverlap - adjustmentForWeekend - i_dayLookback,
+ hour(dayStart),
+ minute(dayStart),
+ second(dayStart))
+
+weekLimitLeft = timestamp(
+ year(timenow),
+ month(timenow),
+ dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekStartDate - adjustmentForWeekend - i_weekLookback * 7,
+ hour(weekStart),
+ minute(weekStart),
+ second(weekStart))
+
+monthLimitLeft = timestamp(
+ year(timenow),
+ month(timenow) - i_monthLookback,
+ 1 - adjustmentForOvernightSession,
+ hour(monthStart),
+ minute(monthStart),
+ second(monthStart))
+
+canShowDay		= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
+canShowWeek		= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
+canShowMonth	= time >= monthLimitLeft and not isLastMonth and not timeframe.ismonthly
 
 //------------------------- Plotting ---------------------------------
 
-plot(can_show_day ? day_high : na, title = "Day Highs", linewidth = day_linewidth, color = day_color, transp = day_transparency, style = day_style)
-plot(can_show_day ? day_low : na, title = "Day Lows", linewidth = day_linewidth, color = day_color, transp = day_transparency, style = day_style)
-plot(can_show_week ? week_high : na, title = "Week Highs", linewidth = week_linewidth, color = day_color, transp = week_transparency, style = week_style)
-plot(can_show_week ? week_low : na, title = "Week Lows", linewidth = week_linewidth, color = day_color, transp = week_transparency, style = week_style)
+plot(canShowDay ? dayHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+plot(canShowDay ? dayLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+plot(canShowWeek ? weekHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+plot(canShowMonth ? monthHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+
