@@ -22,16 +22,19 @@ var DEFAULT_OFFSET_PADDING  = 4
 //                               Inputs
 //--------------------------------------------------------------------
 
-var i_isDailyEnabled        = input     (true,          "Daily",            inline="Daily",     group="Opens")
-var i_dailyColor            = input     (color.green,   "",                 inline="Daily",     group="Opens")
-var i_isWeeklyEnabled       = input     (true,          "Weekly",           inline="Weekly",    group="Opens")
-var i_weeklyColor           = input     (color.orange,  "",                 inline="Weekly",    group="Opens")
-var i_isMonthlyEnabled      = input     (true,          "Monthly",          inline="Monthly",   group="Opens")
-var i_monthlyColor          = input     (color.red,     "",                 inline="Monthly",   group="Opens")
-var i_isYearlyEnabled       = input     (true,          "Yearly",           inline="Yearly",    group="Opens")
-var i_yearlyColor           = input     (color.blue,    "",                 inline="Yearly",    group="Opens")
-var i_isTailsEnabled        = input     (false,         "Show Tails",                           group="Settings")
-var i_projectionOffset      = input.int (20,            "Offset",       1,                      group="Settings")
+t_extendedHours             = "When enabled, discover the open prices from the extended trading hours instead of regular trading hours."
+
+var i_isDailyEnabled        = input     (true,          "Daily",                                inline="Daily",     group="Opens")
+var i_dailyColor            = input     (color.green,   "",                                     inline="Daily",     group="Opens")
+var i_isWeeklyEnabled       = input     (true,          "Weekly",                               inline="Weekly",    group="Opens")
+var i_weeklyColor           = input     (color.orange,  "",                                     inline="Weekly",    group="Opens")
+var i_isMonthlyEnabled      = input     (true,          "Monthly",                              inline="Monthly",   group="Opens")
+var i_monthlyColor          = input     (color.red,     "",                                     inline="Monthly",   group="Opens")
+var i_isYearlyEnabled       = input     (true,          "Yearly",                               inline="Yearly",    group="Opens")
+var i_yearlyColor           = input     (color.blue,    "",                                     inline="Yearly",    group="Opens")
+var i_isTailsEnabled        = input     (false,         "Show Tails",                                               group="Settings")
+var i_projectionOffset      = input.int (20,            "Offset", 1,                                                group="Settings")
+var i_extendedHours         = input     (true,          "Extended Hours",   t_extendedHours,                        group="Settings")
 
 //--------------------------------------------------------------------
 //                          Functions helpers
@@ -94,30 +97,31 @@ _yearlyTime     = yearlyTime
 // When the chart option "ext" is toggled on, open prices and times don't match
 // In such case, we visually want to use the extended hours opens and times
 
-var float _extWeeklyOpen   = na
-var float _extMonthlyOpen  = na
-var float _extYearlyOpen   = na
-var int _extWeeklyTime     = na
-var int _extMonthlyTime    = na
-var int _extYearlyTime     = na
+if i_extendedHours and syminfo.session == session.extended
+    var float _extWeeklyOpen   = na
+    var float _extMonthlyOpen  = na
+    var float _extYearlyOpen   = na
+    var int _extWeeklyTime     = na
+    var int _extMonthlyTime    = na
+    var int _extYearlyTime     = na
 
-if timeframe.isintraday and syminfo.session == session.extended
-    if weekofyear != weekofyear[1]
-        _extWeeklyOpen := dailyOpen
-        _extWeeklyTime := dailyTime
-    if month != month[1]
-        _extMonthlyOpen := dailyOpen
-        _extMonthlyTime := dailyTime
-    if year != year[1]
-        _extYearlyOpen := dailyOpen
-        _extYearlyTime := dailyTime
+    if timeframe.isintraday
+        if weekofyear != weekofyear[1]
+            _extWeeklyOpen := dailyOpen
+            _extWeeklyTime := dailyTime
+        if month != month[1]
+            _extMonthlyOpen := dailyOpen
+            _extMonthlyTime := dailyTime
+        if year != year[1]
+            _extYearlyOpen := dailyOpen
+            _extYearlyTime := dailyTime
 
-    _weeklyOpen     := _extWeeklyOpen
-    _weeklyTime     := _extWeeklyTime
-    _monthlyOpen    := _extMonthlyOpen
-    _monthlyTime    := _extMonthlyTime
-    _yearlyOpen     := _extYearlyOpen
-    _yearlyTime     := _extYearlyTime
+        _weeklyOpen     := _extWeeklyOpen
+        _weeklyTime     := _extWeeklyTime
+        _monthlyOpen    := _extMonthlyOpen
+        _monthlyTime    := _extMonthlyTime
+        _yearlyOpen     := _extYearlyOpen
+        _yearlyTime     := _extYearlyTime
 
 // On the weekly timeframe, Pine Script draws lines from the first weekly candle whose start date belongs to a given month/year
 // E.g. if the first weekly candle of the month whose start date is the 3rd of Feb, then the monthly open line is drawn from this candle
