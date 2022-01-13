@@ -44,9 +44,12 @@ f_drawLine(_x1, _x2, _y, _color, _style, _width, _xloc, _extend=extend.none) =>
     line.set_xy2(_line, _x2, _y)
 
 f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
-    var _label = label.new(_x, _y, _text, style=_style, textcolor=_textcolor, size=_size)
+    _priceStr = str.tostring(_y, format.mintick)
+
+    var _label = label.new(_x, _y, _text, style=_style, textcolor=_textcolor, size=_size, tooltip=_priceStr)
     
     label.set_xy(_label, _x, _y)
+    label.set_tooltip(_label, _priceStr)
 
 f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
     if i_isTailsEnabled
