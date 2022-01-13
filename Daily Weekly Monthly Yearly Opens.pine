@@ -35,7 +35,7 @@ var i_projectionOffset      = input.int (20,            "Offset",       1,      
 //                          Functions helpers
 //--------------------------------------------------------------------
 
-f_drawLine(_x1, _x2, _y, _color, _width) =>
+f_drawLine(_x1, _x2, _y, _color, _width, _xloc=xloc.bar_time) =>
     var _line = line.new(
      x1     = _x1,
      x2     = _x2,
@@ -43,7 +43,7 @@ f_drawLine(_x1, _x2, _y, _color, _width) =>
      y2     = _y,
      color  = _color,
      width  = _width,
-     xloc   = xloc.bar_time
+     xloc   = _xloc
      )
 
     line.set_xy1(_line, _x1, _y)
@@ -56,8 +56,7 @@ f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
      text       = _text,
      textcolor  = _textcolor,
      style      = _style,
-     size       = _size,
-     xloc       = xloc.bar_time
+     size       = _size
      )
     
     label.set_xy(_label, _x, _y)
@@ -82,14 +81,13 @@ f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
     if i_isTailsEnabled
         f_drawTail(time, _rightOffset, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
 
-    f_drawLine(time, _rightOffset, _open, _color, DEFAULT_LINE_WIDTH)
     f_drawLine(_time, time, _open, _color, DEFAULT_LINE_WIDTH)
+    f_drawLine(bar_index, _rightOffset, _open, _color, DEFAULT_LINE_WIDTH, xloc.bar_index)
     f_drawLabel(_rightOffset, _open, _text, _color, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
-    
+
 f_getRightOffset(_margin) =>
     _padding = 4
-    _bar = math.min(time - time[1], time[1] - time[2])
-    time + _bar * (i_projectionOffset + _margin * _padding)
+    bar_index + i_projectionOffset + _margin * _padding
 
 //--------------------------------------------------------------------
 //                        Variables declarations
