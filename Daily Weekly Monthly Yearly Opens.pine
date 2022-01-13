@@ -11,10 +11,12 @@ indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true)
 //                             Constants
 //--------------------------------------------------------------------
 
+var DEFAULT_LINE_STYLE      = line.style_solid
 var DEFAULT_LINE_WIDTH      = 1
 var DEFAULT_TAIL_STYLE      = line.style_dotted
 var DEFAULT_LABEL_SIZE      = size.small
 var DEFAULT_LABEL_STYLE     = label.style_none
+var DEFAULT_OFFSET_PADDING  = 4
 
 //--------------------------------------------------------------------
 //                               Inputs
@@ -35,59 +37,27 @@ var i_projectionOffset      = input.int (20,            "Offset",       1,      
 //                          Functions helpers
 //--------------------------------------------------------------------
 
-f_drawLine(_x1, _x2, _y, _color, _width, _xloc=xloc.bar_time) =>
-    var _line = line.new(
-     x1     = _x1,
-     x2     = _x2,
-     y1     = _y,
-     y2     = _y,
-     color  = _color,
-     width  = _width,
-     xloc   = _xloc
-     )
+f_drawLine(_x1, _x2, _y, _color, _style, _width, _xloc, _extend=extend.none) =>
+    var _line = line.new(_x1, _y, _x2, _y, _xloc, _extend, _color, _style, _width)
 
     line.set_xy1(_line, _x1, _y)
     line.set_xy2(_line, _x2, _y)
 
 f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
-    var _label = label.new(
-     x          = _x,
-     y          = _y,
-     text       = _text,
-     textcolor  = _textcolor,
-     style      = _style,
-     size       = _size
-     )
+    var _label = label.new(_x, _y, _text, style=_style, textcolor=_textcolor, size=_size)
     
     label.set_xy(_label, _x, _y)
 
-f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
-    var _line = line.new(
-     x1     = _x1,
-     x2     = _x2,
-     y1     = _y,
-     y2     = _y,
-     color  = _color,
-     style  = _style,
-     width  = _width,
-     extend = extend.left,
-     xloc   = xloc.bar_time
-     )
-
-    line.set_xy1(_line, _x1, _y)
-    line.set_xy2(_line, _x2, _y)
-
 f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
     if i_isTailsEnabled
-        f_drawTail(time, _rightOffset, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+        f_drawLine(time, time + 1, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_time, extend.left)
 
-    f_drawLine(_time, time, _open, _color, DEFAULT_LINE_WIDTH)
-    f_drawLine(bar_index, _rightOffset, _open, _color, DEFAULT_LINE_WIDTH, xloc.bar_index)
+    f_drawLine(_time, time, _open, _color, DEFAULT_LINE_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_time)
+    f_drawLine(bar_index, _rightOffset, _open, _color, DEFAULT_LINE_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_index)
     f_drawLabel(_rightOffset, _open, _text, _color, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
 
 f_getRightOffset(_margin) =>
-    _padding = 4
-    bar_index + i_projectionOffset + _margin * _padding
+    bar_index + i_projectionOffset + _margin * DEFAULT_OFFSET_PADDING
 
 //--------------------------------------------------------------------
 //                        Variables declarations
@@ -116,8 +86,8 @@ _yearlyTime     = yearlyTime
 
 // Markets with extended sessions (e.g. TSLA) are available for intradays charts only
 // As the yearly, monthly and weekly data come respectively from the 12M, 1M, 1W timeframes, extended hours are excluded
-// When the chart option "ext" is toggled on, opens' price and time don't match
-// In such case, we visually want to use the extended hour open and time
+// When the chart option "ext" is toggled on, open prices and times don't match
+// In such case, we visually want to use the extended hours opens and times
 
 var float _extWeeklyOpen   = na
 var float _extMonthlyOpen  = na
@@ -144,7 +114,7 @@ if timeframe.isintraday and syminfo.session == session.extended
     _yearlyOpen     := _extYearlyOpen
     _yearlyTime     := _extYearlyTime
 
-// On the weekly timeframe, pinescript draws lines from the first weekly candle whose start date belongs to a given month/year
+// On the weekly timeframe, Pine Script draws lines from the first weekly candle whose start date belongs to a given month/year
 // E.g. if the first weekly candle of the month whose start date is the 3rd of Feb, then the monthly open line is drawn from this candle
 // In such case, we visually want it to be anchored on the previous week which contains the 1st Feb
 
