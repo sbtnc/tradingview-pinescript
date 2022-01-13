@@ -28,10 +28,10 @@ var i_projectionOffset      = input(defval = 20,            title = "Offset",   
 
 //----------------------------- Securities -----------------------------
 
-[dailyTime, dailyOpen]      = security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open], lookahead = barmerge.lookahead_on)
-[weeklyTime, weeklyOpen]    = security(syminfo.tickerid, 'W', [time, open], lookahead = barmerge.lookahead_on)
-[monthlyTime, monthlyOpen]  = security(syminfo.tickerid, 'M', [time, open], lookahead = barmerge.lookahead_on)
-[yearlyTime, yearlyOpen]    = security(syminfo.tickerid, '12M', [time, open], lookahead = barmerge.lookahead_on)
+[dailyTime, dailyOpen, isLastDaily]         = security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[weeklyTime, weeklyOpen, isLastWeekly]      = security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[monthlyTime, monthlyOpen, isLastMonthly]   = security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[yearlyTime, yearlyOpen, isLastYearly]      = security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
 
 //--------------------------- Function helpers -------------------------
 
@@ -219,3 +219,8 @@ if barstate.islast
         f_drawLine(dailyTime, time, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
         f_drawLabel(_rightOffset, dailyOpen, "D   ", i_dailyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
         
+// Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for alerting
+plot(isLastDaily ? dailyOpen : na,      "D",    color.new(i_dailyColor, 100),   editable=false)
+plot(isLastWeekly ? weeklyOpen : na,    "W",    color.new(i_weeklyColor, 100),  editable=false)
+plot(isLastMonthly ? monthlyOpen : na,  "M",    color.new(i_monthlyColor, 100), editable=false)
+plot(isLastYearly ? yearlyOpen : na,    "Y",    color.new(i_yearlyColor, 100),  editable=false)
