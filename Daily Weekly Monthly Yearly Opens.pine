@@ -50,9 +50,11 @@ f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
 
 f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
     if i_isTailsEnabled
-        f_drawLine(time, time + 1, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_time, extend.left)
+        f_drawLine(_time, _time + 1, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_time, extend.left)
 
     f_drawLine(_time, time, _open, _color, DEFAULT_LINE_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_time)
+
+    // Plots line and label that projects in the future using xloc.bar_index for non 24x7 markets
     f_drawLine(bar_index, _rightOffset, _open, _color, DEFAULT_LINE_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_index)
     f_drawLabel(_rightOffset, _open, _text, _color, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
 
