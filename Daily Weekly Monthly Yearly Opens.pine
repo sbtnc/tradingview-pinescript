@@ -1,9 +1,10 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
-// 2020-01-11
+// Created: 2020-01-11
+// Last modified: 2022-01-13
 
-//@version=4
-study("Daily Weekly Monthly Yearly Opens", shorttitle = "DWMY O", overlay = true)
+// @version=5
+indicator("Daily Weekly Monthly Yearly Opens", shorttitle = "DWMY O", overlay = true)
 
 //---------------------------- Constants ------------------------------
 
@@ -24,14 +25,14 @@ var i_monthlyColor          = input(defval = color.red,     title = "",         
 var i_isYearlyEnabled       = input(defval = true,          title = "Yearly",       group = "Opens",    inline = "Yearly")
 var i_yearlyColor           = input(defval = color.blue,    title = "",             group = "Opens",    inline = "Yearly")
 var i_isTailsEnabled        = input(defval = false,         title = "Show Tails",   group = "Settings")
-var i_projectionOffset      = input(defval = 20,            title = "Offset",       group = "Settings", minval = 1)
+var i_projectionOffset      = input.int(defval = 20,        title = "Offset",       group = "Settings", minval = 1)
 
 //----------------------------- Securities -----------------------------
 
-[dailyTime, dailyOpen, isLastDaily]         = security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-[weeklyTime, weeklyOpen, isLastWeekly]      = security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-[monthlyTime, monthlyOpen, isLastMonthly]   = security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-[yearlyTime, yearlyOpen, isLastYearly]      = security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[dailyTime, dailyOpen, isLastDaily]         = request.security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[weeklyTime, weeklyOpen, isLastWeekly]      = request.security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[monthlyTime, monthlyOpen, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[yearlyTime, yearlyOpen, isLastYearly]      = request.security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
 
 //--------------------------- Function helpers -------------------------
 
@@ -80,7 +81,7 @@ f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
 
 f_getRightOffset(_margin) =>
     _padding = 4
-    _bar = min(time - time[1], time[1] - time[2])
+    _bar = math.min(time - time[1], time[1] - time[2])
     time + _bar * (i_projectionOffset + _margin * _padding)
 
 //------------------------------ Plotting ------------------------------
