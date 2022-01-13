@@ -4,9 +4,11 @@
 // Last modified: 2022-01-13
 
 // @version=5
-indicator("Daily Weekly Monthly Yearly Opens", shorttitle = "DWMY O", overlay = true)
+indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true)
 
-//---------------------------- Constants ------------------------------
+//--------------------------------------------------------------------
+//                             Constants
+//--------------------------------------------------------------------
 
 var DEFAULT_LINE_WIDTH      = 1
 var DEFAULT_TAIL_WIDTH      = 1
@@ -14,27 +16,24 @@ var DEFAULT_TAIL_STYLE      = line.style_dotted
 var DEFAULT_LABEL_SIZE      = size.small
 var DEFAULT_LABEL_STYLE     = label.style_none
 
-//------------------------------ Inputs -------------------------------
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
 
-var i_isDailyEnabled        = input(defval = true,          title = "Daily",        group = "Opens",    inline = "Daily")
-var i_dailyColor            = input(defval = color.green,   title = "",             group = "Opens",    inline = "Daily")
-var i_isWeeklyEnabled       = input(defval = true,          title = "Weekly",       group = "Opens",    inline = "Weekly")
-var i_weeklyColor           = input(defval = color.orange,  title = "",             group = "Opens",    inline = "Weekly")
-var i_isMonthlyEnabled      = input(defval = true,          title = "Monthly",      group = "Opens",    inline = "Monthly")
-var i_monthlyColor          = input(defval = color.red,     title = "",             group = "Opens",    inline = "Monthly")
-var i_isYearlyEnabled       = input(defval = true,          title = "Yearly",       group = "Opens",    inline = "Yearly")
-var i_yearlyColor           = input(defval = color.blue,    title = "",             group = "Opens",    inline = "Yearly")
-var i_isTailsEnabled        = input(defval = false,         title = "Show Tails",   group = "Settings")
-var i_projectionOffset      = input.int(defval = 20,        title = "Offset",       group = "Settings", minval = 1)
+var i_isDailyEnabled        = input     (true,          "Daily",            inline="Daily",     group="Opens")
+var i_dailyColor            = input     (color.green,   "",                 inline="Daily",     group="Opens")
+var i_isWeeklyEnabled       = input     (true,          "Weekly",           inline="Weekly",    group="Opens")
+var i_weeklyColor           = input     (color.orange,  "",                 inline="Weekly",    group="Opens")
+var i_isMonthlyEnabled      = input     (true,          "Monthly",          inline="Monthly",   group="Opens")
+var i_monthlyColor          = input     (color.red,     "",                 inline="Monthly",   group="Opens")
+var i_isYearlyEnabled       = input     (true,          "Yearly",           inline="Yearly",    group="Opens")
+var i_yearlyColor           = input     (color.blue,    "",                 inline="Yearly",    group="Opens")
+var i_isTailsEnabled        = input     (false,         "Show Tails",                           group="Settings")
+var i_projectionOffset      = input.int (20,            "Offset",       1,                      group="Settings")
 
-//----------------------------- Securities -----------------------------
-
-[dailyTime, dailyOpen, isLastDaily]         = request.security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-[weeklyTime, weeklyOpen, isLastWeekly]      = request.security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-[monthlyTime, monthlyOpen, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-[yearlyTime, yearlyOpen, isLastYearly]      = request.security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
-
-//--------------------------- Function helpers -------------------------
+//--------------------------------------------------------------------
+//                          Functions helpers
+//--------------------------------------------------------------------
 
 f_drawLine(_x1, _x2, _y, _color, _width) =>
     var _line = line.new(
@@ -84,12 +83,23 @@ f_getRightOffset(_margin) =>
     _bar = math.min(time - time[1], time[1] - time[2])
     time + _bar * (i_projectionOffset + _margin * _padding)
 
-//------------------------------ Plotting ------------------------------
+//--------------------------------------------------------------------
+//                        Variables declarations
+//--------------------------------------------------------------------
+
+[dailyTime, dailyOpen, isLastDaily]         = request.security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[weeklyTime, weeklyOpen, isLastWeekly]      = request.security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[monthlyTime, monthlyOpen, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
+[yearlyTime, yearlyOpen, isLastYearly]      = request.security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead = barmerge.lookahead_on)
 
 var canShowDaily    = i_isDailyEnabled and timeframe.isintraday
 var canShowWeekly   = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
 var canShowMonthly  = i_isMonthlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly)
 var canShowYearly   = i_isYearlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly or (timeframe.ismonthly and timeframe.multiplier < 12))
+
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
 
 _weeklyOpen     = weeklyOpen
 _weeklyTime     = weeklyTime
@@ -151,6 +161,10 @@ if timeframe.isweekly
         _yearlyTime := x1YearlyAnchor
     if dayofmonth(weeklyTimeOnMonthChange) != dayofmonth(_monthlyTime)
         _monthlyTime := x1MonthlyAnchor
+
+//--------------------------------------------------------------------
+//                          Plotting & styling
+//--------------------------------------------------------------------
 
 if barstate.islast
     //
