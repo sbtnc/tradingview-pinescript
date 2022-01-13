@@ -11,7 +11,6 @@ indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true)
 //--------------------------------------------------------------------
 
 var DEFAULT_LINE_WIDTH      = 1
-var DEFAULT_TAIL_WIDTH      = 1
 var DEFAULT_TAIL_STYLE      = line.style_dotted
 var DEFAULT_LABEL_SIZE      = size.small
 var DEFAULT_LABEL_STYLE     = label.style_none
@@ -179,11 +178,11 @@ if barstate.islast
     if canShowYearly
         _margin = 0
         if canShowDaily and dailyOpen == _yearlyOpen
-            _margin := 1
+            _margin += 1
         if canShowWeekly and _weeklyOpen == _yearlyOpen
-            _margin := _margin + 1
+            _margin += 1
         if canShowMonthly and _monthlyOpen == _yearlyOpen
-            _margin := _margin + 1
+            _margin += 1
         _rightOffset = f_getRightOffset(_margin)
         
         f_drawOpen(_yearlyTime, _yearlyOpen, _rightOffset, i_yearlyColor, "Y   ")
@@ -194,9 +193,9 @@ if barstate.islast
     if canShowMonthly
         _margin = 0
         if canShowDaily and dailyOpen == _monthlyOpen
-            _margin := 1
+            _margin += 1
         if canShowWeekly and _weeklyOpen == _monthlyOpen
-            _margin := _margin + 1
+            _margin += 1
         _rightOffset = f_getRightOffset(_margin)
 
         f_drawOpen(_monthlyTime, _monthlyOpen, _rightOffset, i_monthlyColor, "M   ")
@@ -207,7 +206,7 @@ if barstate.islast
     if canShowWeekly
         _margin = 0
         if canShowDaily and dailyOpen == _weeklyOpen
-            _margin := 1
+            _margin += 1
         _rightOffset = f_getRightOffset(_margin)
         
         f_drawOpen(_weeklyTime, _weeklyOpen, _rightOffset, i_weeklyColor, "W   ")
