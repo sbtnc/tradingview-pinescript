@@ -78,6 +78,14 @@ f_drawTail(_x1, _x2, _y, _color, _style, _width) =>
     line.set_xy1(_line, _x1, _y)
     line.set_xy2(_line, _x2, _y)
 
+f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
+    if i_isTailsEnabled
+        f_drawTail(time, _rightOffset, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
+
+    f_drawLine(time, _rightOffset, _open, _color, DEFAULT_LINE_WIDTH)
+    f_drawLine(_time, time, _open, _color, DEFAULT_LINE_WIDTH)
+    f_drawLabel(_rightOffset, _open, _text, _color, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+    
 f_getRightOffset(_margin) =>
     _padding = 4
     _bar = math.min(time - time[1], time[1] - time[2])
@@ -180,13 +188,8 @@ if barstate.islast
             _margin := _margin + 1
         _rightOffset = f_getRightOffset(_margin)
         
-        if i_isTailsEnabled
-            f_drawTail(time, _rightOffset, _yearlyOpen, i_yearlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
-        
-        f_drawLine(time, _rightOffset, _yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
-        f_drawLine(_yearlyTime, time, _yearlyOpen, i_yearlyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_rightOffset, _yearlyOpen, "Y   ", i_yearlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
-        
+        f_drawOpen(_yearlyTime, _yearlyOpen, _rightOffset, i_yearlyColor, "Y   ")
+
     //
     // Monthly
     //
@@ -197,13 +200,8 @@ if barstate.islast
         if canShowWeekly and _weeklyOpen == _monthlyOpen
             _margin := _margin + 1
         _rightOffset = f_getRightOffset(_margin)
-        
-        if i_isTailsEnabled
-            f_drawTail(time, _rightOffset, _monthlyOpen, i_monthlyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
-        
-        f_drawLine(time, _rightOffset, _monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
-        f_drawLine(_monthlyTime, time, _monthlyOpen, i_monthlyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_rightOffset, _monthlyOpen, "M   ", i_monthlyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)  
+
+        f_drawOpen(_monthlyTime, _monthlyOpen, _rightOffset, i_monthlyColor, "M   ")
 
     //
     // Weekly
@@ -214,25 +212,15 @@ if barstate.islast
             _margin := 1
         _rightOffset = f_getRightOffset(_margin)
         
-        if i_isTailsEnabled
-            f_drawTail(time, _rightOffset, _weeklyOpen, i_weeklyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
-
-        f_drawLine(time, _rightOffset, _weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
-        f_drawLine(_weeklyTime, time, _weeklyOpen, i_weeklyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_rightOffset, _weeklyOpen, "W   ", i_weeklyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+        f_drawOpen(_weeklyTime, _weeklyOpen, _rightOffset, i_weeklyColor, "W   ")
             
     //
     // Daily
     //
     if canShowDaily
         _rightOffset = f_getRightOffset(0)
-        
-        if i_isTailsEnabled
-            f_drawTail(time, _rightOffset, dailyOpen, i_dailyColor, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH)
-        
-        f_drawLine(time, _rightOffset, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
-        f_drawLine(dailyTime, time, dailyOpen, i_dailyColor, DEFAULT_LINE_WIDTH)
-        f_drawLabel(_rightOffset, dailyOpen, "D   ", i_dailyColor, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+
+        f_drawOpen(dailyTime, dailyOpen, _rightOffset, i_dailyColor, "D   ")
         
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for alerting
 plot(isLastDaily ? dailyOpen : na,      "D",    color.new(i_dailyColor, 100),   editable=false)
