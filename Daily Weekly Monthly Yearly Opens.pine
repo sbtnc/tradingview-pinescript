@@ -78,7 +78,7 @@ f_getRightOffset(_margin) =>
 //                        Variables declarations
 //--------------------------------------------------------------------
 
-[dailyTime, dailyOpen, isLastDaily]         = request.security(syminfo.tickerid, timeframe.isintraday ? '1440' : 'D', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
+[dailyTime, dailyOpen, isLastDaily]         = request.security(syminfo.tickerid, i_extendedHours ? '1440' : 'D', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
 [weeklyTime, weeklyOpen, isLastWeekly]      = request.security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
 [monthlyTime, monthlyOpen, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
 [yearlyTime, yearlyOpen, isLastYearly]      = request.security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
@@ -143,9 +143,9 @@ if yearlyTime != yearlyTime[1]
 // Markets with extended sessions (e.g. TSLA) are available for intradays charts only
 // As the yearly, monthly and weekly data come respectively from the 12M, 1M, 1W timeframes, extended hours are excluded
 // When the chart option "ext" is toggled on, open prices and times don't match
-// In such case, we visually want to use the extended hours opens and times
+// In such case, if the "extended hours" setting is enabled we discover the extended open prices
 
-if i_extendedHours and syminfo.session == session.extended
+if i_extendedHours and syminfo.session == session.extended and timeframe.isintraday 
     var float _extWeeklyOpen   = na
     var float _extMonthlyOpen  = na
     var float _extYearlyOpen   = na
@@ -153,23 +153,22 @@ if i_extendedHours and syminfo.session == session.extended
     var int _extMonthlyTime    = na
     var int _extYearlyTime     = na
 
-    if timeframe.isintraday
-        if weekofyear != weekofyear[1]
-            _extWeeklyOpen := dailyOpen
-            _extWeeklyTime := dailyTime
-        if month != month[1]
-            _extMonthlyOpen := dailyOpen
-            _extMonthlyTime := dailyTime
-        if year != year[1]
-            _extYearlyOpen := dailyOpen
-            _extYearlyTime := dailyTime
+    if weekofyear != weekofyear[1]
+        _extWeeklyOpen := dailyOpen
+        _extWeeklyTime := dailyTime
+    if month != month[1]
+        _extMonthlyOpen := dailyOpen
+        _extMonthlyTime := dailyTime
+    if year != year[1]
+        _extYearlyOpen := dailyOpen
+        _extYearlyTime := dailyTime
 
-        _weeklyOpen     := _extWeeklyOpen
-        _weeklyTime     := _extWeeklyTime
-        _monthlyOpen    := _extMonthlyOpen
-        _monthlyTime    := _extMonthlyTime
-        _yearlyOpen     := _extYearlyOpen
-        _yearlyTime     := _extYearlyTime
+    _weeklyOpen     := _extWeeklyOpen
+    _weeklyTime     := _extWeeklyTime
+    _monthlyOpen    := _extMonthlyOpen
+    _monthlyTime    := _extMonthlyTime
+    _yearlyOpen     := _extYearlyOpen
+    _yearlyTime     := _extYearlyTime
 
 // On the weekly timeframe, Pine Script draws lines from the first weekly candle whose start date belongs to a given month/year
 // E.g. if the first weekly candle of the month whose start date is the 3rd of Feb, then the monthly open line is drawn from this candle
@@ -261,6 +260,6 @@ if barstate.islast
         
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for alerting
 plot(isLastDaily and i_isDailyEnabled ? dailyOpen : na,         "D",    color.new(i_dailyColor, 100),   editable=false)
-plot(isLastWeekly and i_isWeeklyEnabled ? weeklyOpen : na,      "W",    color.new(i_weeklyColor, 100),  editable=false)
-plot(isLastMonthly and i_isMonthlyEnabled ? monthlyOpen : na,   "M",    color.new(i_monthlyColor, 100), editable=false)
-plot(isLastYearly and i_isYearlyEnabled ? yearlyOpen : na,      "Y",    color.new(i_yearlyColor, 100),  editable=false)
+plot(isLastWeekly and i_isWeeklyEnabled ? _weeklyOpen : na,     "W",    color.new(i_weeklyColor, 100),  editable=false)
+plot(isLastMonthly and i_isMonthlyEnabled ? _monthlyOpen : na,  "M",    color.new(i_monthlyColor, 100), editable=false)
+plot(isLastYearly and i_isYearlyEnabled ? _yearlyOpen : na,     "Y",    color.new(i_yearlyColor, 100),  editable=false)
