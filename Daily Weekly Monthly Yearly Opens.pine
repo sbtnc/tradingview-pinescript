@@ -52,7 +52,7 @@ f_drawLine(_x1, _x2, _y, _color, _style, _width, _xloc, _extend=extend.none) =>
 
 f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
     _priceStr = str.tostring(_y, format.mintick)
-    
+
     var _label = label.new(_x, _y, _text, style=_style, textcolor=_textcolor, size=_size, tooltip=_priceStr)
     
     label.set_xy(_label, _x, _y)
@@ -260,7 +260,7 @@ if barstate.islast
         f_drawLastOpen(dailyTime, dailyOpen, _rightOffset, i_dailyColor, "D   ")
         
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for alerting
-plot(isLastDaily ? dailyOpen : na,      "D",    color.new(i_dailyColor, 100),   editable=false)
-plot(isLastWeekly ? weeklyOpen : na,    "W",    color.new(i_weeklyColor, 100),  editable=false)
-plot(isLastMonthly ? monthlyOpen : na,  "M",    color.new(i_monthlyColor, 100), editable=false)
-plot(isLastYearly ? yearlyOpen : na,    "Y",    color.new(i_yearlyColor, 100),  editable=false)
+plot(isLastDaily and i_isDailyEnabled ? dailyOpen : na,         "D",    color.new(i_dailyColor, 100),   editable=false)
+plot(isLastWeekly and i_isWeeklyEnabled ? weeklyOpen : na,      "W",    color.new(i_weeklyColor, 100),  editable=false)
+plot(isLastMonthly and i_isMonthlyEnabled ? monthlyOpen : na,   "M",    color.new(i_monthlyColor, 100), editable=false)
+plot(isLastYearly and i_isYearlyEnabled ? yearlyOpen : na,      "Y",    color.new(i_yearlyColor, 100),  editable=false)
