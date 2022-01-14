@@ -52,13 +52,13 @@ f_drawLine(_x1, _x2, _y, _color, _style, _width, _xloc, _extend=extend.none) =>
 
 f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
     _priceStr = str.tostring(_y, format.mintick)
-
+    
     var _label = label.new(_x, _y, _text, style=_style, textcolor=_textcolor, size=_size, tooltip=_priceStr)
     
     label.set_xy(_label, _x, _y)
     label.set_tooltip(_label, _priceStr)
 
-f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
+f_drawLastOpen(_time, _open, _rightOffset, _color, _text) =>
     if i_isTailsEnabled
         f_drawLine(_time, _time + 1, _open, _color, DEFAULT_TAIL_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_time, extend.left)
 
@@ -67,6 +67,9 @@ f_drawOpen(_time, _open, _rightOffset, _color, _text) =>
     // Plots line and label that projects in the future using xloc.bar_index for non 24x7 markets
     f_drawLine(bar_index, _rightOffset, _open, _color, DEFAULT_LINE_STYLE, DEFAULT_LINE_WIDTH, xloc.bar_index)
     f_drawLabel(_rightOffset, _open, _text, _color, DEFAULT_LABEL_STYLE, DEFAULT_LABEL_SIZE)
+
+f_drawPreviousOpen(_startTime, _endTime, _open, _color) =>
+    line.new(_startTime, _open, _endTime, _open, xloc.bar_time, color=_color, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
 
 f_getRightOffset(_margin) =>
     bar_index + i_projectionOffset + _margin * DEFAULT_OFFSET_PADDING
@@ -201,6 +204,10 @@ if barstate.islast
     // Yearly
     //
     if canShowYearly
+        if i_yearlyLookback > 1 and array.size(a_yearlyTimes) > 1
+            for i = 0 to array.size(a_yearlyTimes) - 2
+                f_drawPreviousOpen(array.get(a_yearlyTimes, i), array.get(a_yearlyTimes, i + 1), array.get(a_yearlyOpens, i), i_yearlyColor)
+
         _margin = 0
         if canShowDaily and dailyOpen == _yearlyOpen
             _margin += 1
@@ -209,72 +216,48 @@ if barstate.islast
         if canShowMonthly and _monthlyOpen == _yearlyOpen
             _margin += 1
         _rightOffset = f_getRightOffset(_margin)
-        
-        f_drawOpen(_yearlyTime, _yearlyOpen, _rightOffset, i_yearlyColor, "Y   ")
+        f_drawLastOpen(_yearlyTime, _yearlyOpen, _rightOffset, i_yearlyColor, "Y   ")
 
-        if i_yearlyLookback > 1 and array.size(a_yearlyTimes) > 1
-            for i = 0 to array.size(a_yearlyTimes) - 2
-                _x1 = array.get(a_yearlyTimes, i)
-                _x2 = array.get(a_yearlyTimes, i + 1)
-                _y = array.get(a_yearlyOpens, i)
-
-                line.new(_x1, _y, _x2, _y, xloc.bar_time, color=i_yearlyColor, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
     //
     // Monthly
     //
     if canShowMonthly
+        if i_monthlyLookback > 1 and array.size(a_monthlyTimes) > 1
+            for i = 0 to array.size(a_monthlyTimes) - 2
+                f_drawPreviousOpen(array.get(a_monthlyTimes, i), array.get(a_monthlyTimes, i + 1), array.get(a_monthlyOpens, i), i_monthlyColor)
+
         _margin = 0
         if canShowDaily and dailyOpen == _monthlyOpen
             _margin += 1
         if canShowWeekly and _weeklyOpen == _monthlyOpen
             _margin += 1
         _rightOffset = f_getRightOffset(_margin)
-
-        f_drawOpen(_monthlyTime, _monthlyOpen, _rightOffset, i_monthlyColor, "M   ")
-
-        if i_monthlyLookback > 1 and array.size(a_monthlyTimes) > 1
-            for i = 0 to array.size(a_monthlyTimes) - 2
-                _x1 = array.get(a_monthlyTimes, i)
-                _x2 = array.get(a_monthlyTimes, i + 1)
-                _y = array.get(a_monthlyOpens, i)
-
-                line.new(_x1, _y, _x2, _y, xloc.bar_time, color=i_monthlyColor, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
+        f_drawLastOpen(_monthlyTime, _monthlyOpen, _rightOffset, i_monthlyColor, "M   ")
   
     //
     // Weekly
     //
     if canShowWeekly
+        if i_weeklyLookback > 1 and array.size(a_weekyTimes) > 1
+            for i = 0 to array.size(a_weekyTimes) - 2
+                f_drawPreviousOpen(array.get(a_weekyTimes, i), array.get(a_weekyTimes, i + 1), array.get(a_weekyOpens, i), i_weeklyColor)
+
         _margin = 0
         if canShowDaily and dailyOpen == _weeklyOpen
             _margin += 1
         _rightOffset = f_getRightOffset(_margin)
-        
-        f_drawOpen(_weeklyTime, _weeklyOpen, _rightOffset, i_weeklyColor, "W   ")
-        
-        if i_weeklyLookback > 1 and array.size(a_weekyTimes) > 1
-            for i = 0 to array.size(a_weekyTimes) - 2
-                _x1 = array.get(a_weekyTimes, i)
-                _x2 = array.get(a_weekyTimes, i + 1)
-                _y = array.get(a_weekyOpens, i)
-
-                line.new(_x1, _y, _x2, _y, xloc.bar_time, color=i_weeklyColor, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
+        f_drawLastOpen(_weeklyTime, _weeklyOpen, _rightOffset, i_weeklyColor, "W   ")
 
     //
     // Daily
     //
     if canShowDaily
-        _rightOffset = f_getRightOffset(0)
-
-        f_drawOpen(dailyTime, dailyOpen, _rightOffset, i_dailyColor, "D   ")
-
         if i_dailyLookback > 1 and array.size(a_dailyTimes) > 1
             for i = 0 to array.size(a_dailyTimes) - 2
-                _x1 = array.get(a_dailyTimes, i)
-                _x2 = array.get(a_dailyTimes, i + 1)
-                _y = array.get(a_dailyOpens, i)
+                f_drawPreviousOpen(array.get(a_dailyTimes, i), array.get(a_dailyTimes, i + 1), array.get(a_dailyOpens, i), i_dailyColor)
 
-                line.new(_x1, _y, _x2, _y, xloc.bar_time, color=i_dailyColor, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
-
+        _rightOffset = f_getRightOffset(0)
+        f_drawLastOpen(dailyTime, dailyOpen, _rightOffset, i_dailyColor, "D   ")
         
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for alerting
 plot(isLastDaily ? dailyOpen : na,      "D",    color.new(i_dailyColor, 100),   editable=false)
