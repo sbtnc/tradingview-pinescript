@@ -38,7 +38,7 @@ var i_yearlyColor           = input     (color.blue,    "",                     
 var i_yearlyLookback        = input.int (1,             "", 1,                                  inline="Yearly",    group="Opens")
 var i_isTailsEnabled        = input     (false,         "Show Tails",                                               group="Settings")
 var i_projectionOffset      = input.int (20,            "Offset", 1,                                                group="Settings")
-var i_extendedHours         = input     (true,          "Extended Hours",   t_extendedHours,                        group="Settings")
+var i_extendedHours         = input     (false,         "Extended Hours",   t_extendedHours,                        group="Settings")
 
 //--------------------------------------------------------------------
 //                          Functions helpers
@@ -74,6 +74,16 @@ f_drawPreviousOpen(_startTime, _endTime, _open, _color) =>
 f_getRightOffset(_margin) =>
     bar_index + i_projectionOffset + _margin * DEFAULT_OFFSET_PADDING
 
+
+f_collectOpen(_lookback, _arrayTimes, _arrayPrices) =>
+    if _lookback > 1
+        if array.size(_arrayTimes) >= _lookback
+            array.shift(_arrayTimes)
+            array.shift(_arrayPrices)
+        
+        array.push(_arrayTimes, time)
+        array.push(_arrayPrices, open)
+
 //--------------------------------------------------------------------
 //                        Variables declarations
 //--------------------------------------------------------------------
@@ -82,22 +92,6 @@ f_getRightOffset(_margin) =>
 [weeklyTime, weeklyOpen, isLastWeekly]      = request.security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
 [monthlyTime, monthlyOpen, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
 [yearlyTime, yearlyOpen, isLastYearly]      = request.security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
-
-var canShowDaily    = i_isDailyEnabled and timeframe.isintraday
-var canShowWeekly   = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
-var canShowMonthly  = i_isMonthlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly)
-var canShowYearly   = i_isYearlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly or (timeframe.ismonthly and timeframe.multiplier < 12))
-
-//--------------------------------------------------------------------
-//                                Logic
-//--------------------------------------------------------------------
-
-_weeklyOpen     = weeklyOpen
-_weeklyTime     = weeklyTime
-_monthlyOpen    = monthlyOpen
-_monthlyTime    = monthlyTime
-_yearlyOpen     = yearlyOpen
-_yearlyTime     = yearlyTime
 
 var a_dailyTimes = array.new_int(0)
 var a_dailyOpens = array.new_float(0)
@@ -115,7 +109,22 @@ var int _extWeeklyTime     = na
 var int _extMonthlyTime    = na
 var int _extYearlyTime     = na
 
-extendedHours = i_extendedHours and syminfo.session == session.extended and timeframe.isintraday
+var canShowDaily    = i_isDailyEnabled and timeframe.isintraday
+var canShowWeekly   = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
+var canShowMonthly  = i_isMonthlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly)
+var canShowYearly   = i_isYearlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly or (timeframe.ismonthly and timeframe.multiplier < 12))
+var extendedHours   = i_extendedHours and syminfo.session == session.extended and timeframe.isintraday
+
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
+
+_weeklyOpen     = weeklyOpen
+_weeklyTime     = weeklyTime
+_monthlyOpen    = monthlyOpen
+_monthlyTime    = monthlyTime
+_yearlyOpen     = yearlyOpen
+_yearlyTime     = yearlyTime
 
 hasDailyTimeChanged = dailyTime != dailyTime[1]
 hasWeekklyTimeChanged = extendedHours ? weekofyear != weekofyear[1] : weeklyTime != weeklyTime[1]
@@ -123,50 +132,28 @@ hasMonthlyTimeChanged = extendedHours ? month != month[1] : monthlyTime != month
 hasYearlyTimeChanged = extendedHours ? year != year[1] : yearlyTime != yearlyTime[1]
 
 if hasDailyTimeChanged
-    if array.size(a_dailyTimes) >= i_dailyLookback
-        array.shift(a_dailyTimes)
-        array.shift(a_dailyOpens)
-    
-    array.push(a_dailyTimes, time)
-    array.push(a_dailyOpens, open)
+    f_collectOpen(i_dailyLookback, a_dailyTimes, a_dailyOpens)
 
 if hasWeekklyTimeChanged
-    if array.size(a_weekyTimes) >= i_weeklyLookback
-        array.shift(a_weekyTimes)
-        array.shift(a_weekyOpens)
-    
-    array.push(a_weekyTimes, time)
-    array.push(a_weekyOpens, open)
-
-    _extWeeklyOpen := dailyOpen
+    f_collectOpen(i_weeklyLookback, a_weekyTimes, a_weekyOpens)
     _extWeeklyTime := dailyTime     
+    _extWeeklyOpen := dailyOpen
 
 if hasMonthlyTimeChanged
-    if array.size(a_monthlyTimes) >= i_monthlyLookback
-        array.shift(a_monthlyTimes)
-        array.shift(a_monthlyOpens)
-    
-    array.push(a_monthlyTimes, time)
-    array.push(a_monthlyOpens, open)
-
-    _extMonthlyOpen := dailyOpen
+    f_collectOpen(i_monthlyLookback, a_monthlyTimes, a_monthlyOpens)
     _extMonthlyTime := dailyTime
+    _extMonthlyOpen := dailyOpen
 
 if hasYearlyTimeChanged
-    if array.size(a_yearlyTimes) >= i_yearlyLookback
-        array.shift(a_yearlyTimes)
-        array.shift(a_yearlyOpens)
-    
-    array.push(a_yearlyTimes, time)
-    array.push(a_yearlyOpens, open)
-
-    _extYearlyOpen := dailyOpen
+    f_collectOpen(i_yearlyLookback, a_yearlyTimes, a_yearlyOpens)
     _extYearlyTime := dailyTime
-    
+    _extYearlyOpen := dailyOpen
+
 // Markets with extended sessions (e.g. TSLA) are available for intradays charts only
-// As the yearly, monthly and weekly data come respectively from the 12M, 1M, 1W timeframes, extended hours are excluded
+// As the yearly, monthly, and weekly data come respectively from the 12M, 1M, 1W time frames, extended hours are excluded
 // When the chart option "ext" is toggled on, open prices and times don't match
 // In such case, if the "extended hours" setting is enabled we discover the extended open prices
+
 if extendedHours
     _weeklyOpen     := _extWeeklyOpen
     _weeklyTime     := _extWeeklyTime
