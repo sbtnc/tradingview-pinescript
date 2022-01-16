@@ -88,10 +88,10 @@ f_collectOpen(_lookback, _arrayTimes, _arrayPrices) =>
 //                        Variables declarations
 //--------------------------------------------------------------------
 
-[dailyTime, dailyOpen, isLastDaily]         = request.security(syminfo.tickerid, i_extendedHours ? '1440' : 'D', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
-[weeklyTime, weeklyOpen, isLastWeekly]      = request.security(syminfo.tickerid, 'W', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
-[monthlyTime, monthlyOpen, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
-[yearlyTime, yearlyOpen, isLastYearly]      = request.security(syminfo.tickerid, '12M', [time, open, barstate.islast], lookahead=barmerge.lookahead_on)
+[dailyTime, dailyOpen]      = request.security(syminfo.tickerid, i_extendedHours ? '1440' : 'D', [time, open], lookahead=barmerge.lookahead_on)
+[weeklyTime, weeklyOpen]    = request.security(syminfo.tickerid, 'W', [time, open], lookahead=barmerge.lookahead_on)
+[monthlyTime, monthlyOpen]  = request.security(syminfo.tickerid, 'M', [time, open], lookahead=barmerge.lookahead_on)
+[yearlyTime, yearlyOpen]    = request.security(syminfo.tickerid, '12M', [time, open], lookahead=barmerge.lookahead_on)
 
 var a_dailyTimes = array.new_int(0)
 var a_dailyOpens = array.new_float(0)
@@ -251,7 +251,8 @@ if barstate.islast
         f_drawLastOpen(dailyTime, dailyOpen, _rightOffset, i_dailyColor, "D   ")
         
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for alerting
-plot(isLastDaily and canShowDaily ? dailyOpen : na,         "D",    color.new(i_dailyColor, 100),   editable=false)
-plot(isLastWeekly and canShowWeekly ? _weeklyOpen : na,     "W",    color.new(i_weeklyColor, 100),  editable=false)
-plot(isLastMonthly and canShowMonthly ? _monthlyOpen : na,  "M",    color.new(i_monthlyColor, 100), editable=false)
-plot(isLastYearly and canShowYearly ? _yearlyOpen : na,     "Y",    color.new(i_yearlyColor, 100),  editable=false)
+
+plot(canShowDaily ? dailyOpen : na,         "D",    color.new(i_dailyColor, 100),   editable=false)
+plot(canShowWeekly ? _weeklyOpen : na,      "W",    color.new(i_weeklyColor, 100),  editable=false)
+plot(canShowMonthly ? _monthlyOpen : na,    "M",    color.new(i_monthlyColor, 100), editable=false)
+plot(canShowYearly ? _yearlyOpen : na,      "Y",    color.new(i_yearlyColor, 100),  editable=false)
