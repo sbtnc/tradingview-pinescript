@@ -5,7 +5,7 @@
 // version 6.0
 
 // @version=5
-indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true)
+indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true, max_lines_count=500)
 
 //--------------------------------------------------------------------
 //                             Constants
@@ -22,6 +22,8 @@ var OFFSET_PADDING      = 4
 //                               Inputs
 //--------------------------------------------------------------------
 
+t_tails                 = "Extends current opens on historical bars."
+t_heads                 = "Extends previous opens in the future."
 t_discoverPrices        = "When enabled, discover the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
 t_extendedHours         = "When enabled, discover the opening prices from the extended trading hours if available."
 
@@ -37,8 +39,9 @@ var i_monthlyLookback   = input.int (1,             "", 1,                      
 var i_isYearlyEnabled   = input     (true,          "Yearly",                               inline="Yearly",    group="Opens")
 var i_yearlyColor       = input     (color.blue,    "",                                     inline="Yearly",    group="Opens")
 var i_yearlyLookback    = input.int (1,             "", 1,                                  inline="Yearly",    group="Opens")
-var i_isTailsEnabled    = input     (false,         "Show Tails",                                               group="Style")
 var i_projectionOffset  = input.int (20,            "Offset", 1,                                                group="Style")
+var i_areTailsEnabled   = input     (false,         "Show Tails",       t_tails,                                group="Style")
+var i_areHeadsEnabled   = input     (false,         "Show Projections", t_heads,                                group="Style")
 var i_discoverPrices    = input     (false,         "Discover Prices",  t_discoverPrices,                       group="Settings")
 var i_extendedHours     = input     (false,         "Extended Hours",   t_extendedHours,                        group="Settings")
 
@@ -88,7 +91,7 @@ f_drawLabel(_x, _y, _text, _textcolor, _style, _size) =>
 f_drawLastOpen(_time, _open, _margin, _color, _text) =>
     _rightOffset = f_getRightOffset(_margin)
 
-    if i_isTailsEnabled
+    if i_areTailsEnabled
         f_drawLine(_time, _time + 1, _open, _color, TAIL_STYLE, LINE_WIDTH, xloc.bar_time, extend.left)
 
     f_drawLine(_time, time, _open, _color, LINE_STYLE, LINE_WIDTH, xloc.bar_time)
@@ -98,15 +101,27 @@ f_drawLastOpen(_time, _open, _margin, _color, _text) =>
     f_drawLabel(_rightOffset, _open, _text, _color, LABEL_STYLE, LABEL_SIZE)
 
 f_drawPreviousOpen(_startTime, _endTime, _open, _color) =>
+    _rightOffset = f_getRightOffset(-2)
+
     line.new(_startTime, _open, _endTime, _open, xloc.bar_time, color=_color, style=LINE_STYLE, width=LINE_WIDTH)
 
-f_collectOpen(_lookback, _arrayTimes, _arrayPrices, _htfPrice) =>
+    if i_areHeadsEnabled
+        line.new(_endTime, _open, time, _open, xloc.bar_time, color=color.new(_color, 60), style=LINE_STYLE, width=LINE_WIDTH)
+        line.new(bar_index, _open, _rightOffset, _open, color=color.new(_color, 60), style=LINE_STYLE, width=LINE_WIDTH)
+
+f_collectOpen(_lookback, _arrayTimes, _arrayPrices, _htfOpen, _prevTime=false) =>
     if array.size(_arrayTimes) >= _lookback
         array.shift(_arrayTimes)
         array.shift(_arrayPrices)
 
-    array.push(_arrayTimes, time)
-    array.push(_arrayPrices, (i_discoverPrices or hasExtendedHours) ? open : _htfPrice)
+    array.push(_arrayTimes, _prevTime ? time[1] : time)
+    array.push(_arrayPrices, (i_discoverPrices or hasExtendedHours) ? open : _htfOpen)
+
+// On the weekly time frame, the monthly/yearly open is drawn from the first candle of the month/year
+// The first weekly candle is not necessarily containing the first day of the month
+// In such case, we visually anchor the open of the previous weekly candle
+f_isContainedOnPrevWeekly(_time) =>
+    timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
 
 //--------------------------------------------------------------------
 //                                Logic
@@ -124,34 +139,10 @@ if hasWeekklyTimeChanged
     f_collectOpen(i_weeklyLookback, a_weekyTimes, a_weeklyOpens, weeklyOpen)
 
 if hasMonthlyTimeChanged
-    f_collectOpen(i_monthlyLookback, a_monthlyTimes, a_monthlyOpens, monthlyOpen)
+    f_collectOpen(i_monthlyLookback, a_monthlyTimes, a_monthlyOpens, monthlyOpen, f_isContainedOnPrevWeekly(monthlyTime))
 
 if hasYearlyTimeChanged
-    f_collectOpen(i_yearlyLookback, a_yearlyTimes, a_yearlyOpens, yearlyOpen)
-   
-// On the weekly timeframe, Pine Script draws lines from the first weekly candle whose start date belongs to a given month/year
-// E.g. if the first weekly candle of the month whose start date is the 3rd of Feb, then the monthly open line is drawn from this candle
-// In such case, we visually want it to be anchored on the previous week which contains the 1st Feb
-
-//var int weeklyTimeOnYearChange  = na
-//var int x1YearlyAnchor          = na
-//var int weeklyTimeOnMonthChange = na
-//var int x1MonthlyAnchor         = na
-//
-//if timeframe.isweekly
-//    if yearlyTime != yearlyTime[1]
-//        weeklyTimeOnYearChange := weeklyTime
-//        x1YearlyAnchor := weeklyTime[1]
-//    if monthlyTime != monthlyTime[1]
-//        weeklyTimeOnMonthChange := weeklyTime
-//        x1MonthlyAnchor := weeklyTime[1]
-//
-//    // Theorically we would adjust the position if the weekly start date is different than the 1st
-//    // Which pratically result actually of the first day of the month/year considering holidays
-//    if dayofmonth(weeklyTimeOnYearChange) != dayofmonth(_yearlyTime)
-//        _yearlyTime := x1YearlyAnchor
-//    if dayofmonth(weeklyTimeOnMonthChange) != dayofmonth(_monthlyTime)
-//        _monthlyTime := x1MonthlyAnchor
+    f_collectOpen(i_yearlyLookback, a_yearlyTimes, a_yearlyOpens, yearlyOpen, f_isContainedOnPrevWeekly(yearlyTime))
 
 //--------------------------------------------------------------------
 //                          Plotting & styling
