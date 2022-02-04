@@ -142,16 +142,16 @@ f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, strin
 //                                Logic
 //--------------------------------------------------------------------
 
-if hasDailyTimeChanged
+if i_isDailyEnabled and hasDailyTimeChanged 
     array.set(a_lastOpens, 0, discoverPrices ? open : dailyOpen)
 
-if hasWeekklyTimeChanged
+if i_isWeeklyEnabled and hasWeekklyTimeChanged
     array.set(a_lastOpens, 1, discoverPrices ? open : weeklyOpen)
 
-if hasMonthlyTimeChanged
+if i_isMonthlyEnabled and hasMonthlyTimeChanged
     array.set(a_lastOpens, 2, discoverPrices ? open : monthlyOpen)
 
-if hasYearlyTimeChanged
+if i_isYearlyEnabled and hasYearlyTimeChanged
     array.set(a_lastOpens, 3, discoverPrices ? open : yearlyOpen)
 
 //--------------------------------------------------------------------
