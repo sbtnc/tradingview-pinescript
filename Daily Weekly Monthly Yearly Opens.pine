@@ -115,14 +115,14 @@ f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, strin
         _body := line.new(_start, _y, _end, _y, color=_color, style=LINE_STYLE, width=LINE_WIDTH)
         array.push(_bodies, _body)
 
+        // Head
+        if i_areHeadsEnabled
+            array.push(_heads, line.new(bar_index, _y, bar_index, _y, color=color.new(_color, HEAD_TRANSP), style=LINE_STYLE, width=LINE_WIDTH))
+
         // Tail
         if i_areTailsEnabled
             line.set_xy1(_tail, _start - 1, _y)
             line.set_xy2(_tail, _start, _y)
-
-        // Head
-        if i_areHeadsEnabled
-            array.push(_heads, line.new(bar_index, _y, bar_index, _y, color=color.new(_color, HEAD_TRANSP), style=LINE_STYLE, width=LINE_WIDTH))
 
         if array.size(_bodies) > _lookback
             line.delete(array.shift(_bodies))
