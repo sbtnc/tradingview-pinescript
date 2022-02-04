@@ -132,8 +132,9 @@ f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, strin
         line.set_x2(_body, _end)
         label.set_x(_label, _end)
 
-        if i_areHeadsEnabled
-            for i = 0 to array.size(_heads) > 1 ? array.size(_heads) - 2 : 0
+        if i_areHeadsEnabled and array.size(_heads) > 1
+            // Not updating the last open's projection
+            for i = 0 to array.size(_heads) - 2
                 // Avoid projecting on last opens bodies
                 if not array.includes(a_lastOpens, line.get_y1(array.get(_heads, i)))
                     line.set_x2(array.get(_heads, i), f_getRightBarIndex(HEAD_PADDING))
@@ -142,16 +143,16 @@ f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, strin
 //                                Logic
 //--------------------------------------------------------------------
 
-if i_isDailyEnabled and hasDailyTimeChanged 
+if canShowDaily and hasDailyTimeChanged 
     array.set(a_lastOpens, 0, discoverPrices ? open : dailyOpen)
 
-if i_isWeeklyEnabled and hasWeekklyTimeChanged
+if canShowWeekly and hasWeekklyTimeChanged
     array.set(a_lastOpens, 1, discoverPrices ? open : weeklyOpen)
 
-if i_isMonthlyEnabled and hasMonthlyTimeChanged
+if canShowMonthly and hasMonthlyTimeChanged
     array.set(a_lastOpens, 2, discoverPrices ? open : monthlyOpen)
 
-if i_isYearlyEnabled and hasYearlyTimeChanged
+if canShowYearly and hasYearlyTimeChanged
     array.set(a_lastOpens, 3, discoverPrices ? open : yearlyOpen)
 
 //--------------------------------------------------------------------
