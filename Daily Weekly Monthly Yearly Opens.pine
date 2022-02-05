@@ -88,7 +88,7 @@ f_getPadding(int _index) =>
         _padding += 1
     _padding
 
-f_getRightBarIndex(int _padding) => bar_index + i_rightOffset + _padding * OFFSET_PADDING
+f_getRightBarIndex(int _index) => bar_index + i_rightOffset + f_getPadding(_index) * OFFSET_PADDING
 
 // On the weekly time frame, the monthly/yearly open is drawn from the first candle of the month/year
 // The first weekly candle is not necessarily containing the first day of the month
@@ -96,14 +96,13 @@ f_getRightBarIndex(int _padding) => bar_index + i_rightOffset + _padding * OFFSE
 f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
 
 // Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions
-f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, string _text, bool _prevTime=false) =>
+f_draw(bool _newOpen, int _end, float _y, int _lookback, color _color, string _text, bool _prevTime=false) =>
     var line _body  = na 
     var _label      = label.new(na, na, _text, style=LABEL_STYLE, textcolor=_color, size=LABEL_SIZE)
     var _tail       = line.new(na, na, na, na, color=_color, style=TAIL_STYLE, width=LINE_WIDTH, extend=extend.left)
     var _bodies     = array.new_line()
     var _heads      = array.new_line()
     _start          = _prevTime ? bar_index - 1 : bar_index
-    _end            = f_getRightBarIndex(_padding)
 
     if _newOpen
         // Label
@@ -161,16 +160,16 @@ if canShowYearly and hasYearlyTimeChanged
 //--------------------------------------------------------------------
 
 if canShowYearly
-    f_draw(hasYearlyTimeChanged, array.get(a_lastOpens, 3), i_yearlyLookback, i_yearlyColor, f_getPadding(3), "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
+    f_draw(hasYearlyTimeChanged, f_getRightBarIndex(3), array.get(a_lastOpens, 3), i_yearlyLookback, i_yearlyColor, "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
 
 if canShowMonthly
-    f_draw(hasMonthlyTimeChanged, array.get(a_lastOpens, 2), i_monthlyLookback, i_monthlyColor, f_getPadding(2), "M   ", f_isContainedOnPrevWeekly(monthlyTime))
+    f_draw(hasMonthlyTimeChanged, f_getRightBarIndex(2), array.get(a_lastOpens, 2), i_monthlyLookback, i_monthlyColor, "M   ", f_isContainedOnPrevWeekly(monthlyTime))
 
 if canShowWeekly
-    f_draw(hasWeekklyTimeChanged, array.get(a_lastOpens, 1), i_weeklyLookback, i_weeklyColor, f_getPadding(1), "W   ")
+    f_draw(hasWeekklyTimeChanged, f_getRightBarIndex(1), array.get(a_lastOpens, 1), i_weeklyLookback, i_weeklyColor, "W   ")
 
 if canShowDaily
-    f_draw(hasDailyTimeChanged, array.get(a_lastOpens, 0), i_dailyLookback, i_dailyColor, 0, "D   ")
+    f_draw(hasDailyTimeChanged, f_getRightBarIndex(0), array.get(a_lastOpens, 0), i_dailyLookback, i_dailyColor, "D   ")
 
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
