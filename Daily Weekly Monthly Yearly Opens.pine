@@ -26,8 +26,8 @@ var TAIL_STYLE          = line.style_dotted
 
 t_tails                 = "Extends last opens on historical bars."
 t_heads                 = "Extends previous opens in the future."
-t_discoverPrices        = "When enabled, discover the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
-t_extendedHours         = "When enabled, discover the opening prices from the extended trading hours if available."
+t_discoverPrices        = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
+t_extendedHours         = "Discovers the opening prices from the extended trading hours if available."
 
 var i_isDailyEnabled    = input     (true,          "Daily",                                inline="Daily",     group="Opens")
 var i_dailyColor        = input     (color.green,   "",                                     inline="Daily",     group="Opens")
@@ -54,8 +54,8 @@ var i_extendedHours     = input     (false,         "Extended Hours",   t_extend
 var a_lastOpens             = array.new_float(4)
 var canShowDaily            = i_isDailyEnabled and timeframe.isintraday
 var canShowWeekly           = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
-var canShowMonthly          = i_isMonthlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly)
-var canShowYearly           = i_isYearlyEnabled and (timeframe.isintraday or timeframe.isdaily or timeframe.isweekly or (timeframe.ismonthly and timeframe.multiplier < 12))
+var canShowMonthly          = i_isMonthlyEnabled and not timeframe.ismonthly
+var canShowYearly           = i_isYearlyEnabled and not (timeframe.ismonthly and timeframe.multiplier >= 12)
 var hasExtendedHours        = i_extendedHours and syminfo.session == session.extended
 var discoverPrices          = i_discoverPrices or hasExtendedHours
 
@@ -73,8 +73,8 @@ hasYearlyTimeChanged        = hasExtendedHours ? year != year[1] : yearlyTime !=
 //                              Functions 
 //--------------------------------------------------------------------
 
-// If we have the same opening prices for different time frames, their labels would overlap
-// Instead, we padds the higher time frame ones for achieving a "separator sheet"
+// If different opens share the same opening prices, their labels will overlap
+// Instead, we pad the higher time frame ones for achieving a "separator sheet"
 f_getPadding(int _index) =>
     _padding = 0
     // Weekly, monthly, or yearly overlaps the daily open
@@ -95,7 +95,7 @@ f_getRightBarIndex(int _padding) => bar_index + i_rightOffset + _padding * OFFSE
 // In such case, we visually anchor the open of the previous weekly candle
 f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
 
-// Create and update an open level. An open is composed of a label, a "body" line, and optionals "tail" and "head" lines extensions
+// Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions
 f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, string _text, bool _prevTime=false) =>
     var line _body  = na 
     var _label      = label.new(na, na, _text, style=LABEL_STYLE, textcolor=_color, size=LABEL_SIZE)
@@ -174,7 +174,7 @@ if canShowDaily
 
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
-plot(canShowDaily   ? array.get(a_lastOpens, 0) : na,   "D",    color.new(i_dailyColor, 100),   editable=false)
-plot(canShowWeekly  ? array.get(a_lastOpens, 1) : na,   "W",    color.new(i_weeklyColor, 100),  editable=false)
-plot(canShowMonthly ? array.get(a_lastOpens, 2) : na,   "M",    color.new(i_monthlyColor, 100), editable=false)
-plot(canShowYearly  ? array.get(a_lastOpens, 3) : na,   "Y",    color.new(i_yearlyColor, 100),  editable=false)
+plot(array.get(a_lastOpens, 0), "D",    color.new(i_dailyColor, 100),   editable=false)
+plot(array.get(a_lastOpens, 1), "W",    color.new(i_weeklyColor, 100),  editable=false)
+plot(array.get(a_lastOpens, 2), "M",    color.new(i_monthlyColor, 100), editable=false)
+plot(array.get(a_lastOpens, 3), "Y",    color.new(i_yearlyColor, 100),  editable=false)
