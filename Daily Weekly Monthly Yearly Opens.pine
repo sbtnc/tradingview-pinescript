@@ -126,6 +126,7 @@ f_draw(bool _newOpen, float _y, int _lookback, color _color, int _padding, strin
 
         if array.size(_bodies) > _lookback
             line.delete(array.shift(_bodies))
+        if array.size(_heads) > _lookback
             line.delete(array.shift(_heads))
 
     if barstate.islast
