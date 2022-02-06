@@ -5,9 +5,11 @@
 // version 3.0
 
 // @version=5
-indicator("Day Week Month Highs & Lows", "DWM HL", true, max_lines_count=500)
+indicator("Daily Weekly Monthly Highs & Lows", "DWM HL", true, max_lines_count=500)
 
-//----------------------------- Constants -----------------------------
+//--------------------------------------------------------------------
+//                             Constants
+//--------------------------------------------------------------------
 
 var DAILY_LINE_STYLE	= line.style_dashed
 var DAILY_LINE_WITDH	= 1
@@ -16,7 +18,9 @@ var WEEKLY_LINE_WIDTH	= 1
 var MONTHLY_LINE_STYLE	= line.style_dashed
 var MONTHLY_LINE_WIDTH 	= 1
 
-//------------------------------ Inputs ------------------------------
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
 
 var i_isDailyEnabled    = input     (true,			"Daily",	inline="Daily")
 var i_dailyColor        = input     (color.green,	"",			inline="Daily")
@@ -28,19 +32,27 @@ var i_isMonthlyEnabled  = input     (true,			"Monthly",	inline="Monthly")
 var i_monthlyColor      = input     (color.red,     "",			inline="Monthly")
 var i_monthlyLookback	= input.int	(1, 			"", 0,		inline="Monthly")
 
-//----------------------------- Securities ----------------------------
+//--------------------------------------------------------------------
+//                        Variables declarations
+//--------------------------------------------------------------------
 
-var canShowDaily	= i_isDailyEnabled and timeframe.isintraday
-var canShowWeekly	= i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
-var canShowMonthly	= i_isMonthlyEnabled and not timeframe.ismonthly
+var a_lastHighs             			= array.new_float(3)
+var a_lastLows             				= array.new_float(3)
+var canShowDaily						= i_isDailyEnabled and timeframe.isintraday
+var canShowWeekly						= i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
+var canShowMonthly						= i_isMonthlyEnabled and not timeframe.ismonthly
 
-[dayStart, dayHigh, dayLow, isLastDay] = request.security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
-[weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = request.security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
-[monthStart, monthHigh, monthLow, isLastMonth] = request.security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
+[dailyTime, dailyHigh, dailyLow] 		= request.security(syminfo.tickerid, 'D', [time, high, low], lookahead = barmerge.lookahead_on)
+[weeklyTime, weeklyHigh, weeklyLow] 	= request.security(syminfo.tickerid, 'W', [time, high, low], lookahead = barmerge.lookahead_on)
+[monthlyTime, monthlyHigh, monthlyLow] 	= request.security(syminfo.tickerid, 'M', [time, high, low], lookahead = barmerge.lookahead_on)
 
-hasDailyTimeChanged = dayStart != dayStart[1]
-hasWeekklyTimeChanged = weekStart != weekStart[1]
-hasMonthlyTimeChanged = monthStart != monthStart[1]
+hasDailyTimeChanged 					= dailyTime != dailyTime[1]
+hasWeekklyTimeChanged 					= weeklyTime != weeklyTime[1]
+hasMonthlyTimeChanged 					= monthlyTime != monthlyTime[1]
+
+//--------------------------------------------------------------------
+//                              Functions 
+//--------------------------------------------------------------------
 
 f_draw(bool _isNew, float _y, int _lookback, color _color, string _style, int _width) =>
 	var line _body 	= na
@@ -54,29 +66,54 @@ f_draw(bool _isNew, float _y, int _lookback, color _color, string _style, int _w
 		if array.size(_bodies) > _lookback + 1
             line.delete(array.shift(_bodies))
 
-	//if barstate.islast
-	//	line.set_x2(_body, )
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
+
+if canShowDaily and hasDailyTimeChanged 
+	array.set(a_lastHighs, 0, dailyHigh)
+	array.set(a_lastLows, 0, dailyLow)
+
+if canShowWeekly and hasWeekklyTimeChanged
+	array.set(a_lastHighs, 1, dailyHigh)
+	array.set(a_lastLows, 1, dailyLow)
+
+if canShowMonthly and hasMonthlyTimeChanged
+	array.set(a_lastHighs, 2, dailyHigh)
+	array.set(a_lastLows, 2, dailyLow)
+
+//--------------------------------------------------------------------
+//                          Plotting & styling
+//--------------------------------------------------------------------
 
 if canShowMonthly
-	f_draw(hasMonthlyTimeChanged, monthHigh, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
-	f_draw(hasMonthlyTimeChanged, monthLow, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
+	f_draw(hasMonthlyTimeChanged, monthlyHigh, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
+	f_draw(hasMonthlyTimeChanged, monthlyLow, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
 
 if canShowWeekly
-	f_draw(hasWeekklyTimeChanged, weekHigh, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
-	f_draw(hasWeekklyTimeChanged, weekLow, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
+	f_draw(hasWeekklyTimeChanged, weeklyHigh, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
+	f_draw(hasWeekklyTimeChanged, weeklyLow, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
 
 if canShowDaily
-	f_draw(hasDailyTimeChanged, dayHigh, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
-	f_draw(hasDailyTimeChanged, dayLow, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
+	f_draw(hasDailyTimeChanged, dailyHigh, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
+	f_draw(hasDailyTimeChanged, dailyLow, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
 
+// Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
+
+plot(array.get(a_lastHighs, 0),	"DH",	color.new(i_dailyColor, 100),   editable=false)
+plot(array.get(a_lastLows, 0), 	"DL",	color.new(i_dailyColor, 100),   editable=false)
+plot(array.get(a_lastHighs, 1), "WH",	color.new(i_weeklyColor, 100),  editable=false)
+plot(array.get(a_lastLows, 1), 	"WL",	color.new(i_weeklyColor, 100),  editable=false)
+plot(array.get(a_lastHighs, 2), "MH",	color.new(i_monthlyColor, 100), editable=false)
+plot(array.get(a_lastLows, 2), 	"ML",	color.new(i_monthlyColor, 100), editable=false)
 
 //----------------------------- Functions -----------------------------
 
 //// Check if current time is within the first session of the day (e.g. EURUSD Monday 00:00-16:59)
-//f_isFirstSession() => hour(timenow) < hour(dayStart)
+//f_isFirstSession() => hour(timenow) < hour(dailyTime)
 //
 //// Check if current time is within the last session of the day (e.g. EURUSD Monday 17:00-23:59)
-//f_isLastSession() => hour(timenow) >= hour(dayStart)
+//f_isLastSession() => hour(timenow) >= hour(dailyTime)
 //
 //// Check if current date is on a given weekday
 //f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
@@ -109,7 +146,7 @@ if canShowDaily
 //adjustmentForOvernightSession = f_isFirstSession() ? 1 : 0
 //
 //// 2. When trading into the week we adjust at the first trading session
-//adjustmentForWeekStartDate = currentSessionIdx
+//adjustmentForweeklyTimeDate = currentSessionIdx
 //
 //// 3. When previous x days overlap a weekend and if market was closed we adjust at previous week's last trading session
 //adjustmentForWeekend = 0
@@ -125,25 +162,25 @@ if canShowDaily
 // year(timenow),
 // month(timenow),
 // dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekendOverlap - adjustmentForWeekend - i_dailyLookback,
-// hour(dayStart),
-// minute(dayStart),
-// second(dayStart))
+// hour(dailyTime),
+// minute(dailyTime),
+// second(dailyTime))
 //
 //weekLimitLeft = timestamp(
 // year(timenow),
 // month(timenow),
-// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekStartDate - adjustmentForWeekend - i_weeklyLookback * 7,
-// hour(weekStart),
-// minute(weekStart),
-// second(weekStart))
+// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForweeklyTimeDate - adjustmentForWeekend - i_weeklyLookback * 7,
+// hour(weeklyTime),
+// minute(weeklyTime),
+// second(weeklyTime))
 //
 //monthLimitLeft = timestamp(
 // year(timenow),
 // month(timenow) - i_monthlyLookback,
 // 1 - adjustmentForOvernightSession,
-// hour(monthStart),
-// minute(monthStart),
-// second(monthStart))
+// hour(monthlyTime),
+// minute(monthlyTime),
+// second(monthlyTime))
 //
 //canShowDay		= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
 //canShowWeek		= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
@@ -151,10 +188,10 @@ if canShowDaily
 
 //------------------------- Plotting ---------------------------------
 
-//plot(canShowDay ? dayHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
-//plot(canShowDay ? dayLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
-//plot(canShowWeek ? weekHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
-//plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
-//plot(canShowMonth ? monthHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
-//plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+//plot(canShowDay ? dailyHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+//plot(canShowDay ? dailyLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+//plot(canShowWeek ? weeklyHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+//plot(canShowWeek ? weeklyLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+//plot(canShowMonth ? monthlyHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+//plot(canShowMonth ? monthlyLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
 
