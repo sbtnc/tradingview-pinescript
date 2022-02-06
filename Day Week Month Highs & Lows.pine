@@ -5,7 +5,7 @@
 // version 3.0
 
 // @version=5
-indicator("Day Week Month Highs & Lows", "DWM HL", true)
+indicator("Day Week Month Highs & Lows", "DWM HL", true, max_lines_count=500)
 
 //------------------------------ Inputs ------------------------------
 
@@ -38,91 +38,119 @@ var monthStyle		= plot.style_cross
 [weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = request.security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
 [monthStart, monthHigh, monthLow, isLastMonth] = request.security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
 
+hasDailyTimeChanged = dayStart != dayStart[1]
+hasWeekklyTimeChanged = weekStart != weekStart[1]
+hasMonthlyTimeChanged = monthStart != monthStart[1]
+
+f_draw(bool _isNew, float _y, int _lookback) =>
+	var line _body 	= na
+	var _bodies     = array.new_line()
+
+	if _isNew
+		line.set_x2(_body, bar_index)
+		_body := line.new(bar_index, _y, bar_index, _y)
+		array.push(_bodies, _body)
+
+		if array.size(_bodies) > _lookback + 1
+            line.delete(array.shift(_bodies))
+
+	//if barstate.islast
+	//	line.set_x2(_body, )
+
+f_draw(hasDailyTimeChanged, dayHigh, i_dayLookback)
+f_draw(hasDailyTimeChanged, dayLow, i_dayLookback)
+
+f_draw(hasWeekklyTimeChanged, weekHigh, i_weekLookback)
+f_draw(hasWeekklyTimeChanged, weekLow, i_weekLookback)
+
+f_draw(hasMonthlyTimeChanged, monthHigh, i_monthLookback)
+f_draw(hasMonthlyTimeChanged, monthLow, i_monthLookback)
+
 //----------------------------- Functions -----------------------------
 
-// Check if current time is within the first session of the day (e.g. EURUSD Monday 00:00-16:59)
-f_isFirstSession() => hour(timenow) < hour(dayStart)
-
-// Check if current time is within the last session of the day (e.g. EURUSD Monday 17:00-23:59)
-f_isLastSession() => hour(timenow) >= hour(dayStart)
-
-// Check if current date is on a given weekday
-f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
-
-// Get from a given date the weekday count ordered from Monday to Sunday [1-7]
-f_getWeekday(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
-
-// Get index of the current weekday ordered from Monday to Sunday [0-6]
-f_getWeekdayIndex() => f_getWeekday(timenow) - 1
+//// Check if current time is within the first session of the day (e.g. EURUSD Monday 00:00-16:59)
+//f_isFirstSession() => hour(timenow) < hour(dayStart)
+//
+//// Check if current time is within the last session of the day (e.g. EURUSD Monday 17:00-23:59)
+//f_isLastSession() => hour(timenow) >= hour(dayStart)
+//
+//// Check if current date is on a given weekday
+//f_isWeekday(_weekday) => dayofweek(timenow) == _weekday
+//
+//// Get from a given date the weekday count ordered from Monday to Sunday [1-7]
+//f_getWeekday(_t) => dayofweek(_t) == dayofweek.sunday ? 7 : dayofweek(_t) -1
+//
+//// Get index of the current weekday ordered from Monday to Sunday [0-6]
+//f_getWeekdayIndex() => f_getWeekday(timenow) - 1
 
 //------------------------------- Logic -------------------------------
 
-// The calculation for the display in a range from right to left starts at current date `timenow`
-// On non 24x7 markets, there is an inherent problematic of missing bars when market are closed (holidays, weekends)
-// While it isn't possible to account for holidays we can adjust the range on weekends
-
-isMarket24x7 = f_getWeekday(lastTradingDayOfTheWeek) == 7
-
-currentSessionIdx = not isMarket24x7 and f_isLastSession() ? (f_isWeekday(dayofweek.sunday) ? 0 : f_getWeekdayIndex() + 1) : f_getWeekdayIndex()
-
-isOverlapingWeekend = currentSessionIdx - i_dayLookback < 0
-
-isSaturdaySession = currentSessionIdx == 5
-
-isSundaySession = currentSessionIdx == 6
-
-// Adjustments:
-
-// 1. If a trading session overlaps two days (e.g. forex 17:00 - 17:00) we adjust at the first day
-adjustmentForOvernightSession = f_isFirstSession() ? 1 : 0
-
-// 2. When trading into the week we adjust at the first trading session
-adjustmentForWeekStartDate = currentSessionIdx
-
-// 3. When previous x days overlap a weekend and if market was closed we adjust at previous week's last trading session
-adjustmentForWeekend = 0
-
-// 4. When current time is on a weekend, if market is closed we adjust at the last trading session
-adjustmentForWeekendOverlap = 0
-
-if not isMarket24x7
-	adjustmentForWeekend		:= isSaturdaySession ? 1 : isSundaySession ? 2 : 0
-	adjustmentForWeekendOverlap	:= isOverlapingWeekend ? 2 : 0
-
-dayLimitLeft = timestamp(
- year(timenow),
- month(timenow),
- dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekendOverlap - adjustmentForWeekend - i_dayLookback,
- hour(dayStart),
- minute(dayStart),
- second(dayStart))
-
-weekLimitLeft = timestamp(
- year(timenow),
- month(timenow),
- dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekStartDate - adjustmentForWeekend - i_weekLookback * 7,
- hour(weekStart),
- minute(weekStart),
- second(weekStart))
-
-monthLimitLeft = timestamp(
- year(timenow),
- month(timenow) - i_monthLookback,
- 1 - adjustmentForOvernightSession,
- hour(monthStart),
- minute(monthStart),
- second(monthStart))
-
-canShowDay		= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
-canShowWeek		= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
-canShowMonth	= time >= monthLimitLeft and not isLastMonth and not timeframe.ismonthly
+//// The calculation for the display in a range from right to left starts at current date `timenow`
+//// On non 24x7 markets, there is an inherent problematic of missing bars when market are closed (holidays, weekends)
+//// While it isn't possible to account for holidays we can adjust the range on weekends
+//
+//isMarket24x7 = f_getWeekday(lastTradingDayOfTheWeek) == 7
+//
+//currentSessionIdx = not isMarket24x7 and f_isLastSession() ? (f_isWeekday(dayofweek.sunday) ? 0 : f_getWeekdayIndex() + 1) : f_getWeekdayIndex()
+//
+//isOverlapingWeekend = currentSessionIdx - i_dayLookback < 0
+//
+//isSaturdaySession = currentSessionIdx == 5
+//
+//isSundaySession = currentSessionIdx == 6
+//
+//// Adjustments:
+//
+//// 1. If a trading session overlaps two days (e.g. forex 17:00 - 17:00) we adjust at the first day
+//adjustmentForOvernightSession = f_isFirstSession() ? 1 : 0
+//
+//// 2. When trading into the week we adjust at the first trading session
+//adjustmentForWeekStartDate = currentSessionIdx
+//
+//// 3. When previous x days overlap a weekend and if market was closed we adjust at previous week's last trading session
+//adjustmentForWeekend = 0
+//
+//// 4. When current time is on a weekend, if market is closed we adjust at the last trading session
+//adjustmentForWeekendOverlap = 0
+//
+//if not isMarket24x7
+//	adjustmentForWeekend		:= isSaturdaySession ? 1 : isSundaySession ? 2 : 0
+//	adjustmentForWeekendOverlap	:= isOverlapingWeekend ? 2 : 0
+//
+//dayLimitLeft = timestamp(
+// year(timenow),
+// month(timenow),
+// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekendOverlap - adjustmentForWeekend - i_dayLookback,
+// hour(dayStart),
+// minute(dayStart),
+// second(dayStart))
+//
+//weekLimitLeft = timestamp(
+// year(timenow),
+// month(timenow),
+// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekStartDate - adjustmentForWeekend - i_weekLookback * 7,
+// hour(weekStart),
+// minute(weekStart),
+// second(weekStart))
+//
+//monthLimitLeft = timestamp(
+// year(timenow),
+// month(timenow) - i_monthLookback,
+// 1 - adjustmentForOvernightSession,
+// hour(monthStart),
+// minute(monthStart),
+// second(monthStart))
+//
+//canShowDay		= time >= dayLimitLeft and not isLastDay and timeframe.isintraday
+//canShowWeek		= time >= weekLimitLeft and not isLastWeek and not timeframe.isweekly and not timeframe.ismonthly
+//canShowMonth	= time >= monthLimitLeft and not isLastMonth and not timeframe.ismonthly
 
 //------------------------- Plotting ---------------------------------
 
-plot(canShowDay ? dayHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
-plot(canShowDay ? dayLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
-plot(canShowWeek ? weekHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
-plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
-plot(canShowMonth ? monthHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
-plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+//plot(canShowDay ? dayHigh : na,		title = "Day Highs",	linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+//plot(canShowDay ? dayLow : na,		title = "Day Lows",		linewidth = dayLinewidth,	color = dayColor,	style = dayStyle)
+//plot(canShowWeek ? weekHigh : na,	title = "Week Highs",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+//plot(canShowWeek ? weekLow : na,	title = "Week Lows",	linewidth = weekLinewidth,	color = weekColor, 	style = weekStyle)
+//plot(canShowMonth ? monthHigh : na,	title = "Month Highs",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
+//plot(canShowMonth ? monthLow : na,	title = "Month Lows",	linewidth = monthLinewidth,	color = monthColor, style = monthStyle)
 
