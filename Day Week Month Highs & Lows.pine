@@ -9,9 +9,12 @@ indicator("Day Week Month Highs & Lows", "DWM HL", true, max_lines_count=500)
 
 //------------------------------ Inputs ------------------------------
 
-i_dayLookback		= input.int	(2, "Previous Days",	0)
-i_weekLookback		= input.int	(1, "Previous Weeks", 	0)
-i_monthLookback		= input.int	(1, "Previous Months", 	0)
+var i_isDailyEnabled    = input     (true,	"Daily",	inline="Daily")
+var i_dayLookback		= input.int	(2, 	"",	0,		inline="Daily")
+var i_isWeeklyEnabled   = input     (true,	"Weekly",	inline="Weekly")
+var i_weekLookback		= input.int	(1, 	" ", 0,		inline="Weekly")
+var i_isMonthlyEnabled  = input     (true,	"Monthly",	inline="Monthly")
+var i_monthLookback		= input.int	(1, 	"", 0,		inline="Monthly")
 
 //----------------------------- Constants -----------------------------
 
@@ -33,6 +36,10 @@ var monthLinewidth	= 3
 var monthStyle		= plot.style_cross
 
 //----------------------------- Securities ----------------------------
+
+var canShowDaily	= i_isDailyEnabled and timeframe.isintraday
+var canShowWeekly	= i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
+var canShowMonthly	= i_isMonthlyEnabled and not timeframe.ismonthly
 
 [dayStart, dayHigh, dayLow, isLastDay] = request.security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
 [weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = request.security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
@@ -57,14 +64,18 @@ f_draw(bool _isNew, float _y, int _lookback) =>
 	//if barstate.islast
 	//	line.set_x2(_body, )
 
-f_draw(hasDailyTimeChanged, dayHigh, i_dayLookback)
-f_draw(hasDailyTimeChanged, dayLow, i_dayLookback)
+if canShowMonthly
+	f_draw(hasMonthlyTimeChanged, monthHigh, i_monthLookback)
+	f_draw(hasMonthlyTimeChanged, monthLow, i_monthLookback)
 
-f_draw(hasWeekklyTimeChanged, weekHigh, i_weekLookback)
-f_draw(hasWeekklyTimeChanged, weekLow, i_weekLookback)
+if canShowWeekly
+	f_draw(hasWeekklyTimeChanged, weekHigh, i_weekLookback)
+	f_draw(hasWeekklyTimeChanged, weekLow, i_weekLookback)
 
-f_draw(hasMonthlyTimeChanged, monthHigh, i_monthLookback)
-f_draw(hasMonthlyTimeChanged, monthLow, i_monthLookback)
+if canShowDaily
+	f_draw(hasDailyTimeChanged, dayHigh, i_dayLookback)
+	f_draw(hasDailyTimeChanged, dayLow, i_dayLookback)
+
 
 //----------------------------- Functions -----------------------------
 
