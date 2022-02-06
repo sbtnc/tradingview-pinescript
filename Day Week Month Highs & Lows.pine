@@ -7,33 +7,26 @@
 // @version=5
 indicator("Day Week Month Highs & Lows", "DWM HL", true, max_lines_count=500)
 
-//------------------------------ Inputs ------------------------------
-
-var i_isDailyEnabled    = input     (true,	"Daily",	inline="Daily")
-var i_dayLookback		= input.int	(2, 	"",	0,		inline="Daily")
-var i_isWeeklyEnabled   = input     (true,	"Weekly",	inline="Weekly")
-var i_weekLookback		= input.int	(1, 	" ", 0,		inline="Weekly")
-var i_isMonthlyEnabled  = input     (true,	"Monthly",	inline="Monthly")
-var i_monthLookback		= input.int	(1, 	"", 0,		inline="Monthly")
-
 //----------------------------- Constants -----------------------------
 
-var DEFAULT_COLOR	= #434651
-var DEFAULT_TRANSP	= 0
+var DAILY_LINE_STYLE	= line.style_dashed
+var DAILY_LINE_WITDH	= 1
+var WEEKLY_LINE_STYLE	= line.style_dashed
+var WEEKLY_LINE_WIDTH	= 1
+var MONTHLY_LINE_STYLE	= line.style_dashed
+var MONTHLY_LINE_WIDTH 	= 1
 
-//------------------------------ Styling ------------------------------
+//------------------------------ Inputs ------------------------------
 
-var dayColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
-var dayLinewidth	= 1
-var dayStyle		= plot.style_circles
-
-var weekColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
-var weekLinewidth	= 2
-var weekStyle		= plot.style_cross
-
-var monthColor		= color.new(DEFAULT_COLOR, DEFAULT_TRANSP)
-var monthLinewidth	= 3
-var monthStyle		= plot.style_cross
+var i_isDailyEnabled    = input     (true,			"Daily",	inline="Daily")
+var i_dailyColor        = input     (color.green,	"",			inline="Daily")
+var i_dailyLookback		= input.int	(2, 			"",	0,		inline="Daily")
+var i_isWeeklyEnabled   = input     (true,			"Weekly",	inline="Weekly")
+var i_weeklyColor       = input     (color.orange,  "",			inline="Weekly")
+var i_weeklyLookback	= input.int	(1, 			"", 0,		inline="Weekly")
+var i_isMonthlyEnabled  = input     (true,			"Monthly",	inline="Monthly")
+var i_monthlyColor      = input     (color.red,     "",			inline="Monthly")
+var i_monthlyLookback	= input.int	(1, 			"", 0,		inline="Monthly")
 
 //----------------------------- Securities ----------------------------
 
@@ -49,13 +42,13 @@ hasDailyTimeChanged = dayStart != dayStart[1]
 hasWeekklyTimeChanged = weekStart != weekStart[1]
 hasMonthlyTimeChanged = monthStart != monthStart[1]
 
-f_draw(bool _isNew, float _y, int _lookback) =>
+f_draw(bool _isNew, float _y, int _lookback, color _color, string _style, int _width) =>
 	var line _body 	= na
 	var _bodies     = array.new_line()
 
 	if _isNew
 		line.set_x2(_body, bar_index)
-		_body := line.new(bar_index, _y, bar_index, _y)
+		_body := line.new(bar_index, _y, bar_index, _y, color=_color, style=_style, width=_width)
 		array.push(_bodies, _body)
 
 		if array.size(_bodies) > _lookback + 1
@@ -65,16 +58,16 @@ f_draw(bool _isNew, float _y, int _lookback) =>
 	//	line.set_x2(_body, )
 
 if canShowMonthly
-	f_draw(hasMonthlyTimeChanged, monthHigh, i_monthLookback)
-	f_draw(hasMonthlyTimeChanged, monthLow, i_monthLookback)
+	f_draw(hasMonthlyTimeChanged, monthHigh, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
+	f_draw(hasMonthlyTimeChanged, monthLow, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
 
 if canShowWeekly
-	f_draw(hasWeekklyTimeChanged, weekHigh, i_weekLookback)
-	f_draw(hasWeekklyTimeChanged, weekLow, i_weekLookback)
+	f_draw(hasWeekklyTimeChanged, weekHigh, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
+	f_draw(hasWeekklyTimeChanged, weekLow, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
 
 if canShowDaily
-	f_draw(hasDailyTimeChanged, dayHigh, i_dayLookback)
-	f_draw(hasDailyTimeChanged, dayLow, i_dayLookback)
+	f_draw(hasDailyTimeChanged, dayHigh, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
+	f_draw(hasDailyTimeChanged, dayLow, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
 
 
 //----------------------------- Functions -----------------------------
@@ -104,7 +97,7 @@ if canShowDaily
 //
 //currentSessionIdx = not isMarket24x7 and f_isLastSession() ? (f_isWeekday(dayofweek.sunday) ? 0 : f_getWeekdayIndex() + 1) : f_getWeekdayIndex()
 //
-//isOverlapingWeekend = currentSessionIdx - i_dayLookback < 0
+//isOverlapingWeekend = currentSessionIdx - i_dailyLookback < 0
 //
 //isSaturdaySession = currentSessionIdx == 5
 //
@@ -131,7 +124,7 @@ if canShowDaily
 //dayLimitLeft = timestamp(
 // year(timenow),
 // month(timenow),
-// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekendOverlap - adjustmentForWeekend - i_dayLookback,
+// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekendOverlap - adjustmentForWeekend - i_dailyLookback,
 // hour(dayStart),
 // minute(dayStart),
 // second(dayStart))
@@ -139,14 +132,14 @@ if canShowDaily
 //weekLimitLeft = timestamp(
 // year(timenow),
 // month(timenow),
-// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekStartDate - adjustmentForWeekend - i_weekLookback * 7,
+// dayofmonth(timenow) - adjustmentForOvernightSession - adjustmentForWeekStartDate - adjustmentForWeekend - i_weeklyLookback * 7,
 // hour(weekStart),
 // minute(weekStart),
 // second(weekStart))
 //
 //monthLimitLeft = timestamp(
 // year(timenow),
-// month(timenow) - i_monthLookback,
+// month(timenow) - i_monthlyLookback,
 // 1 - adjustmentForOvernightSession,
 // hour(monthStart),
 // minute(monthStart),
