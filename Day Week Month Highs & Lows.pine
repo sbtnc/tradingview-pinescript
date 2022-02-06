@@ -1,15 +1,17 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
-// 2020-01-12
+// Created: 2020-01-12
+// Last modified: 2022-02-05
+// version 3.0
 
-//@version=4
-study("Day Week Month Highs & Lows", shorttitle = "DWM HL", overlay = true)
+// @version=5
+indicator("Day Week Month Highs & Lows", "DWM HL", true)
 
 //------------------------------ Inputs ------------------------------
 
-i_dayLookback		= input(defval = 2, minval = 0, title = "Previous Days")
-i_weekLookback		= input(defval = 1, minval = 0, title = "Previous Weeks")
-i_monthLookback		= input(defval = 1, minval = 0, title = "Previous Months")
+i_dayLookback		= input.int	(2, "Previous Days",	0)
+i_weekLookback		= input.int	(1, "Previous Weeks", 	0)
+i_monthLookback		= input.int	(1, "Previous Months", 	0)
 
 //----------------------------- Constants -----------------------------
 
@@ -32,9 +34,9 @@ var monthStyle		= plot.style_cross
 
 //----------------------------- Securities ----------------------------
 
-[dayStart, dayHigh, dayLow, isLastDay] = security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
-[weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
-[monthStart, monthHigh, monthLow, isLastMonth] = security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
+[dayStart, dayHigh, dayLow, isLastDay] = request.security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
+[weekStart, weekHigh, weekLow, isLastWeek, lastTradingDayOfTheWeek] = request.security(syminfo.tickerid, 'W', [time, high, low, barstate.islast, time_tradingday], lookahead = barmerge.lookahead_on)
+[monthStart, monthHigh, monthLow, isLastMonth] = request.security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead = barmerge.lookahead_on)
 
 //----------------------------- Functions -----------------------------
 
