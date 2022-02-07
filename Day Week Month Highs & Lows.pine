@@ -42,9 +42,9 @@ var canShowDaily						= i_isDailyEnabled and timeframe.isintraday
 var canShowWeekly						= i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
 var canShowMonthly						= i_isMonthlyEnabled and not timeframe.ismonthly
 
-[dailyTime, dailyHigh, dailyLow] 		= request.security(syminfo.tickerid, 'D', [time, high, low], lookahead = barmerge.lookahead_on)
-[weeklyTime, weeklyHigh, weeklyLow] 	= request.security(syminfo.tickerid, 'W', [time, high, low], lookahead = barmerge.lookahead_on)
-[monthlyTime, monthlyHigh, monthlyLow] 	= request.security(syminfo.tickerid, 'M', [time, high, low], lookahead = barmerge.lookahead_on)
+[dailyTime, dailyHigh, dailyLow, isLastDaily] 			= request.security(syminfo.tickerid, 'D', [time, high, low, barstate.islast], lookahead=barmerge.lookahead_on)
+[weeklyTime, weeklyHigh, weeklyLow, isLastWeekly] 		= request.security(syminfo.tickerid, 'W', [time, high, low, barstate.islast], lookahead=barmerge.lookahead_on)
+[monthlyTime, monthlyHigh, monthlyLow, isLastMonthly]	= request.security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead=barmerge.lookahead_on)
 
 hasDailyTimeChanged 					= dailyTime != dailyTime[1]
 hasWeekklyTimeChanged 					= weeklyTime != weeklyTime[1]
@@ -70,17 +70,17 @@ f_draw(bool _isNew, float _y, int _lookback, color _color, string _style, int _w
 //                                Logic
 //--------------------------------------------------------------------
 
-if canShowDaily and hasDailyTimeChanged 
+if canShowDaily and hasDailyTimeChanged and not isLastDaily
 	array.set(a_lastHighs, 0, dailyHigh)
 	array.set(a_lastLows, 0, dailyLow)
 
-if canShowWeekly and hasWeekklyTimeChanged
-	array.set(a_lastHighs, 1, dailyHigh)
-	array.set(a_lastLows, 1, dailyLow)
+if canShowWeekly and hasWeekklyTimeChanged and not isLastWeekly
+	array.set(a_lastHighs, 1, weeklyHigh)
+	array.set(a_lastLows, 1, weeklyLow)
 
-if canShowMonthly and hasMonthlyTimeChanged
-	array.set(a_lastHighs, 2, dailyHigh)
-	array.set(a_lastLows, 2, dailyLow)
+if canShowMonthly and hasMonthlyTimeChanged and not isLastMonthly
+	array.set(a_lastHighs, 2, monthlyHigh)
+	array.set(a_lastLows, 2, monthlyLow)
 
 //--------------------------------------------------------------------
 //                          Plotting & styling
