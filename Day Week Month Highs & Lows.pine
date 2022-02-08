@@ -22,15 +22,23 @@ var MONTHLY_LINE_WIDTH 	= 1
 //                               Inputs
 //--------------------------------------------------------------------
 
-var i_isDailyEnabled    = input     (true,			"Daily",	inline="Daily")
-var i_dailyColor        = input     (color.green,	"",			inline="Daily")
-var i_dailyLookback		= input.int	(2, 			"",	0,		inline="Daily")
-var i_isWeeklyEnabled   = input     (true,			"Weekly",	inline="Weekly")
-var i_weeklyColor       = input     (color.orange,  "",			inline="Weekly")
-var i_weeklyLookback	= input.int	(1, 			"", 0,		inline="Weekly")
-var i_isMonthlyEnabled  = input     (true,			"Monthly",	inline="Monthly")
-var i_monthlyColor      = input     (color.red,     "",			inline="Monthly")
-var i_monthlyLookback	= input.int	(1, 			"", 0,		inline="Monthly")
+g_highsAndLows 			= "Highs & Lows"
+g_style					= "Style"
+t_heads					= "Extends previous highs and lows in the future."
+t_gradient				= "Show a color gradient that highlights the recency of highs and lows."
+
+var i_isDailyEnabled	= input     (true,			"Daily",						inline="Daily",		group=g_highsAndLows)
+var i_dailyColor		= input     (color.green,	"",								inline="Daily",		group=g_highsAndLows)
+var i_dailyLookback		= input.int	(2, 			"",	1,							inline="Daily",		group=g_highsAndLows)
+var i_isWeeklyEnabled	= input     (true,			"Weekly",						inline="Weekly",	group=g_highsAndLows)
+var i_weeklyColor		= input     (color.orange,  "",								inline="Weekly",	group=g_highsAndLows)
+var i_weeklyLookback	= input.int	(1, 			"", 1,							inline="Weekly",	group=g_highsAndLows)
+var i_isMonthlyEnabled	= input     (true,			"Monthly",						inline="Monthly",	group=g_highsAndLows)
+var i_monthlyColor		= input     (color.red,     "",								inline="Monthly",	group=g_highsAndLows)
+var i_monthlyLookback	= input.int	(1, 			"", 1,							inline="Monthly",	group=g_highsAndLows)
+var i_areHeadsEnabled	= input     (false,         "Show Projections", t_heads,	inline="Head",		group=g_style)
+var i_rightOffset		= input.int (20,            "", 1,							inline="Head",		group=g_style)
+var i_hasGradient		= input		(true,			"Show Gradient",	t_gradient,						group=g_style)
 
 //--------------------------------------------------------------------
 //                        Variables declarations
@@ -54,17 +62,34 @@ hasMonthlyTimeChanged 					= monthlyTime != monthlyTime[1]
 //                              Functions 
 //--------------------------------------------------------------------
 
+f_getRightBarIndex() => bar_index + i_rightOffset
+
 f_draw(bool _isNew, float _y, int _lookback, color _color, string _style, int _width) =>
 	var line _body 	= na
+	var line _head	= na
 	var _bodies     = array.new_line()
+	var _heads      = array.new_line()
+	_end 			= i_areHeadsEnabled ? f_getRightBarIndex() : bar_index
 
 	if _isNew
-		line.set_x2(_body, bar_index)
+		line.set_x2(_body, _end)
+		if i_hasGradient and array.size(_bodies) > 1
+		    for i = 0 to array.size(_bodies) - 1
+                _c = color.from_gradient(i, 0, array.size(_bodies) - 1, color.new(_color, 100), color.new(_color, 0))
+                line.set_color(array.get(_bodies, i), _c)
+
 		_body := line.new(bar_index, _y, bar_index, _y, color=_color, style=_style, width=_width)
 		array.push(_bodies, _body)
 
 		if array.size(_bodies) > _lookback + 1
             line.delete(array.shift(_bodies))
+		if array.size(_heads) > _lookback + 1
+            line.delete(array.shift(_heads))
+
+	if barstate.islast and i_areHeadsEnabled and array.size(_bodies) > 1
+		// Not updating the last/current line 
+		for i = 0 to array.size(_bodies) - 2
+			line.set_x2(array.get(_bodies, i), f_getRightBarIndex())
 
 //--------------------------------------------------------------------
 //                                Logic
