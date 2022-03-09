@@ -2,13 +2,13 @@
 // © sbtnc
 // 2019-5-19
 
-//@version=3
-study(title="Chaikin Oscillator", shorttitle="Chaikin Osc")
+// @version=5
+indicator(title="Chaikin Oscillator", shorttitle="Chaikin Osc")
 
 //------------------------------ Inputs ------------------------------
 
-fast = input(3, minval=1, title="Fast Length")
-slow = input(10, minval=1, title="Slow Length")
+fast = input.int(3, minval=1, title="Fast Length")
+slow = input.int(10, minval=1, title="Slow Length")
 
 //------------------------------ Colors ------------------------------
 
@@ -19,7 +19,7 @@ color_neutral = #656565
 //------------------------------- Logic ------------------------------
 
 // orignal logic
-osc = ema(accdist, fast) - ema(accdist, slow)
+osc = ta.ema(ta.accdist, fast) - ta.ema(ta.accdist, slow)
 
 positive = osc > 0
 
@@ -31,7 +31,7 @@ transp_zero = 100
 
 color = positive ? color_positive : color_negative
 
-zero = plot(0, color=color_neutral, transp=transp_zero, title="zero")
-chaikinOsc = plot(osc, color=color_neutral, transp=transp_osc, title="Chaikin Oscillator")
+zero = plot(0, color=color.new(color_neutral, transp_zero), title="zero")
+chaikinOsc = plot(osc, color=color.new(color_neutral, transp_osc), title="Chaikin Oscillator")
 
-fill(zero, chaikinOsc, color=color, transp=transp_area, title="area")
+fill(zero, chaikinOsc, color=color.new(color, transp_area), title="area")
