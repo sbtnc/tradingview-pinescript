@@ -75,14 +75,6 @@ f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _sty
         line.set_x2(_high, _end)
         line.set_x2(_low, _end)
 
-        if i_hasGradient
-            _size = array.size(_highs)
-            if _size > 1
-                for i = 0 to _size - 1
-                    _c = color.from_gradient(i, 0, _size - 1, color.new(_color, 100), color.new(_color, 0))
-                    line.set_color(array.get(_highs, i), _c)
-                    line.set_color(array.get(_lows, i), _c)
-
         _high := line.new(bar_index, _h, bar_index, _h, color=_color, style=_style, width=_width)
         _low := line.new(bar_index, _l, bar_index, _l, color=_color, style=_style, width=_width)
         array.push(_highs, _high)
@@ -91,6 +83,15 @@ f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _sty
         if array.size(_highs) > _lookback + 1
             line.delete(array.shift(_highs))
             line.delete(array.shift(_lows))
+
+        if i_hasGradient
+            _size = array.size(_highs)
+            // We need at least more than two (more than one visible) elements for applying a gradient
+            if _size > 2
+                for i = 0 to _size - 2
+                    _c = color.from_gradient(i, 0, _size - 2, color.new(_color, 70), color.new(_color, 0))
+                    line.set_color(array.get(_highs, i), _c)
+                    line.set_color(array.get(_lows, i), _c)  
 
 	if i_areHeadsEnabled and barstate.islast and array.size(_highs) > 1
 		// Avoid updating the last/current high and low 
