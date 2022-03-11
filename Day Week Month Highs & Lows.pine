@@ -36,6 +36,7 @@ var i_weeklyLookback    = input.int (1,             "", 1,                      
 var i_isMonthlyEnabled  = input     (true,          "Monthly",                      inline="Monthly",   group=g_indicator)
 var i_monthlyColor      = input     (color.red,     "",                             inline="Monthly",   group=g_indicator)
 var i_monthlyLookback   = input.int (1,             "", 1,                          inline="Monthly",   group=g_indicator)
+var i_showMidLevels     = input     (false,         "Show Mid Levels",                                  group=g_style)
 var i_areHeadsEnabled   = input     (false,         "Show Projections", t_heads,    inline="Head",      group=g_style)
 var i_rightOffset       = input.int (20,            "", 1,                          inline="Head",      group=g_style)
 var i_hasGradient       = input     (true,          "Show Gradient",    t_gradient,                     group=g_style)
@@ -67,22 +68,31 @@ f_getRightBarIndex() => bar_index + i_rightOffset
 f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _style, int _width) =>
     var line _high  = na
     var line _low   = na
+    var line _mid   = na
     var _highs      = array.new_line()
     var _lows       = array.new_line()
+    var _mids       = array.new_line()
     _end            = i_areHeadsEnabled ? f_getRightBarIndex() : bar_index
     
     if _isNew
         line.set_x2(_high, _end)
         line.set_x2(_low, _end)
-
         _high := line.new(bar_index, _h, bar_index, _h, color=_color, style=_style, width=_width)
         _low := line.new(bar_index, _l, bar_index, _l, color=_color, style=_style, width=_width)
         array.push(_highs, _high)
         array.push(_lows, _low)
 
+        if i_showMidLevels
+            line.set_x2(_mid, _end)
+            _mid := line.new(bar_index, (_h + _l) / 2, bar_index, (_h + _l) / 2, color=_color, style=_style, width=_width)
+            array.push(_mids, _mid)
+
         if array.size(_highs) > _lookback + 1
             line.delete(array.shift(_highs))
             line.delete(array.shift(_lows))
+
+            if i_showMidLevels
+                line.delete(array.shift(_mids))
 
         if i_hasGradient
             _size = array.size(_highs)
@@ -91,13 +101,19 @@ f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _sty
                 for i = 0 to _size - 2
                     _c = color.from_gradient(i, 0, _size - 2, color.new(_color, 70), color.new(_color, 0))
                     line.set_color(array.get(_highs, i), _c)
-                    line.set_color(array.get(_lows, i), _c)  
+                    line.set_color(array.get(_lows, i), _c)
+
+                    if i_showMidLevels
+                        line.set_color(array.get(_mids, i), _c)
 
 	if i_areHeadsEnabled and barstate.islast and array.size(_highs) > 1
 		// Avoid updating the last/current high and low 
 		for i = 0 to array.size(_highs) - 2
 			line.set_x2(array.get(_highs, i), f_getRightBarIndex())
 			line.set_x2(array.get(_lows, i), f_getRightBarIndex())
+
+            if i_showMidLevels
+                line.set_x2(array.get(_mids, i), f_getRightBarIndex())
 
 //--------------------------------------------------------------------
 //                                Logic
