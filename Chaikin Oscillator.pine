@@ -1,11 +1,11 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2019-05-19
-// Last modified: 2022-03-09
+// Last modified: 2022-03-11
 // Version 2.0
 
 // @version=5
-indicator("Chaikin Oscillator", "Chaikin Osc", format=format.volume, timeframe="")
+indicator("Chaikin Oscillator", "Chaikin Osc", format=format.volume, timeframe="", timeframe_gaps=true)
 
 //--------------------------------------------------------------------
 //                             Constants
@@ -21,7 +21,7 @@ GRADIENT_LENGTH     = 20
 g_indicator         = "Oscillator"
 g_style             = "Style"
 
-t_colors            = "Positive and negative colors applied on the oscillator's gradient and background."
+t_colors            = "Positive and negative colors are applied to the oscillator and the background."
 
 i_fastLength        = input.int (3,         "Fast Length", 1,                                   group=g_indicator)
 i_slowLength        = input.int (10,        "Slow Length", 1,                                   group=g_indicator)
