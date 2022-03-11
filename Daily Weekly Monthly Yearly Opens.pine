@@ -64,11 +64,6 @@ var discoverPrices          = i_discoverPrices or hasExtendedHours
 [monthlyTime, monthlyOpen]  = request.security(syminfo.tickerid, 'M',   [time, open], lookahead=barmerge.lookahead_on)
 [yearlyTime, yearlyOpen]    = request.security(syminfo.tickerid, '12M', [time, open], lookahead=barmerge.lookahead_on)
 
-hasDailyTimeChanged         = hasExtendedHours ? time_tradingday != time_tradingday[1]  : discoverPrices ? time == dailyTime and not (dailyTime == dailyTime[1])            : not (dailyTime == dailyTime[1])
-hasWeekklyTimeChanged       = hasExtendedHours ? weekofyear != weekofyear[1]            : discoverPrices ? time == weeklyTime and not (weeklyTime == weeklyTime[1])         : not (weeklyTime == weeklyTime[1])
-hasMonthlyTimeChanged       = hasExtendedHours ? month != month[1]                      : discoverPrices ? time == monthlyTime and not (monthlyTime == monthlyTime[1])      : not (monthlyTime == monthlyTime[1])
-hasYearlyTimeChanged        = hasExtendedHours ? year != year[1]                        : discoverPrices ? time == yearlyTime and not (yearlyTime == yearlyTime[1])         : not (yearlyTime == yearlyTime[1])
-
 //--------------------------------------------------------------------
 //                              Functions 
 //--------------------------------------------------------------------
@@ -94,6 +89,10 @@ f_getRightBarIndex(int _padding) => bar_index + i_rightOffset + _padding * OFFSE
 // The first weekly candle is not necessarily containing the first day of the month
 // In such case, we visually anchor the open of the previous weekly candle
 f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
+
+// Compare previous value and new value
+// When the argument series contains `na` don't resolve `na` (returns true on the first bar's comparaison)
+f_hasChangedValue(_series) => not (_series == _series[1])
 
 // Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions
 f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, string _text, bool _prevTime=false) =>
@@ -143,6 +142,11 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
 //--------------------------------------------------------------------
 //                                Logic
 //--------------------------------------------------------------------
+
+hasDailyTimeChanged     = hasExtendedHours ? ta.change(time_tradingday) : discoverPrices ? f_hasChangedValue(dailyTime) and time == dailyTime        : f_hasChangedValue(dailyTime)
+hasWeekklyTimeChanged   = hasExtendedHours ? ta.change(weekofyear)      : discoverPrices ? f_hasChangedValue(weeklyTime) and time == weeklyTime      : f_hasChangedValue(weeklyTime)
+hasMonthlyTimeChanged   = hasExtendedHours ? ta.change(month)           : discoverPrices ? f_hasChangedValue(monthlyTime) and time == monthlyTime    : f_hasChangedValue(monthlyTime)
+hasYearlyTimeChanged    = hasExtendedHours ? ta.change(year)            : discoverPrices ? f_hasChangedValue(yearlyTime) and time == yearlyTime      : f_hasChangedValue(yearlyTime)
 
 if canShowDaily and hasDailyTimeChanged 
     array.set(a_lastOpens, 0, discoverPrices ? open : dailyOpen)
