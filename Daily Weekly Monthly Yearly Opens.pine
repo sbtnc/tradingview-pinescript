@@ -64,10 +64,10 @@ var discoverPrices          = i_discoverPrices or hasExtendedHours
 [monthlyTime, monthlyOpen]  = request.security(syminfo.tickerid, 'M',   [time, open], lookahead=barmerge.lookahead_on)
 [yearlyTime, yearlyOpen]    = request.security(syminfo.tickerid, '12M', [time, open], lookahead=barmerge.lookahead_on)
 
-hasDailyTimeChanged         = hasExtendedHours ? time_tradingday != time_tradingday[1] : dailyTime != dailyTime[1]
-hasWeekklyTimeChanged       = hasExtendedHours ? weekofyear != weekofyear[1] : weeklyTime != weeklyTime[1]
-hasMonthlyTimeChanged       = hasExtendedHours ? month != month[1] : monthlyTime != monthlyTime[1]
-hasYearlyTimeChanged        = hasExtendedHours ? year != year[1] : yearlyTime != yearlyTime[1]
+hasDailyTimeChanged         = hasExtendedHours ? time_tradingday != time_tradingday[1]  : discoverPrices ? time == dailyTime and not (dailyTime == dailyTime[1])            : not (dailyTime == dailyTime[1])
+hasWeekklyTimeChanged       = hasExtendedHours ? weekofyear != weekofyear[1]            : discoverPrices ? time == weeklyTime and not (weeklyTime == weeklyTime[1])         : not (weeklyTime == weeklyTime[1])
+hasMonthlyTimeChanged       = hasExtendedHours ? month != month[1]                      : discoverPrices ? time == monthlyTime and not (monthlyTime == monthlyTime[1])      : not (monthlyTime == monthlyTime[1])
+hasYearlyTimeChanged        = hasExtendedHours ? year != year[1]                        : discoverPrices ? time == yearlyTime and not (yearlyTime == yearlyTime[1])         : not (yearlyTime == yearlyTime[1])
 
 //--------------------------------------------------------------------
 //                              Functions 
