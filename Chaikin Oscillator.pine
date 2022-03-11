@@ -11,19 +11,23 @@ indicator("Chaikin Oscillator", "Chaikin Osc")
 //                             Constants
 //--------------------------------------------------------------------
 
-COLOR_NEGATIVE  = #ff4e3e
-COLOR_POSITIVE  = #3fbe53
-COLOR_NEUTRAL   = #656565
-TRANSP_AREA     = 92
-TRANSP_OSC      = 20
-TRANSP_ZERO     = 100
+BACKGROUND_TRANSP   = 92
+GRADIENT_LENGTH     = 20
 
 //--------------------------------------------------------------------
 //                               Inputs
 //--------------------------------------------------------------------
 
-i_fastLength    = input.int (3, "Fast Length", 1)
-i_slowLength    = input.int (10, "Slow Length", 1)
+g_indicator         = "Oscillator"
+g_style             = "Style"
+
+i_fastLength        = input.int (3,             "Fast Length", 1,                       group=g_indicator)
+i_slowLength        = input.int (10,            "Slow Length", 1,                       group=g_indicator)
+i_neutralColor      = input     (#656565,       "Single",           inline="Colors",    group=g_style)
+i_positiveColor     = input     (#6aff00,       "Dual",             inline="Colors",    group=g_style)
+i_negativeColor     = input     (#f23645,       "",                 inline="Colors",    group=g_style)
+i_showBackground    = input     (true,          "Show Background",                      group=g_style)
+i_showGradient      = input     (true,          "Show Gradient",                        group=g_style)
 
 //--------------------------------------------------------------------
 //                                Logic
@@ -31,14 +35,17 @@ i_slowLength    = input.int (10, "Slow Length", 1)
 
 osc = ta.ema(ta.accdist, i_fastLength) - ta.ema(ta.accdist, i_slowLength)
 
-isPositive = osc > 0
-
 //--------------------------------------------------------------------
 //                          Plotting & styling
 //--------------------------------------------------------------------
 
-zero        = plot(0,   "Zero",                 color.new(COLOR_NEUTRAL, TRANSP_ZERO))
-chaikinOsc  = plot(osc, "Chaikin Oscillator",   color.new(COLOR_NEUTRAL, TRANSP_OSC))
+zero = plot(0, "Zero", color(na), editable=false, display=display.none)
 
-c_fill = isPositive ? COLOR_POSITIVE : COLOR_NEGATIVE
-fill(zero, chaikinOsc, color.new(c_fill, TRANSP_AREA), "Area")
+// The oscillator's gradient uses the lowest and highest values of the last `GRADIENT_LENGTH` bars
+// The bottom value should be negative, the top value should be positive, and the center always situated on the zero level
+extremeValue = math.max(ta.highest(osc, GRADIENT_LENGTH), math.abs(ta.lowest(osc, GRADIENT_LENGTH)))
+c_line = color.from_gradient(osc, -extremeValue, extremeValue, i_negativeColor, i_positiveColor)
+chaikinOsc = plot(osc, "Oscillator", i_showGradient ? c_line : i_neutralColor)
+
+c_fill = osc > 0 ? i_positiveColor : i_negativeColor
+fill(zero, chaikinOsc, i_showBackground ? color.new(c_fill, BACKGROUND_TRANSP) : color(na))
