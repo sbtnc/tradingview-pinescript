@@ -54,9 +54,9 @@ var canShowMonthly                      = i_isMonthlyEnabled and not timeframe.i
 [weeklyTime, weeklyHigh, weeklyLow, isLastWeekly]       = request.security(syminfo.tickerid, 'W', [time, high, low, barstate.islast], lookahead=barmerge.lookahead_on)
 [monthlyTime, monthlyHigh, monthlyLow, isLastMonthly]   = request.security(syminfo.tickerid, 'M', [time, high, low, barstate.islast], lookahead=barmerge.lookahead_on)
 
-hasDailyTimeChanged                     = dailyTime != dailyTime[1]
-hasWeekklyTimeChanged                   = weeklyTime != weeklyTime[1]
-hasMonthlyTimeChanged                   = monthlyTime != monthlyTime[1]
+hasDailyTimeChanged                     = not (dailyTime == dailyTime[1])
+hasWeekklyTimeChanged                   = not (weeklyTime == weeklyTime[1])
+hasMonthlyTimeChanged                   = not (monthlyTime == monthlyTime[1])
 
 //--------------------------------------------------------------------
 //                              Functions 
