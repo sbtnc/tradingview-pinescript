@@ -44,4 +44,4 @@ c_fill = osc > 0 ? i_positiveBgColor : i_negativeBgColor
 mid = plot(0, "", editable=false, display=display.none)
 fill(mid, chaikinOsc, c_fill)
 
-hline(0, "Zero", color.new(color.white, 95), hline.style_solid)
+hline(0, "Zero", color.new(color.gray, 90), hline.style_solid)
