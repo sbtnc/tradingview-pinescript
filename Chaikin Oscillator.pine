@@ -1,37 +1,47 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
-// 2019-5-19
+// Created: 2019-05-19
+// Last modified: 2022-04-09
+// Version 2.0
 
-//@version=3
-study(title="Chaikin Oscillator", shorttitle="Chaikin Osc")
+// @version=5
+indicator("Chaikin Oscillator", "Chaikin Osc", format=format.volume, timeframe="", timeframe_gaps=true)
 
-//------------------------------ Inputs ------------------------------
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
 
-fast = input(3, minval=1, title="Fast Length")
-slow = input(10, minval=1, title="Slow Length")
+g_indicator         = "Oscillator"
+g_style             = "Style"
 
-//------------------------------ Colors ------------------------------
+t_gradientLength    = "Number of bars used in the oscillator's gradient coloring. The length determines the lookback for the highest positive and lowest negative values."
 
-color_negative = #ff4e3e
-color_positive = #3fbe53
-color_neutral = #656565
+i_fastLength        = input.int (3,                                         "Fast Length", 1,                                               group=g_indicator)
+i_slowLength        = input.int (10,                                        "Slow Length", 1,                                               group=g_indicator)
+i_positiveOscColor  = input     (color.green,                               "Oscillator",                           inline="Colors",        group=g_style)
+i_negativeOscColor  = input     (color.red,                                 "",                                     inline="Colors",        group=g_style)
+i_gradientLength    = input     (20,                                        "Gradient Length",  t_gradientLength,                           group=g_style)
+i_positiveBgColor   = input     (color.new(color.green, 90),                "Background",                           inline="Background",    group=g_style)
+i_negativeBgColor   = input     (color.new(color.red, 90),                  "",                                     inline="Background",    group=g_style)
 
-//------------------------------- Logic ------------------------------
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
 
-// orignal logic
-osc = ema(accdist, fast) - ema(accdist, slow)
+osc = ta.ema(ta.accdist, i_fastLength) - ta.ema(ta.accdist, i_slowLength)
 
-positive = osc > 0
+//--------------------------------------------------------------------
+//                          Plotting & styling
+//--------------------------------------------------------------------
 
-//------------------------- Plotting & styling ------------------------
+// The oscillator's gradient uses the lowest and highest values of the last `i_gradientLength` bars
+// The bottom value should be negative, the top value should be positive, and the center always situated on the zero level
+extremeValue = math.max(ta.highest(osc, i_gradientLength), math.abs(ta.lowest(osc, i_gradientLength)))
+c_osc = color.from_gradient(osc, -extremeValue, extremeValue, i_negativeOscColor, i_positiveOscColor)
+chaikinOsc = plot(osc, "Oscillator", c_osc)
 
-transp_area = 92
-transp_osc = 20
-transp_zero = 100
+c_fill = osc > 0 ? i_positiveBgColor : i_negativeBgColor
+mid = plot(0, "", editable=false, display=display.none)
+fill(mid, chaikinOsc, c_fill)
 
-color = positive ? color_positive : color_negative
-
-zero = plot(0, color=color_neutral, transp=transp_zero, title="zero")
-chaikinOsc = plot(osc, color=color_neutral, transp=transp_osc, title="Chaikin Oscillator")
-
-fill(zero, chaikinOsc, color=color, transp=transp_area, title="area")
+hline(0, "Zero", color.new(color.gray, 90), hline.style_solid)
