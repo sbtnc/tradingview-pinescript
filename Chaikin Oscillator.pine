@@ -1,18 +1,11 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2019-05-19
-// Last modified: 2022-03-11
+// Last modified: 2022-04-09
 // Version 2.0
 
 // @version=5
 indicator("Chaikin Oscillator", "Chaikin Osc", format=format.volume, timeframe="", timeframe_gaps=true)
-
-//--------------------------------------------------------------------
-//                             Constants
-//--------------------------------------------------------------------
-
-BACKGROUND_TRANSP   = 92
-GRADIENT_LENGTH     = 20
 
 //--------------------------------------------------------------------
 //                               Inputs
@@ -21,13 +14,15 @@ GRADIENT_LENGTH     = 20
 g_indicator         = "Oscillator"
 g_style             = "Style"
 
-t_colors            = "Positive and negative colors are applied to the oscillator and the background."
+t_gradientLength    = "Number of bars used in the oscillator's gradient coloring. The length determines the lookback for the highest positive and lowest negative values."
 
-i_fastLength        = input.int (3,         "Fast Length", 1,                                   group=g_indicator)
-i_slowLength        = input.int (10,        "Slow Length", 1,                                   group=g_indicator)
-i_positiveColor     = input     (#6aff00,   "Colors",           t_colors,   inline="Colors",    group=g_style)
-i_negativeColor     = input     (#f23645,   "",                             inline="Colors",    group=g_style)
-i_showBackground    = input     (true,      "Show Background",                                  group=g_style)
+i_fastLength        = input.int (3,                                         "Fast Length", 1,                                               group=g_indicator)
+i_slowLength        = input.int (10,                                        "Slow Length", 1,                                               group=g_indicator)
+i_positiveOscColor  = input     (color.green,                               "Oscillator",                           inline="Colors",        group=g_style)
+i_negativeOscColor  = input     (color.red,                                 "",                                     inline="Colors",        group=g_style)
+i_gradientLength    = input     (20,                                        "Gradient Length",  t_gradientLength,                           group=g_style)
+i_positiveBgColor   = input     (color.new(color.green, 90),                "Background",                           inline="Background",    group=g_style)
+i_negativeBgColor   = input     (color.new(color.red, 90),                  "",                                     inline="Background",    group=g_style)
 
 //--------------------------------------------------------------------
 //                                Logic
@@ -39,13 +34,14 @@ osc = ta.ema(ta.accdist, i_fastLength) - ta.ema(ta.accdist, i_slowLength)
 //                          Plotting & styling
 //--------------------------------------------------------------------
 
-// The oscillator's gradient uses the lowest and highest values of the last `GRADIENT_LENGTH` bars
+// The oscillator's gradient uses the lowest and highest values of the last `i_gradientLength` bars
 // The bottom value should be negative, the top value should be positive, and the center always situated on the zero level
-extremeValue = math.max(ta.highest(osc, GRADIENT_LENGTH), math.abs(ta.lowest(osc, GRADIENT_LENGTH)))
-c_line = color.from_gradient(osc, -extremeValue, extremeValue, i_negativeColor, i_positiveColor)
-chaikinOsc = plot(osc, "Oscillator", c_line)
+extremeValue = math.max(ta.highest(osc, i_gradientLength), math.abs(ta.lowest(osc, i_gradientLength)))
+c_osc = color.from_gradient(osc, -extremeValue, extremeValue, i_negativeOscColor, i_positiveOscColor)
+chaikinOsc = plot(osc, "Oscillator", c_osc)
 
-zero = plot(0, "Zero", color(na), editable=false, display=display.none)
+c_fill = osc > 0 ? i_positiveBgColor : i_negativeBgColor
+mid = plot(0, "", editable=false, display=display.none)
+fill(mid, chaikinOsc, c_fill)
 
-c_fill = osc > 0 ? i_positiveColor : i_negativeColor
-fill(zero, chaikinOsc, i_showBackground ? color.new(c_fill, BACKGROUND_TRANSP) : color(na))
+hline(0, "Zero", color.new(color.white, 95), hline.style_solid)
