@@ -40,52 +40,62 @@ var i_startOffset   = input        (true,                        "Show Start Off
 //                        Variables declarations
 //--------------------------------------------------------------------
 
-[d1_high, d1_low, d1_atr, d1_open, prev_d1_close] = request.security(
-     syminfo.tickerid,
-     'D',
-     [high, low, ta.atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
-     lookahead = barmerge.lookahead_on)
-[intraday_high, intraday_low, intraday_time, intraday_open, prev_intraday_close] = request.security(
-     syminfo.tickerid,
-     '1440',
-     [high, low, time, open, close[1]],
-     lookahead = barmerge.lookahead_on)
+var float dayHigh = na
+var float dayLow = na
 
-// daily data might be inconsistent between intradays and D1 charts
-// we ensure the data is relevant per the displayed chart, so when user is on:
-//  - an intraday chart we requests daily data as "1440 minutes";
-//  - D1 chart we request daily data as "1 day".
-isIntraday      = timeframe.isintraday
-day_high        = isIntraday ? intraday_high : d1_high
-day_low         = isIntraday ? intraday_low : d1_low
-day_open        = isIntraday ? intraday_open : d1_open
-prev_day_close  = isIntraday ? prev_intraday_close : prev_d1_close
-// intraday time is accurate when extra hours are available and on
-// otherwise it's always consistent with D1 time
-day_time        = intraday_time
-// an exception is made for the ATR data:
-// a user expects the `Daily ATR Levels' ATR value
-// to be the same as the the built-in `ATR` value one plotted on D1 timeframe 
-day_atr         = d1_atr 
+[dayOpen, prevDayClose, dayTime, dayATR] = request.security(
+      syminfo.tickerid,
+      'D',
+      [open, close[1], time, ta.atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
+      lookahead = barmerge.lookahead_on)
+
+// For avoiding unexpected behaviors, don't display the indicator when requesting data from lower time frames
+can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
 
 var line atr_high_line      = na
 var line atr_low_line       = na
 var label atr_high_label    = na
 var label atr_low_label     = na
-can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
 
 
 //--------------------------------------------------------------------
 //                              Functions 
 //--------------------------------------------------------------------
 
-// for including gaps in level computations 
-f_hasGapped()       => day_open != prev_day_close
-f_getTopPrice()     => f_hasGapped() ? prev_day_close > day_high ? prev_day_close : day_high : day_high
-f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close : day_low : day_low
+f_hasGapped(_open, _prevClose) => _open != _prevClose
+
+f_getTopPrice(_open, _prevClose, _high) => f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
+
+f_getBottomPrice(_open, _prevClose, _low) => f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
 
 // get consistent bar time difference (ignoring weekends and holidays)
 f_getMinTimeDiff() => math.min(time - time[1], time[1] - time[2])
+
+
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
+
+// Collect the daily high and low on runtime instead of fetching them from a security call
+// It aims to avoid the initial `future leak` from the "jump" when using the bar replay function
+
+// Init on the first bar / reset on following day change
+if not (dayTime == dayTime[1])
+    dayHigh := high
+    dayLow := low
+
+// Tracks newest high and low
+if high > dayHigh
+    dayHigh := high
+if low < dayLow
+    dayLow := low
+
+
+// Computes ATR levels prices
+
+atr_high = f_getBottomPrice(dayOpen, prevDayClose, dayLow) + dayATR
+atr_low = f_getTopPrice(dayOpen, prevDayClose, dayHigh) - dayATR
+
 
 
 //--------------------------------------------------------------------
@@ -95,13 +105,10 @@ f_getMinTimeDiff() => math.min(time - time[1], time[1] - time[2])
 bar = nz(f_getMinTimeDiff())
 
 if barstate.islast and can_display_timeframe
-    // ATR computing
-    atr_high            = f_getBottomPrice() + day_atr
-    atr_low             = f_getTopPrice() - day_atr
 
     // levels positioning
     offset              = time + bar * DEFAULT_OFFSET_START
-    level_start         = i_startOffset ? offset : day_time
+    level_start         = i_startOffset ? offset : dayTime
     level_end           = i_startOffset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
 
     // when price is passed the upper or lower, this last gets highlighted
@@ -130,7 +137,7 @@ if barstate.islast and can_display_timeframe
      color  = level_low_color,
      width  = DEFAULT_LINE_WIDTH)
     
-    atrStr = str.tostring(day_atr, format.mintick)
+    atrStr = str.tostring(dayATR, format.mintick)
     upperPriceStr = str.tostring(atr_high, format.mintick)
     lowerPriceStr = str.tostring(atr_low, format.mintick)
 
