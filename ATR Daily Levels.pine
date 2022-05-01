@@ -2,7 +2,7 @@
 // © sbtnc
 // Created: 2020-09-06
 // Last modified: 2022-05-01
-// Version 4.0
+// Version 5.0
 
 // @version=5
 indicator("Daily ATR Levels", "D ATR", true)
@@ -95,7 +95,6 @@ if low < dayLow
 
 atr_high = f_getBottomPrice(dayOpen, prevDayClose, dayLow) + dayATR
 atr_low = f_getTopPrice(dayOpen, prevDayClose, dayHigh) - dayATR
-
 
 
 //--------------------------------------------------------------------
