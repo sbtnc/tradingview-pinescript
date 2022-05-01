@@ -4,8 +4,8 @@
 // Last modified: 2022-05-01
 // Version 4.0
 
-//@version=4
-study("ATR Daily Levels", shorttitle = "D ATR", overlay = true)
+// @version=5
+indicator("ATR Daily Levels", shorttitle = "D ATR", overlay = true)
 
 //------------------------------ Config -------------------------------
 
@@ -21,19 +21,19 @@ var DEFAULT_LABEL_COLOR     = color(na)
 //------------------------------ Inputs -------------------------------
 
 var i_period            = input(defval = 20, title = "Length")
-var i_value             = input(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
+var i_value             = input.string(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
 var i_color             = input(defval = DEFAULT_COLOR, title = "Color")
 var i_overflow_color    = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
 var i_start_offset      = input(defval = true, title = "Show Start Offset")
 
 //----------------------- Variables declarations ----------------------
 
-[d1_high, d1_low, d1_atr, d1_open, prev_d1_close] = security(
+[d1_high, d1_low, d1_atr, d1_open, prev_d1_close] = request.security(
      syminfo.tickerid,
      'D',
-     [high, low, atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
+     [high, low, ta.atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
      lookahead = barmerge.lookahead_on)
-[intraday_high, intraday_low, intraday_time, intraday_open, prev_intraday_close] = security(
+[intraday_high, intraday_low, intraday_time, intraday_open, prev_intraday_close] = request.security(
      syminfo.tickerid,
      '1440',
      [high, low, time, open, close[1]],
@@ -66,9 +66,9 @@ can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
 
 // rounds a given number per symbol's miniumum tick precision
 f_round(number) =>
-    exponent = abs(log10(syminfo.mintick))
-    factor = pow(10, exponent)
-    round(number * factor) / factor
+    exponent = math.abs(math.log10(syminfo.mintick))
+    factor = math.pow(10, exponent)
+    math.round(number * factor) / factor
 
 // for including gaps in level computations 
 f_hasGapped()       => day_open != prev_day_close
@@ -76,7 +76,7 @@ f_getTopPrice()     => f_hasGapped() ? prev_day_close > day_high ? prev_day_clos
 f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close : day_low : day_low
 
 // get consistent bar time difference (ignoring weekends and holidays)
-f_getMinTimeDiff() => min(time - time[1], time[1] - time[2])
+f_getMinTimeDiff() => math.min(time - time[1], time[1] - time[2])
 
 //----------------------------- Plotting ------------------------------
 
@@ -118,8 +118,8 @@ if barstate.islast and can_display_timeframe
      color  = level_low_color,
      width  = DEFAULT_LINE_WIDTH)
 
-    atr_high_text = tostring(f_round(atr_high)) + " (" + tostring(f_round(day_atr)) + ")"
-    atr_low_text = tostring(f_round(atr_low))
+    atr_high_text = str.tostring(f_round(atr_high)) + " (" + str.tostring(f_round(day_atr)) + ")"
+    atr_low_text = str.tostring(f_round(atr_low))
 
     // labels
 
