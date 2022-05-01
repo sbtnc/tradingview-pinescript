@@ -79,12 +79,6 @@ can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
 //                              Functions 
 //--------------------------------------------------------------------
 
-// rounds a given number per symbol's miniumum tick precision
-f_round(number) =>
-    exponent = math.abs(math.log10(syminfo.mintick))
-    factor = math.pow(10, exponent)
-    math.round(number * factor) / factor
-
 // for including gaps in level computations 
 f_hasGapped()       => day_open != prev_day_close
 f_getTopPrice()     => f_hasGapped() ? prev_day_close > day_high ? prev_day_close : day_high : day_high
@@ -135,16 +129,20 @@ if barstate.islast and can_display_timeframe
      style  = DEFAULT_LINE_STYLE,
      color  = level_low_color,
      width  = DEFAULT_LINE_WIDTH)
+    
+    atrStr = str.tostring(day_atr, format.mintick)
+    upperPriceStr = str.tostring(atr_high, format.mintick)
+    lowerPriceStr = str.tostring(atr_low, format.mintick)
 
-    atr_high_text = str.tostring(f_round(atr_high)) + " (" + str.tostring(f_round(day_atr)) + ")"
-    atr_low_text = str.tostring(f_round(atr_low))
+    upperLabelText = str.format("{0} ({1})", upperPriceStr, atrStr)
+    LowerLabelText = lowerPriceStr
 
     // labels
 
     atr_high_label := label.new(
      x          = level_end,
      y          = atr_high,
-     text       = atr_high_text,
+     text       = upperLabelText,
      xloc       = xloc.bar_time,
      color      = DEFAULT_LABEL_COLOR,
      style      = DEFAULT_LABEL_STYLE,
@@ -153,7 +151,7 @@ if barstate.islast and can_display_timeframe
     atr_low_label := label.new(
      x          = level_end,
      y          = atr_low,
-     text       = atr_low_text,
+     text       = LowerLabelText,
      xloc       = xloc.bar_time,
      color      = DEFAULT_LABEL_COLOR,
      style      = DEFAULT_LABEL_STYLE,
