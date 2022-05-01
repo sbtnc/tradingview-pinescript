@@ -1,5 +1,8 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
+// Created: 2020-09-06
+// Last modified: 2022-05-01
+// Version 4.0
 
 //@version=4
 study("ATR Daily Levels", shorttitle = "D ATR", overlay = true)
