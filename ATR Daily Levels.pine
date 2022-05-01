@@ -26,14 +26,14 @@ var DEFAULT_LABEL_COLOR     = color(na)
 //                               Inputs
 //--------------------------------------------------------------------
 
-var g_indicator          = "ATR"
-var g_style              = "Style"
+var g_indicator     = "ATR"
+var g_style         = "Style"
 
-var i_period            = input         (20,                          "Length",                               group=g_indicator)
-var i_value             = input.string  ("Yesterday",                 "Reference", ["Today", "Yesterday"],    group=g_indicator)
-var i_color             = input         (DEFAULT_COLOR,               "Color",                                group=g_style)
-var i_overflow_color    = input         (DEFAULT_HIGHLIGHT_COLOR,     "Overflow Color",                       group=g_style)
-var i_start_offset      = input         (true,                        "Show Start Offset",                    group=g_style)
+var i_period        = input        (20,                          "Length",                               group=g_indicator)
+var i_value         = input.string ("Yesterday",                 "Reference", ["Today", "Yesterday"],    group=g_indicator)
+var i_color         = input        (DEFAULT_COLOR,               "Color",                                group=g_style)
+var i_overflowColor = input        (DEFAULT_HIGHLIGHT_COLOR,     "Overflow Color",                       group=g_style)
+var i_startOffset   = input        (true,                        "Show Start Offset",                    group=g_style)
 
 
 //--------------------------------------------------------------------
@@ -107,12 +107,12 @@ if barstate.islast and can_display_timeframe
 
     // levels positioning
     offset              = time + bar * DEFAULT_OFFSET_START
-    level_start         = i_start_offset ? offset : day_time
-    level_end           = i_start_offset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
+    level_start         = i_startOffset ? offset : day_time
+    level_end           = i_startOffset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
 
     // when price is passed the upper or lower, this last gets highlighted
-    level_high_color    = day_high > atr_high ? i_overflow_color : i_color
-    level_low_color     = day_low < atr_low ? i_overflow_color : i_color
+    level_high_color    = day_high > atr_high ? i_overflowColor : i_color
+    level_low_color     = day_low < atr_low ? i_overflowColor : i_color
     
     // levels
 
