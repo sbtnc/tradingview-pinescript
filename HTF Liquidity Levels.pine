@@ -1,0 +1,147 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
+// Created: 2022-04-26
+// Last modified: 2022-04-26
+// Version 1.0
+
+//@version=5
+indicator("HTF Liquidity Levels", "HTF Liquidity", overlay=true, max_lines_count=500)
+
+
+//--------------------------------------------------------------------
+//                             Constants
+//--------------------------------------------------------------------
+
+var START_OFFSET                = 0
+var END_OFFSET                  = 25
+var PURGED_COLOR                = color.gray
+var PURGED_STYLE                = line.style_dotted
+
+
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
+
+var g_indicator = "Liquidity"
+
+i_isDailyEnabled                = input (true,                          "Daily",    inline="Daily",     group=g_indicator)
+i_dailyAboveLiquidityColor      = input (color.new(color.green, 30),    "",         inline="Daily",     group=g_indicator)
+i_dailyBelowLiquidityColor      = input (color.new(#f23645, 30),        "",         inline="Daily",     group=g_indicator)
+i_dailyWidth                    = input (1,                             "Width",    inline="Daily",     group=g_indicator)
+i_isWeeklyEnabled               = input (true,                          "Weekly",   inline="Weekly",    group=g_indicator)
+i_weelyAboveLiquidityColor      = input (color.new(color.lime, 70),     "",         inline="Weekly",    group=g_indicator)
+i_weelyBelowLiquidityColor      = input (color.new(color.red, 70),      "",         inline="Weekly",    group=g_indicator)
+i_weeklyWidth                   = input (5,                             "Width",    inline="Weekly",    group=g_indicator)
+i_isMonthlyEnabled              = input (true,                          "Monthly",  inline="Monthly",   group=g_indicator)
+i_monthlyAboveLiquidityColor    = input (color.new(#87fe07, 90),        "",         inline="Monthly",   group=g_indicator)
+i_monthlyBelowLiquidityColor    = input (color.new(color.orange, 90),   "",         inline="Monthly",   group=g_indicator)
+i_monthlyWidth                  = input (10,                            "Width",    inline="Monthly",   group=g_indicator)
+
+
+//--------------------------------------------------------------------
+//                        Variables declarations
+//--------------------------------------------------------------------
+
+var highsArray                  = array.new_float()
+var lowsArray                   = array.new_float()
+var highLinesArray              = array.new_line()
+var lowLinesArray               = array.new_line()
+var float dayHigh               = na
+var float dayLow                = na
+
+[prevDayHigh, prevDayLow]       = request.security(syminfo.tickerid, "D", [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prevWeekHigh, prevWeekLow]     = request.security(syminfo.tickerid, "W", [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prevMonthHigh, prevMonthLow]   = request.security(syminfo.tickerid, "M", [high[1], low[1]], lookahead=barmerge.lookahead_on)
+
+
+//--------------------------------------------------------------------
+//                              Functions 
+//--------------------------------------------------------------------
+
+f_drawLine(float _y, color _c, int _w=1) => line.new(bar_index, _y, bar_index, _y, color=_c, width=_w)
+
+f_create(float _high, float _low, color _upperColor, color _lowerColor, int _linewidth) =>
+    array.push(highsArray, _high)
+    array.push(lowsArray, _low)
+    array.push(highLinesArray, f_drawLine(_high, _upperColor, _linewidth))
+    array.push(lowLinesArray, f_drawLine(_low, _lowerColor, _linewidth))
+
+f_update(array<line> _levels) =>
+    for _line in _levels
+        line.set_x1(_line, bar_index + START_OFFSET)
+        line.set_x2(_line, bar_index + END_OFFSET)
+
+f_cleanUpperLevels(float _high, array<float> _highs, array<line> _levels) =>
+    while array.min(_highs) < _high
+        for [_index, _value] in _highs
+            if _high > _value
+                line.delete(array.remove(_levels, _index))
+                array.remove(_highs, _index)
+            
+f_cleanLowerLevels(float _low, array<float> _lows, array<line> _levels) =>
+    while array.max(_lows) > _low
+        for [_index, _value] in _lows
+            if _low < _value
+                line.delete(array.remove(_levels, _index))
+                array.remove(_lows, _index)
+
+f_highlightUpperLevels(float _high, array<float> _highs, array<line> _levels) =>
+    for [_index, _value] in _highs
+        if _high > _value
+            _line = array.get(_levels, _index)
+            line.set_color(_line, PURGED_COLOR)
+            line.set_style(_line, PURGED_STYLE)
+
+f_highlightLowerLevels(float _low, array<float> _lows, array<line> _levels) =>
+    for [_index, _value] in _lows
+        if _low < _value
+            _line = array.get(_levels, _index)
+            line.set_color(_line, PURGED_COLOR)
+            line.set_style(_line, PURGED_STYLE)
+
+
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
+    
+// Create levels on historical bars
+
+if i_isDailyEnabled and ta.change(time("D"))
+    f_create(prevDayHigh, prevDayLow, i_dailyAboveLiquidityColor, i_dailyBelowLiquidityColor, i_dailyWidth)
+
+if i_isWeeklyEnabled and ta.change(time("W")) 
+    f_create(prevWeekHigh, prevWeekLow, i_weelyAboveLiquidityColor, i_weelyBelowLiquidityColor, i_weeklyWidth)
+
+if i_isMonthlyEnabled and ta.change(time("M"))
+    f_create(prevMonthHigh, prevMonthLow, i_monthlyAboveLiquidityColor, i_monthlyBelowLiquidityColor, i_monthlyWidth)
+
+
+// Update levels on the last bar
+
+if barstate.islast
+    f_update(highLinesArray)
+    f_update(lowLinesArray)
+
+
+// Highlight immediately levels that have their liquidity taken
+
+if ta.change(time("D"))
+    dayHigh := high
+    dayLow := low
+
+if high > dayHigh
+    dayHigh := high
+
+if low < dayLow
+    dayLow := low
+
+if barstate.islast
+    f_highlightUpperLevels(dayHigh, highsArray, highLinesArray)
+    f_highlightLowerLevels(dayLow, lowsArray, lowLinesArray)
+
+
+// Clean up levels that have their liquidity taken at the end of each day
+
+if ta.change(time("D"))
+    f_cleanUpperLevels(prevDayHigh, highsArray, highLinesArray)
+    f_cleanLowerLevels(prevDayLow, lowsArray, lowLinesArray)
