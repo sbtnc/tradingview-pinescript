@@ -26,11 +26,14 @@ var DEFAULT_LABEL_COLOR     = color(na)
 //                               Inputs
 //--------------------------------------------------------------------
 
-var i_period            = input(defval = 20, title = "Length")
-var i_value             = input.string(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
-var i_color             = input(defval = DEFAULT_COLOR, title = "Color")
-var i_overflow_color    = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
-var i_start_offset      = input(defval = true, title = "Show Start Offset")
+var g_indicator          = "ATR"
+var g_style              = "Style"
+
+var i_period            = input(defval = 20, title = "Length", group=g_indicator)
+var i_value             = input.string(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"], group=g_indicator)
+var i_color             = input(defval = DEFAULT_COLOR, title = "Color", group=g_style)
+var i_overflow_color    = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color", group=g_style)
+var i_start_offset      = input(defval = true, title = "Show Start Offset", group=g_style)
 
 
 //--------------------------------------------------------------------
