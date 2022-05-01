@@ -5,9 +5,12 @@
 // Version 4.0
 
 // @version=5
-indicator("ATR Daily Levels", shorttitle = "D ATR", overlay = true)
+indicator("Daily ATR Levels", "D ATR", true)
 
-//------------------------------ Config -------------------------------
+
+//--------------------------------------------------------------------
+//                             Constants
+//--------------------------------------------------------------------
 
 var DEFAULT_COLOR           = color.gray
 var DEFAULT_HIGHLIGHT_COLOR = color.new(DEFAULT_COLOR, 60)
@@ -18,7 +21,10 @@ var DEFAULT_LINE_LENGTH     = 8
 var DEFAULT_LABEL_STYLE     = label.style_label_left
 var DEFAULT_LABEL_COLOR     = color(na)
 
-//------------------------------ Inputs -------------------------------
+
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
 
 var i_period            = input(defval = 20, title = "Length")
 var i_value             = input.string(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
@@ -26,7 +32,10 @@ var i_color             = input(defval = DEFAULT_COLOR, title = "Color")
 var i_overflow_color    = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
 var i_start_offset      = input(defval = true, title = "Show Start Offset")
 
-//----------------------- Variables declarations ----------------------
+
+//--------------------------------------------------------------------
+//                        Variables declarations
+//--------------------------------------------------------------------
 
 [d1_high, d1_low, d1_atr, d1_open, prev_d1_close] = request.security(
      syminfo.tickerid,
@@ -62,7 +71,10 @@ var label atr_high_label    = na
 var label atr_low_label     = na
 can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
 
-//------------------------- Functions helpers -------------------------
+
+//--------------------------------------------------------------------
+//                              Functions 
+//--------------------------------------------------------------------
 
 // rounds a given number per symbol's miniumum tick precision
 f_round(number) =>
@@ -78,7 +90,10 @@ f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close
 // get consistent bar time difference (ignoring weekends and holidays)
 f_getMinTimeDiff() => math.min(time - time[1], time[1] - time[2])
 
-//----------------------------- Plotting ------------------------------
+
+//--------------------------------------------------------------------
+//                          Plotting & styling
+//--------------------------------------------------------------------
 
 bar = nz(f_getMinTimeDiff())
 
