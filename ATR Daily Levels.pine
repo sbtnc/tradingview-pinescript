@@ -42,6 +42,7 @@ var i_startOffset   = input        (true,                        "Show Start Off
 
 var float dayHigh = na
 var float dayLow = na
+var int startBarIndex = na
 
 [dayOpen, prevDayClose, dayTime, dayATR] = request.security(
       syminfo.tickerid,
@@ -51,11 +52,6 @@ var float dayLow = na
 
 // For avoiding unexpected behaviors, don't display the indicator when requesting data from lower time frames
 can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
-
-var line atr_high_line      = na
-var line atr_low_line       = na
-var label atr_high_label    = na
-var label atr_low_label     = na
 
 
 //--------------------------------------------------------------------
@@ -68,8 +64,22 @@ f_getTopPrice(_open, _prevClose, _high) => f_hasGapped(_open, _prevClose) ? _pre
 
 f_getBottomPrice(_open, _prevClose, _low) => f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
 
-// get consistent bar time difference (ignoring weekends and holidays)
-f_getMinTimeDiff() => math.min(time - time[1], time[1] - time[2])
+f_drawLine(int _x1, int _x2, float _y, color _c) =>
+    var _l = line.new(na, na, na, na, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
+
+    if barstate.islast
+        line.set_xy1(_l, _x1, _y)
+        line.set_xy2(_l, _x2, _y)
+        line.set_color(_l, _c)
+
+f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
+    var _l = label.new(na, na, style=DEFAULT_LABEL_STYLE, color=DEFAULT_LABEL_COLOR)
+
+    if barstate.islast
+        label.set_xy(_l, _x, _y)
+        label.set_text(_l, _t)
+        label.set_textcolor(_l, _textColor)
+        label.set_tooltip(_l, _tooltip)
 
 
 //--------------------------------------------------------------------
@@ -83,6 +93,7 @@ f_getMinTimeDiff() => math.min(time - time[1], time[1] - time[2])
 if not (dayTime == dayTime[1])
     dayHigh := high
     dayLow := low
+    startBarIndex := bar_index
 
 // Tracks newest high and low
 if high > dayHigh
@@ -93,78 +104,39 @@ if low < dayLow
 
 // Computes ATR levels prices
 
-atr_high = f_getBottomPrice(dayOpen, prevDayClose, dayLow) + dayATR
-atr_low = f_getTopPrice(dayOpen, prevDayClose, dayHigh) - dayATR
+atrHigh = f_getBottomPrice(dayOpen, prevDayClose, dayLow) + dayATR
+atrLow = f_getTopPrice(dayOpen, prevDayClose, dayHigh) - dayATR
 
+
+// Handles the condiditional coloring
+
+// when price is passed the upper or lower, this last gets highlighted
+level_high_color = dayHigh > atrHigh ? i_overflowColor : i_color
+level_low_color = dayLow < atrLow ? i_overflowColor : i_color
+
+
+// Composes the labels and tooltips text
+
+atrStr = str.tostring(dayATR, format.mintick)
+upperPriceStr = str.tostring(atrHigh, format.mintick)
+lowerPriceStr = str.tostring(atrLow, format.mintick)
+
+upperLabelText = str.format("{0} ({1})", upperPriceStr, atrStr)
+lowerLabelText = lowerPriceStr
+
+upperLabelTooltip = str.format("{0} (D ATR: {1})", upperPriceStr, atrStr)
+lowerLabelTooltip = str.format("{0} (D ATR: {1})", lowerPriceStr, atrStr)
 
 //--------------------------------------------------------------------
 //                          Plotting & styling
 //--------------------------------------------------------------------
 
-bar = nz(f_getMinTimeDiff())
+if can_display_timeframe
+    _offsetBarIndex = bar_index + DEFAULT_OFFSET_START
+    _start  = i_startOffset ? _offsetBarIndex : startBarIndex
+    _end    = _offsetBarIndex + DEFAULT_LINE_LENGTH
 
-if barstate.islast and can_display_timeframe
-
-    // levels positioning
-    offset              = time + bar * DEFAULT_OFFSET_START
-    level_start         = i_startOffset ? offset : dayTime
-    level_end           = i_startOffset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
-
-    // when price is passed the upper or lower, this last gets highlighted
-    level_high_color    = day_high > atr_high ? i_overflowColor : i_color
-    level_low_color     = day_low < atr_low ? i_overflowColor : i_color
-    
-    // levels
-
-    atr_high_line := line.new(
-     x1     = level_start,
-     x2     = level_end,
-     y1     = atr_high,
-     y2     = atr_high,
-     xloc   = xloc.bar_time,
-     style  = DEFAULT_LINE_STYLE,
-     color  = level_high_color,
-     width  = DEFAULT_LINE_WIDTH)
-    
-    atr_low_line := line.new(
-     x1     = level_start,
-     x2     = level_end,
-     y1     = atr_low,
-     y2     = atr_low,
-     xloc   = xloc.bar_time,
-     style  = DEFAULT_LINE_STYLE,
-     color  = level_low_color,
-     width  = DEFAULT_LINE_WIDTH)
-    
-    atrStr = str.tostring(dayATR, format.mintick)
-    upperPriceStr = str.tostring(atr_high, format.mintick)
-    lowerPriceStr = str.tostring(atr_low, format.mintick)
-
-    upperLabelText = str.format("{0} ({1})", upperPriceStr, atrStr)
-    LowerLabelText = lowerPriceStr
-
-    // labels
-
-    atr_high_label := label.new(
-     x          = level_end,
-     y          = atr_high,
-     text       = upperLabelText,
-     xloc       = xloc.bar_time,
-     color      = DEFAULT_LABEL_COLOR,
-     style      = DEFAULT_LABEL_STYLE,
-     textcolor  = level_high_color)
-    
-    atr_low_label := label.new(
-     x          = level_end,
-     y          = atr_low,
-     text       = LowerLabelText,
-     xloc       = xloc.bar_time,
-     color      = DEFAULT_LABEL_COLOR,
-     style      = DEFAULT_LABEL_STYLE,
-     textcolor  = level_low_color)
-    
-    // fix multiple drawings on the current candle update
-    line.delete(atr_high_line[1])
-    line.delete(atr_low_line[1])
-    label.delete(atr_high_label[1])
-    label.delete(atr_low_label[1])
+    f_drawLine(_start, _end, atrHigh, level_high_color)
+    f_drawLine(_start, _end, atrLow, level_low_color)
+    f_drawLabel(_end, atrHigh, upperLabelText, level_high_color, upperLabelTooltip)
+    f_drawLabel(_end, atrLow, lowerLabelText, level_low_color, lowerLabelTooltip)
