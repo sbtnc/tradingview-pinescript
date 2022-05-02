@@ -50,7 +50,7 @@ var int dayBarIndex = na
       [open, close[1], time, ta.atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
       lookahead = barmerge.lookahead_on)
 
-// For avoiding unexpected behaviors, don't display the indicator when requesting data from lower time frames
+// For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
 canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 
 
