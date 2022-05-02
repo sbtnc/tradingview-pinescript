@@ -31,7 +31,7 @@ var g_style         = "Style"
 
 var t_overflowColor = "Coloring after price reached or exceeded ATR boundary."
 
-var i_period        = input        (20,                          "Length",                                                   group=g_indicator)
+var i_period        = input.int    (20,                          "Length", 1,                                                group=g_indicator)
 var i_value         = input.string ("Yesterday",                 "Reference", ["Today", "Yesterday"],                        group=g_indicator)
 var i_color         = input        (DEFAULT_COLOR,               "Color",                                                    group=g_style)
 var i_overflowColor = input        (DEFAULT_HIGHLIGHT_COLOR,     "Overflow Color",                       t_overflowColor,    group=g_style)
