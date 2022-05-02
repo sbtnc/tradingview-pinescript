@@ -60,26 +60,28 @@ canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 
 f_hasGapped(float _open, float _prevClose) => _open != _prevClose
 
-f_getTopPrice(float _open, float _prevClose, float _high) => f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
+f_getTopPrice(float _open, float _prevClose, float _high) =>
+     f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
 
-f_getBottomPrice(float _open, float _prevClose, float _low) => f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
+f_getBottomPrice(float _open, float _prevClose, float _low) =>
+     f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
 
 f_drawLine(int _x1, int _x2, float _y, color _c) =>
-    var _l = line.new(na, na, na, na, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
+     var _l = line.new(na, na, na, na, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
 
-    if barstate.islast
-        line.set_xy1(_l, _x1, _y)
-        line.set_xy2(_l, _x2, _y)
-        line.set_color(_l, _c)
+     if barstate.islast
+          line.set_xy1(_l, _x1, _y)
+          line.set_xy2(_l, _x2, _y)
+          line.set_color(_l, _c)
 
 f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
-    var _l = label.new(na, na, style=DEFAULT_LABEL_STYLE, color=DEFAULT_LABEL_COLOR)
+     var _l = label.new(na, na, style=DEFAULT_LABEL_STYLE, color=DEFAULT_LABEL_COLOR)
 
-    if barstate.islast
-        label.set_xy(_l, _x, _y)
-        label.set_text(_l, _t)
-        label.set_textcolor(_l, _textColor)
-        label.set_tooltip(_l, _tooltip)
+     if barstate.islast
+          label.set_xy(_l, _x, _y)
+          label.set_text(_l, _t)
+          label.set_textcolor(_l, _textColor)
+          label.set_tooltip(_l, _tooltip)
 
 
 //--------------------------------------------------------------------
@@ -91,31 +93,30 @@ f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
 
 // Init on the first bar / reset on following day change
 if not (dayTime == dayTime[1])
-    dayHigh := high
-    dayLow := low
-    dayBarIndex := bar_index
+     dayHigh := high
+     dayLow := low
+     dayBarIndex := bar_index
 
 // Tracks newest high and low
 if high > dayHigh
-    dayHigh := high
+     dayHigh := high
 if low < dayLow
-    dayLow := low
+     dayLow := low
 
 
-// Computes ATR levels prices
+// Compute ATR levels prices
 
 atrHigh = f_getBottomPrice(dayOpen, prevDayClose, dayLow) + dayATR
 atrLow = f_getTopPrice(dayOpen, prevDayClose, dayHigh) - dayATR
 
 
-// Handles the condiditional coloring
+// Handle the condiditional coloring
 
-// when price is passed the upper or lower, this last gets highlighted
-level_high_color = dayHigh > atrHigh ? i_overflowColor : i_color
-level_low_color = dayLow < atrLow ? i_overflowColor : i_color
+c_upper = dayHigh >= atrHigh ? i_overflowColor : i_color
+c_lower = dayLow <= atrLow ? i_overflowColor : i_color
 
 
-// Composes the labels and tooltips text
+// Compose the labels and tooltips text
 
 atrStr = str.tostring(dayATR, format.mintick)
 upperPriceStr = str.tostring(atrHigh, format.mintick)
@@ -132,11 +133,11 @@ lowerLabelTooltip = str.format("{0} (D ATR: {1})", lowerPriceStr, atrStr)
 //--------------------------------------------------------------------
 
 if canDisplay
-    _offsetBarIndex = bar_index + DEFAULT_OFFSET_START
-    _start  = i_startOffset ? _offsetBarIndex : dayBarIndex
-    _end    = _offsetBarIndex + DEFAULT_LINE_LENGTH
+     _offsetBarIndex = bar_index + DEFAULT_OFFSET_START
+     _startBarIndex  = i_startOffset ? _offsetBarIndex : dayBarIndex
+     _endBarIndex    = _offsetBarIndex + DEFAULT_LINE_LENGTH
 
-    f_drawLine(_start, _end, atrHigh, level_high_color)
-    f_drawLine(_start, _end, atrLow, level_low_color)
-    f_drawLabel(_end, atrHigh, upperLabelText, level_high_color, upperLabelTooltip)
-    f_drawLabel(_end, atrLow, lowerLabelText, level_low_color, lowerLabelTooltip)
+     f_drawLine(_startBarIndex, _endBarIndex, atrHigh, c_upper)
+     f_drawLine(_startBarIndex, _endBarIndex, atrLow, c_lower)
+     f_drawLabel(_endBarIndex, atrHigh, upperLabelText, c_upper, upperLabelTooltip)
+     f_drawLabel(_endBarIndex, atrLow, lowerLabelText, c_lower, lowerLabelTooltip)
