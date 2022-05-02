@@ -58,11 +58,11 @@ canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 //                              Functions 
 //--------------------------------------------------------------------
 
-f_hasGapped(_open, _prevClose) => _open != _prevClose
+f_hasGapped(float _open, float _prevClose) => _open != _prevClose
 
-f_getTopPrice(_open, _prevClose, _high) => f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
+f_getTopPrice(float _open, float _prevClose, float _high) => f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
 
-f_getBottomPrice(_open, _prevClose, _low) => f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
+f_getBottomPrice(float _open, float _prevClose, float _low) => f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
 
 f_drawLine(int _x1, int _x2, float _y, color _c) =>
     var _l = line.new(na, na, na, na, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
