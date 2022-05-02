@@ -40,9 +40,9 @@ var i_startOffset   = input        (true,                        "Show Start Off
 //                        Variables declarations
 //--------------------------------------------------------------------
 
-var float dayHigh = na
-var float dayLow = na
-var int startBarIndex = na
+var float dayHigh   = na
+var float dayLow    = na
+var int dayBarIndex = na
 
 [dayOpen, prevDayClose, dayTime, dayATR] = request.security(
       syminfo.tickerid,
@@ -51,7 +51,7 @@ var int startBarIndex = na
       lookahead = barmerge.lookahead_on)
 
 // For avoiding unexpected behaviors, don't display the indicator when requesting data from lower time frames
-can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
+canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 
 
 //--------------------------------------------------------------------
@@ -93,7 +93,7 @@ f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
 if not (dayTime == dayTime[1])
     dayHigh := high
     dayLow := low
-    startBarIndex := bar_index
+    dayBarIndex := bar_index
 
 // Tracks newest high and low
 if high > dayHigh
@@ -131,9 +131,9 @@ lowerLabelTooltip = str.format("{0} (D ATR: {1})", lowerPriceStr, atrStr)
 //                          Plotting & styling
 //--------------------------------------------------------------------
 
-if can_display_timeframe
+if canDisplay
     _offsetBarIndex = bar_index + DEFAULT_OFFSET_START
-    _start  = i_startOffset ? _offsetBarIndex : startBarIndex
+    _start  = i_startOffset ? _offsetBarIndex : dayBarIndex
     _end    = _offsetBarIndex + DEFAULT_LINE_LENGTH
 
     f_drawLine(_start, _end, atrHigh, level_high_color)
