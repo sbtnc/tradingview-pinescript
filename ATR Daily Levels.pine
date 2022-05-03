@@ -26,15 +26,16 @@ var DEFAULT_LABEL_STYLE     = label.style_label_left
 
 var g_indicator     = "ATR"
 var g_style         = "Style"
+var g_preferences   = "Preferences"
 
 var t_overflowColor = "Coloring after the price reached or exceeded the ATR boundary."
-var t_startOffset   = "When enabled, draw levels on the right side of the price.\n\nWhen disabled, draw levels from the start of the day."
+var t_startOffset   = "Draw levels on the right side of the price only.\n\nWhen disabled, draw levels from the start of the day."
 
 var i_period        = input.int     (20,                        "Length", 1,                                                group=g_indicator)
 var i_value         = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g_indicator)
 var i_color         = input         (color.gray,                "Color",                                                    group=g_style)
 var i_overflowColor = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g_style)
-var i_startOffset   = input         (true,                      "Show Start Offset",                    t_startOffset,      group=g_style)
+var i_startOffset   = input         (true,                      "Show Start Offset",                    t_startOffset,      group=g_preferences)
 
 
 //--------------------------------------------------------------------
