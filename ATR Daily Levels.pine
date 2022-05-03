@@ -28,15 +28,16 @@ var g_indicator     = "ATR"
 var g_style         = "Style"
 var g_preferences   = "Preferences"
 
-var t_overflowColor = "Coloring after the price reached or exceeded the ATR boundary."
-var t_startOffset   = "Draw levels on the right side of the price only.\n\nWhen disabled, draw levels from the start of the day."
+var t_overflowColor     = "Coloring after the price reached or exceeded the ATR boundary."
+var t_showStartOffset   = "Draw levels on the right side of the price only.\n\nWhen disabled, draw levels from the start of the day."
+var t_showNext          = "Plot next day's ATR levels when the market is closed.\n\nNote: Use this option if you like to plan your trades ahead of the next day or prepare on the weekend for Monday."
 
-var i_period        = input.int     (20,                        "Length", 1,                                                group=g_indicator)
-var i_value         = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g_indicator)
-var i_color         = input         (color.gray,                "Color",                                                    group=g_style)
-var i_overflowColor = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g_style)
-var i_startOffset   = input         (true,                      "Show Start Offset",                    t_startOffset,      group=g_preferences)
-
+var i_period            = input.int     (20,                        "Length", 1,                                                group=g_indicator)
+var i_value             = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g_indicator)
+var i_color             = input         (color.gray,                "Color",                                                    group=g_style)
+var i_overflowColor     = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g_style)
+var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g_preferences)
+var i_showNext          = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g_preferences)
 
 //--------------------------------------------------------------------
 //                        Variables declarations
@@ -106,10 +107,25 @@ if low < dayLow
     dayLow := low
 
 
+// Get top and bottom anchor prices (gap minded)
+
+bottomPrice         = f_getBottomPrice(dayOpen, prevDayClose, dayLow)
+topPrice            = f_getTopPrice(dayOpen, prevDayClose, dayHigh)
+
+
+// Override values when displaying tomorrow's ATR
+
+if i_showNext and barstate.islast and barstate.islastconfirmedhistory
+    dayHigh := close
+    dayLow := close
+    bottomPrice := close
+    topPrice := close
+
+
 // Compute ATR levels prices
 
-atrHigh             = f_getBottomPrice(dayOpen, prevDayClose, dayLow) + dayATR
-atrLow              = f_getTopPrice(dayOpen, prevDayClose, dayHigh) - dayATR
+atrHigh             = bottomPrice + dayATR
+atrLow              = topPrice - dayATR
 
 
 // Handle the condiditional coloring
@@ -137,7 +153,7 @@ lowerLabelTooltip   = str.format("{0} (D ATR: {1})", lowerPriceStr, atrStr)
 
 if canDisplay
     _offsetBarIndex = bar_index + DEFAULT_OFFSET_START
-    _startBarIndex  = i_startOffset ? _offsetBarIndex : dayBarIndex
+    _startBarIndex  = i_showStartOffset ? _offsetBarIndex : dayBarIndex
     _endBarIndex    = _offsetBarIndex + DEFAULT_LINE_LENGTH
 
     f_drawLine(_startBarIndex, _endBarIndex, atrHigh, c_upper)
