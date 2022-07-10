@@ -37,7 +37,7 @@ var i_value             = input.string  ("Yesterday",               "Reference",
 var i_color             = input         (color.gray,                "Color",                                                    group=g_style)
 var i_overflowColor     = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g_style)
 var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g_preferences)
-var i_showNext          = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g_preferences)
+var i_showNextDay       = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g_preferences)
 
 //--------------------------------------------------------------------
 //                        Variables declarations
@@ -47,19 +47,26 @@ var float dayHigh   = na
 var float dayLow    = na
 var int dayBarIndex = na
 
-[dayOpen, prevDayClose, dayTime, dayATR] = request.security(
+[dayOpen, prevDayClose, dayTime, dayAtr, prevDayAtr] = request.security(
      syminfo.tickerid,
      'D',
-     [open, close[1], time, ta.atr(i_period)[i_value == "Yesterday" ? 1 : 0]],
+     [open, close[1], time, ta.atr(i_period), ta.atr(i_period)[1]],
      lookahead = barmerge.lookahead_on)
 
 // For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
 canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 
+isMarketClosed = barstate.islast and barstate.islastconfirmedhistory
+
 
 //--------------------------------------------------------------------
 //                              Functions 
 //--------------------------------------------------------------------
+
+f_getAtr() =>
+    switch i_value
+        "Today"     => dayAtr
+        "Yesterday" => i_showNextDay and isMarketClosed ? dayAtr : prevDayAtr
 
 f_hasGapped(float _open, float _prevClose) => _open != _prevClose
 
@@ -91,6 +98,8 @@ f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
 //                                Logic
 //--------------------------------------------------------------------
 
+atr = f_getAtr()
+
 // Collect the daily high and low on runtime instead of fetching them from a security call
 // It aims to avoid the initial `future leak` from the "jump" when using the bar replay function
 
@@ -115,7 +124,7 @@ topPrice            = f_getTopPrice(dayOpen, prevDayClose, dayHigh)
 
 // Override values when displaying tomorrow's ATR
 
-if i_showNext and barstate.islast and barstate.islastconfirmedhistory
+if i_showNextDay and isMarketClosed
     dayHigh := close
     dayLow := close
     bottomPrice := close
@@ -124,8 +133,8 @@ if i_showNext and barstate.islast and barstate.islastconfirmedhistory
 
 // Compute ATR levels prices
 
-atrHigh             = bottomPrice + dayATR
-atrLow              = topPrice - dayATR
+atrHigh             = bottomPrice + atr
+atrLow              = topPrice - atr
 
 
 // Handle the condiditional coloring
@@ -136,7 +145,7 @@ c_lower             = dayLow <= atrLow ? i_overflowColor : i_color
 
 // Compose the labels and tooltips text
 
-atrStr              = str.tostring(dayATR, format.mintick)
+atrStr              = str.tostring(atr, format.mintick)
 upperPriceStr       = str.tostring(atrHigh, format.mintick)
 lowerPriceStr       = str.tostring(atrLow, format.mintick)
 
@@ -160,3 +169,16 @@ if canDisplay
     f_drawLine(_startBarIndex, _endBarIndex, atrLow, c_lower)
     f_drawLabel(_endBarIndex, atrHigh, upperLabelText, c_upper, upperLabelTooltip)
     f_drawLabel(_endBarIndex, atrLow, lowerLabelText, c_lower, lowerLabelTooltip)
+
+
+//--------------------------------------------------------------------
+//                                Debug
+//--------------------------------------------------------------------
+
+plotchar(topPrice,                              "top",          "", location.top, color.new(color.gray, 100))
+plotchar(bottomPrice,                           "bottom",       "", location.top, color.new(color.gray, 100))
+plotchar(dayOpen,                               "open",         "", location.top, color.new(color.gray, 100))
+plotchar(prevDayClose,                          "prevClose",    "", location.top, color.new(color.gray, 100))
+plotchar(f_hasGapped(dayOpen, prevDayClose),    "gap?",         "", location.top, color.new(color.gray, 100))
+plotchar(dayLow,                                "low",          "", location.top, color.new(color.gray, 100))
+plotchar(isMarketClosed,                        "closed?",      "", location.top, color.new(color.gray, 100))
