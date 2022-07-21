@@ -104,7 +104,9 @@ atr = f_getAtr()
 // It aims to avoid the initial `future leak` from the "jump" when using the bar replay function
 
 // Init on the first bar / reset on following day change
-if not (dayTime == dayTime[1])
+//if not (dayTime == dayTime[1])
+//if ta.change(time('1440'))
+if not (time('1440') == time('1440')[1])
     dayHigh     := high
     dayLow      := low
     dayBarIndex := bar_index
