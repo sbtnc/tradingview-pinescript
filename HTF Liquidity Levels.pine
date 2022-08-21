@@ -1,8 +1,8 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2022-04-26
-// Last modified: 2022-04-26
-// Version 1.0
+// Last modified: 2022-07-22
+// Version 2.0
 
 //@version=5
 indicator("HTF Liquidity Levels", "HTF Liquidity", overlay=true, max_lines_count=500)
@@ -36,6 +36,14 @@ i_isMonthlyEnabled              = input (true,                          "Monthly
 i_monthlyAboveLiquidityColor    = input (color.new(#87fe07, 90),        "",         inline="Monthly",   group=g_indicator)
 i_monthlyBelowLiquidityColor    = input (color.new(color.orange, 90),   "",         inline="Monthly",   group=g_indicator)
 i_monthlyWidth                  = input (10,                            "Width",    inline="Monthly",   group=g_indicator)
+i_is4HEnabled                   = input (true,                          "4H",       inline="4H",        group=g_indicator)
+i_4HAboveLiquidityColor         = input (color.new(color.green, 20),    "",         inline="4H",        group=g_indicator)
+i_4HBelowLiquidityColor         = input (color.new(color.red, 20),      "",         inline="4H",        group=g_indicator)
+i_4HWidth                       = input (1,                             "Width",    inline="4H",        group=g_indicator)
+i_is1HEnabled                   = input (true,                          "1H",       inline="1H",        group=g_indicator)
+i_1HAboveLiquidityColor         = input (color.new(#87fe07, 90),        "",         inline="1H",        group=g_indicator)
+i_1HBelowLiquidityColor         = input (color.new(color.orange, 90),   "",         inline="1H",        group=g_indicator)
+i_1HWidth                       = input (10,                            "Width",    inline="1H",        group=g_indicator)
 
 
 //--------------------------------------------------------------------
@@ -49,9 +57,11 @@ var lowLinesArray               = array.new_line()
 var float dayHigh               = na
 var float dayLow                = na
 
-[prevDayHigh, prevDayLow]       = request.security(syminfo.tickerid, "D", [high[1], low[1]], lookahead=barmerge.lookahead_on)
-[prevWeekHigh, prevWeekLow]     = request.security(syminfo.tickerid, "W", [high[1], low[1]], lookahead=barmerge.lookahead_on)
-[prevMonthHigh, prevMonthLow]   = request.security(syminfo.tickerid, "M", [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prevDayHigh, prevDayLow]       = request.security(syminfo.tickerid, "D",   [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prevWeekHigh, prevWeekLow]     = request.security(syminfo.tickerid, "W",   [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prevMonthHigh, prevMonthLow]   = request.security(syminfo.tickerid, "M",   [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prev4HHigh, prev4HLow]         = request.security(syminfo.tickerid, "240", [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[prev1HHigh, prev1HLow]         = request.security(syminfo.tickerid, "60",  [high[1], low[1]], lookahead=barmerge.lookahead_on)
 
 
 //--------------------------------------------------------------------
@@ -114,6 +124,12 @@ if i_isWeeklyEnabled and ta.change(time("W"))
 
 if i_isMonthlyEnabled and ta.change(time("M"))
     f_create(prevMonthHigh, prevMonthLow, i_monthlyAboveLiquidityColor, i_monthlyBelowLiquidityColor, i_monthlyWidth)
+
+if i_is4HEnabled and ta.change(time("240"))
+    f_create(prev4HHigh, prev4HLow, i_4HAboveLiquidityColor, i_4HBelowLiquidityColor, i_4HWidth)
+
+if i_is1HEnabled and ta.change(time("60"))
+    f_create(prev1HHigh, prev1HLow, i_1HAboveLiquidityColor, i_1HBelowLiquidityColor, i_1HWidth)
 
 
 // Update levels on the last bar
