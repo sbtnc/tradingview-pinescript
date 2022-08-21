@@ -132,31 +132,20 @@ if i_is1HEnabled and ta.change(time("60"))
     f_create(prev1HHigh, prev1HLow, i_1HAboveLiquidityColor, i_1HBelowLiquidityColor, i_1HWidth)
 
 
-// Update levels on the last bar
+// Update levels for "sticking" at the right of the latest bar
 
 if barstate.islast
     f_update(highLinesArray)
     f_update(lowLinesArray)
 
 
-// Highlight immediately levels that have their liquidity taken
+// Highlight, immediately, levels that got their liquidity taken
 
-if ta.change(time("D"))
-    dayHigh := high
-    dayLow := low
-
-if high > dayHigh
-    dayHigh := high
-
-if low < dayLow
-    dayLow := low
-
-if barstate.islast
-    f_highlightUpperLevels(dayHigh, highsArray, highLinesArray)
-    f_highlightLowerLevels(dayLow, lowsArray, lowLinesArray)
+f_highlightUpperLevels(high, highsArray, highLinesArray)
+f_highlightLowerLevels(low, lowsArray, lowLinesArray)
 
 
-// Clean up levels that have their liquidity taken at the end of each day
+// Clean up, at the end of each day, levels that had their liquidity taken
 
 if ta.change(time("D"))
     f_cleanUpperLevels(prevDayHigh, highsArray, highLinesArray)
