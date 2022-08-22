@@ -41,8 +41,8 @@ i_4HAboveLiquidityColor         = input (color.new(color.green, 20),    "",     
 i_4HBelowLiquidityColor         = input (color.new(color.red, 20),      "",         inline="4H",        group=g_indicator)
 i_4HWidth                       = input (1,                             "Width",    inline="4H",        group=g_indicator)
 i_is1HEnabled                   = input (true,                          "1H",       inline="1H",        group=g_indicator)
-i_1HAboveLiquidityColor         = input (color.new(#87fe07, 90),        "",         inline="1H",        group=g_indicator)
-i_1HBelowLiquidityColor         = input (color.new(color.orange, 90),   "",         inline="1H",        group=g_indicator)
+i_1HAboveLiquidityColor         = input (color.new(#87fe07, 10),        "",         inline="1H",        group=g_indicator)
+i_1HBelowLiquidityColor         = input (color.new(color.orange, 10),   "",         inline="1H",        group=g_indicator)
 i_1HWidth                       = input (10,                            "Width",    inline="1H",        group=g_indicator)
 
 
@@ -56,6 +56,7 @@ var highLinesArray              = array.new_line()
 var lowLinesArray               = array.new_line()
 var float dayHigh               = na
 var float dayLow                = na
+var purgedLinesArray            = array.new_line()
 
 [prevDayHigh, prevDayLow]       = request.security(syminfo.tickerid, "D",   [high[1], low[1]], lookahead=barmerge.lookahead_on)
 [prevWeekHigh, prevWeekLow]     = request.security(syminfo.tickerid, "W",   [high[1], low[1]], lookahead=barmerge.lookahead_on)
@@ -76,39 +77,45 @@ f_create(float _high, float _low, color _upperColor, color _lowerColor, int _lin
     array.push(highLinesArray, f_drawLine(_high, _upperColor, _linewidth))
     array.push(lowLinesArray, f_drawLine(_low, _lowerColor, _linewidth))
 
-f_update(array<line> _levels) =>
+f_updateStickyLevels(array<line> _levels) =>
     for _line in _levels
         line.set_x1(_line, bar_index + START_OFFSET)
         line.set_x2(_line, bar_index + END_OFFSET)
 
-f_cleanUpperLevels(float _high, array<float> _highs, array<line> _levels) =>
+f_moveLevel(array<line> _from, array<line> _to, line _level, int _index) =>
+    array.push(_to, _level)
+    array.remove(_from, _index)
+
+f_highlightPurgedLevel(line _level) =>
+    line.set_color(_level, PURGED_COLOR)
+    line.set_style(_level, PURGED_STYLE)
+
+f_updateUpperLevels(float _high, array<float> _highs, array<line> _levels, array<line> _purgedLevels) =>
     while array.min(_highs) < _high
         for [_index, _value] in _highs
             if _high > _value
-                line.delete(array.remove(_levels, _index))
+                _line = array.get(_levels, _index)
+                f_highlightPurgedLevel(_line)
+                f_moveLevel(_levels, _purgedLevels, _line, _index)
                 array.remove(_highs, _index)
-            
-f_cleanLowerLevels(float _low, array<float> _lows, array<line> _levels) =>
+
+f_updateLowerLevels(float _low, array<float> _lows, array<line> _levels, array<line> _purgedLevels) =>
     while array.max(_lows) > _low
         for [_index, _value] in _lows
             if _low < _value
-                line.delete(array.remove(_levels, _index))
+                _line = array.get(_levels, _index)
+                f_highlightPurgedLevel(_line)
+                f_moveLevel(_levels, _purgedLevels, _line, _index) 
                 array.remove(_lows, _index)
 
-f_highlightUpperLevels(float _high, array<float> _highs, array<line> _levels) =>
-    for [_index, _value] in _highs
-        if _high > _value
-            _line = array.get(_levels, _index)
-            line.set_color(_line, PURGED_COLOR)
-            line.set_style(_line, PURGED_STYLE)
+f_clearLevels(array<line> _levels) =>
+    while array.size(_levels) > 0
+        for [_index, _line] in _levels
+            line.delete(array.remove(_levels, _index))
 
-f_highlightLowerLevels(float _low, array<float> _lows, array<line> _levels) =>
-    for [_index, _value] in _lows
-        if _low < _value
-            _line = array.get(_levels, _index)
-            line.set_color(_line, PURGED_COLOR)
-            line.set_style(_line, PURGED_STYLE)
-
+    // for [_index, _line] in _levels
+    //     line.delete(array.get(_levels, _index))
+    // array.clear(_levels)
 
 //--------------------------------------------------------------------
 //                                Logic
@@ -132,21 +139,21 @@ if i_is1HEnabled and ta.change(time("60"))
     f_create(prev1HHigh, prev1HLow, i_1HAboveLiquidityColor, i_1HBelowLiquidityColor, i_1HWidth)
 
 
-// Update levels for "sticking" at the right of the latest bar
+// Update levels positions to "stick" at the right of the latest bar
 
 if barstate.islast
-    f_update(highLinesArray)
-    f_update(lowLinesArray)
+    f_updateStickyLevels(highLinesArray)
+    f_updateStickyLevels(lowLinesArray)
+    f_updateStickyLevels(purgedLinesArray)
 
 
-// Highlight, immediately, levels that got their liquidity taken
+// Set and highlight, immediately, levels that got their liquidity taken
 
-f_highlightUpperLevels(high, highsArray, highLinesArray)
-f_highlightLowerLevels(low, lowsArray, lowLinesArray)
+f_updateUpperLevels(high, highsArray, highLinesArray, purgedLinesArray)
+f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
 
 
 // Clean up, at the end of each day, levels that had their liquidity taken
 
 if ta.change(time("D"))
-    f_cleanUpperLevels(prevDayHigh, highsArray, highLinesArray)
-    f_cleanLowerLevels(prevDayLow, lowsArray, lowLinesArray)
+    f_clearLevels(purgedLinesArray)
