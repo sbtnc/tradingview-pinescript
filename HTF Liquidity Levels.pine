@@ -24,30 +24,30 @@ var g_htf                       = "HTF Liquidity"
 var g_intraday                  = "Intraday Liquidity"
 var g_purged                    = "Purged Liquidity"
 
-i_isMonthlyEnabled              = input         (true,                          "Monthly",  inline="Monthly",               group=g_htf)
-i_monthlyAboveLiquidityColor    = input         (color.rgb(135, 254, 7, 90),    "",         inline="Monthly",               group=g_htf)
-i_monthlyBelowLiquidityColor    = input         (color.new(color.orange, 90),   "",         inline="Monthly",               group=g_htf)
-i_monthlyWidth                  = input         (10,                            "Width",    inline="Monthly",               group=g_htf)
+i_isDailyEnabled                = input         (true,                          "Daily",    inline="Daily",                 group=g_htf)
+i_dailyAboveLiquidityColor      = input         (color.new(color.green, 30),    "",         inline="Daily",                 group=g_htf)
+i_dailyBelowLiquidityColor      = input         (color.rgb(242, 54, 69, 70),    "",         inline="Daily",                 group=g_htf)
+i_dailyWidth                    = input         (1,                             "Width",    inline="Daily",                 group=g_htf)
 
 i_isWeeklyEnabled               = input         (true,                          "Weekly",   inline="Weekly",                group=g_htf)
 i_weelyAboveLiquidityColor      = input         (color.new(color.lime, 70),     "",         inline="Weekly",                group=g_htf)
 i_weelyBelowLiquidityColor      = input         (color.new(color.red, 70),      "",         inline="Weekly",                group=g_htf)
 i_weeklyWidth                   = input         (5,                             "Width",    inline="Weekly",                group=g_htf)
 
-i_isDailyEnabled                = input         (true,                          "Daily",    inline="Daily",                 group=g_htf)
-i_dailyAboveLiquidityColor      = input         (color.new(color.green, 30),    "",         inline="Daily",                 group=g_htf)
-i_dailyBelowLiquidityColor      = input         (color.rgb(242, 54, 69, 70),    "",         inline="Daily",                 group=g_htf)
-i_dailyWidth                    = input         (1,                             "Width",    inline="Daily",                 group=g_htf)
-
-i_is4HEnabled                   = input         (false,                         "4H",       inline="4H",                    group=g_intraday)
-i_4HAboveLiquidityColor         = input         (color.rgb(0, 151, 167, 50),    "",         inline="4H",                    group=g_intraday)
-i_4HBelowLiquidityColor         = input         (color.rgb(123, 31, 162, 20),   "",         inline="4H",                    group=g_intraday)
-i_4HWidth                       = input         (1,                             "Width",    inline="4H",                    group=g_intraday)
+i_isMonthlyEnabled              = input         (true,                          "Monthly",  inline="Monthly",               group=g_htf)
+i_monthlyAboveLiquidityColor    = input         (color.rgb(135, 254, 7, 90),    "",         inline="Monthly",               group=g_htf)
+i_monthlyBelowLiquidityColor    = input         (color.new(color.orange, 90),   "",         inline="Monthly",               group=g_htf)
+i_monthlyWidth                  = input         (10,                            "Width",    inline="Monthly",               group=g_htf)
 
 i_is1HEnabled                   = input         (false,                         "1H",       inline="1H",                    group=g_intraday)
 i_1HAboveLiquidityColor         = input         (color.rgb(0, 96, 100, 70),     "",         inline="1H",                    group=g_intraday)
 i_1HBelowLiquidityColor         = input         (color.rgb(74, 20, 140, 70),    "",         inline="1H",                    group=g_intraday)
 i_1HWidth                       = input         (1,                             "Width",    inline="1H",                    group=g_intraday)
+
+i_is4HEnabled                   = input         (false,                         "4H",       inline="4H",                    group=g_intraday)
+i_4HAboveLiquidityColor         = input         (color.rgb(0, 151, 167, 50),    "",         inline="4H",                    group=g_intraday)
+i_4HBelowLiquidityColor         = input         (color.rgb(123, 31, 162, 20),   "",         inline="4H",                    group=g_intraday)
+i_4HWidth                       = input         (1,                             "Width",    inline="4H",                    group=g_intraday)
 
 i_purgedLevelColor              = input         (color.new(color.gray, 50),     "Color",                                    group=g_purged)
 i_purgedLevelStyle              = input.string  ("Solid",                       "Style",    ["Solid", "Dashed", "Dotted"],  group=g_purged)
