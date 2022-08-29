@@ -121,10 +121,6 @@ f_clearLevels(array<line> _levels) =>
         for [_index, _line] in _levels
             line.delete(array.remove(_levels, _index))
 
-    // for [_index, _line] in _levels
-    //     line.delete(array.get(_levels, _index))
-    // array.clear(_levels)
-
 f_isHigherTimeframe(string _timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(_timeframe)
 
 
