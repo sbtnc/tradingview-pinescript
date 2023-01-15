@@ -199,4 +199,4 @@ plotchar(dayOpen,                               "open",         "", location.top
 plotchar(prevDayClose,                          "prevClose",    "", location.top, color.new(color.gray, 100))
 plotchar(f_hasGapped(dayOpen, prevDayClose),    "gap?",         "", location.top, color.new(color.gray, 100))
 plotchar(dayLow,                                "low",          "", location.top, color.new(color.gray, 100))
-plotchar(isMarketClosed,                        "closed?",      "", location.top, color.new(color.gray, 100))
+plotchar(f_isMarketClosed(),                    "closed?",      "", location.top, color.new(color.gray, 100))
