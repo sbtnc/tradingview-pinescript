@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-09-06
-// Last modified: 2022-05-01
+// Last modified: 2023-01-15
 // Version 5.0
 
 // @version=5
@@ -24,20 +24,31 @@ var DEFAULT_LABEL_STYLE     = label.style_label_left
 //                               Inputs
 //--------------------------------------------------------------------
 
-var g_indicator     = "ATR"
-var g_style         = "Style"
-var g_preferences   = "Preferences"
+// Groups
+
+var g1                  = "ATR"
+var g2                  = "Style"
+var g3                  = "Preferences"
+
+
+// Tooltips
 
 var t_overflowColor     = "Coloring after the price reached or exceeded the ATR boundary."
-var t_showStartOffset   = "Draw levels on the right side of the price only.\n\nWhen disabled, draw levels from the start of the day."
-var t_showNext          = "Plot next day's ATR levels when the market is closed.\n\nNote: Use this option if you like to plan your trades ahead of the next day or prepare on the weekend for Monday."
+var t_showStartOffset   = "Draw levels on the right side of the price only.\n\n" +
+                             "When disabled, draw levels from the start of the day."
+var t_showNext          = "Plot next day's ATR levels when the market is closed.\n\n" +
+                             "Note: Use this option if you like to plan your trades ahead of the next day or prepare on the weekend for Monday."
 
-var i_period            = input.int     (20,                        "Length", 1,                                                group=g_indicator)
-var i_value             = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g_indicator)
-var i_color             = input         (color.gray,                "Color",                                                    group=g_style)
-var i_overflowColor     = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g_style)
-var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g_preferences)
-var i_showNextDay       = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g_preferences)
+
+// Inputs
+
+var i_period            = input.int     (20,                        "Length", 1,                                                group=g1)
+var i_value             = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g1)
+var i_color             = input         (color.gray,                "Color",                                                    group=g2)
+var i_overflowColor     = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g2)
+var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g3)
+var i_showNextDay       = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g3)
+
 
 //--------------------------------------------------------------------
 //                        Variables declarations
@@ -56,19 +67,24 @@ var int dayBarIndex = na
 // For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
 canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 
-isMarketClosed = barstate.islast and barstate.islastconfirmedhistory
-
 
 //--------------------------------------------------------------------
 //                              Functions 
 //--------------------------------------------------------------------
 
+f_isMarketClosed() => 
+    barstate.islast and barstate.islastconfirmedhistory
+
+f_canShowNextATR() =>
+    i_showNextDay and f_isMarketClosed()
+
 f_getAtr() =>
     switch i_value
         "Today"     => dayAtr
-        "Yesterday" => i_showNextDay and isMarketClosed ? dayAtr : prevDayAtr
+        "Yesterday" => f_canShowNextATR() ? dayAtr : prevDayAtr
 
-f_hasGapped(float _open, float _prevClose) => _open != _prevClose
+f_hasGapped(float _open, float _prevClose) =>
+    _open != _prevClose
 
 f_getTopPrice(float _open, float _prevClose, float _high) =>
     f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
@@ -113,9 +129,9 @@ if not (time('1440') == time('1440')[1])
 
 // Tracks newest high and low
 if high > dayHigh
-    dayHigh := high
+    dayHigh     := high
 if low < dayLow
-    dayLow := low
+    dayLow      := low
 
 
 // Get top and bottom anchor prices (gap minded)
@@ -126,11 +142,11 @@ topPrice            = f_getTopPrice(dayOpen, prevDayClose, dayHigh)
 
 // Override values when displaying tomorrow's ATR
 
-if i_showNextDay and isMarketClosed
-    dayHigh := close
-    dayLow := close
+if f_canShowNextATR()
+    dayHigh     := close
+    dayLow      := close
     bottomPrice := close
-    topPrice := close
+    topPrice    := close
 
 
 // Compute ATR levels prices
