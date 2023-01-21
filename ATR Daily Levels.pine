@@ -59,14 +59,16 @@ var i_showNextDay       = input         (true,                      "Show Next A
 
 var float dayHigh       = na
 var float dayLow        = na
+var float dayOpen       = na
+var float prevDayClose  = na
 var int dayBarIndex     = na
 var float bottomPrice   = na
 var float topPrice      = na
 
-[dayOpen, prevDayClose, dayTime, dayAtr, prevDayAtr] = request.security(
+[dayAtr, prevDayAtr] = request.security(
      syminfo.tickerid,
      'D',
-     [open, close[1], time, ta.atr(i_period), ta.atr(i_period)[1]],
+     [ta.atr(i_period), ta.atr(i_period)[1]],
      lookahead = barmerge.lookahead_on)
 
 // For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
@@ -183,47 +185,49 @@ else
 
     // 1/ Init on the first bar of the chart
     // 2/ Reset on new day change (condition should cover the extended sessions bars)
-    if timeframe.change("1440") or barstate.isfirst
-        dayHigh     := high
-        dayLow      := low
-        dayBarIndex := bar_index
+    if timeframe.change("D") or barstate.isfirst
+        dayHigh         := high
+        dayLow          := low
+        dayOpen         := open
+        prevDayClose    := close[1]
+        dayBarIndex     := bar_index
 
 
     // Track the new higher high and lower low
     if high > dayHigh
-        dayHigh     := high
+        dayHigh         := high
     if low < dayLow
-        dayLow      := low
+        dayLow          := low
 
 
     // Get top and bottom anchor prices (gap minded)
-    bottomPrice     := f_getBottomPrice(dayOpen, prevDayClose, dayLow)
-    topPrice        := f_getTopPrice(dayOpen, prevDayClose, dayHigh)
+    bottomPrice         := f_getBottomPrice(dayOpen, prevDayClose, dayLow)
+    topPrice            := f_getTopPrice(dayOpen, prevDayClose, dayHigh)
 
 
 // Compute ATR levels prices
 
-atrHigh             = bottomPrice   + atr
-atrLow              = topPrice      - atr
+atrHigh                 = bottomPrice   + atr
+atrLow                  = topPrice      - atr
 
 
 // Handle the condiditional coloring
 
-c_upper             = dayHigh >= atrHigh    ? i_overflowColor : i_color
-c_lower             = dayLow <= atrLow      ? i_overflowColor : i_color
+c_upper                 = dayHigh >= atrHigh    ? i_overflowColor : i_color
+c_lower                 = dayLow <= atrLow      ? i_overflowColor : i_color
 
 
 // Compose the labels and tooltips text
 
-atrStr              = str.tostring(atr,     format.mintick)
-upperPriceStr       = str.tostring(atrHigh, format.mintick)
-lowerPriceStr       = str.tostring(atrLow,  format.mintick)
+atrStr                  = str.tostring(atr,     format.mintick)
+upperPriceStr           = str.tostring(atrHigh, format.mintick)
+lowerPriceStr           = str.tostring(atrLow,  format.mintick)
 
-upperLabelText      = str.format("{0} ({1})", upperPriceStr, atrStr)
-lowerLabelText      = lowerPriceStr
+upperLabelText          = str.format("{0} ({1})", upperPriceStr, atrStr)
+lowerLabelText          = lowerPriceStr
 
-upperLabelTooltip   = str.format("{0} (D ATR: {1})", upperPriceStr, atrStr)
-lowerLabelTooltip   = str.format("{0} (D ATR: {1})", lowerPriceStr, atrStr)
+upperLabelTooltip       = str.format("{0} (D ATR: {1})", upperPriceStr, atrStr)
+lowerLabelTooltip       = str.format("{0} (D ATR: {1})", lowerPriceStr, atrStr)
 
 
 //--------------------------------------------------------------------
