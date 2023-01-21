@@ -48,7 +48,7 @@ var t_showNext          = "Plot next day's ATR levels when the market is closed.
 var i_period            = input.int     (20,                        "Length", 1,                                                group=g1)
 var i_value             = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g1)
 var i_color             = input         (color.gray,                "Color",                                                    group=g2)
-var i_overflowColor     = input         (color.new(color.gray, 60), "Overflow Color",                       t_overflowColor,    group=g2)
+var i_overflowColor     = input         (color.new(#50535e, 50),    "Overflow Color",                       t_overflowColor,    group=g2)
 var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g3)
 var i_showNextDay       = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g3)
 
