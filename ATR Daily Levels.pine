@@ -244,6 +244,13 @@ if canDisplay
     f_drawLabel (_endBarIndex, atrLow,  lowerLabelText, c_lower, lowerLabelTooltip)
 
 
+// Plot additionnal values for helping as well as for providing default alert conditions
+
+plot(canDisplay ? atrHigh       : na,   "Upper Level",  c_upper,            editable=false,    display=display.status_line + display.data_window + display.price_scale)
+plot(canDisplay ? atrLow        : na,   "Lower Lever",  c_lower,            editable=false,    display=display.status_line + display.data_window + display.price_scale)
+plot(canDisplay ? atr           : na,   "ATR",          i_overflowColor,    editable=false,    display=display.status_line + display.data_window)
+
+
 // Draw the notification table
 
 notifications           = array.from(
