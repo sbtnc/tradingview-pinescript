@@ -179,8 +179,9 @@ if f_canShowNextATR()
 // When showing the today/yesterday levels
 
 else
-    // Track the daily high and low on runtime instead of fetching them from a security call
+    // 1/ Track the daily high and low on runtime instead of fetching them from a security call
     // This aims to avoid the `future leak` from the "jump" when using the bar replay function
+    // 2/ Track the daily open and previous daily close for minding gaps
 
 
     // 1/ Init on the first bar of the chart
