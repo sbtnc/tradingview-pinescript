@@ -54,28 +54,6 @@ var i_showNextDay       = input         (true,                      "Show Next A
 
 
 //--------------------------------------------------------------------
-//                        Variables declarations
-//--------------------------------------------------------------------
-
-var float dayHigh       = na
-var float dayLow        = na
-var float dayOpen       = na
-var float prevDayClose  = na
-var int dayBarIndex     = na
-var float bottomPrice   = na
-var float topPrice      = na
-
-[dayAtr, prevDayAtr] = request.security(
-     syminfo.tickerid,
-     'D',
-     [ta.atr(i_period), ta.atr(i_period)[1]],
-     lookahead = barmerge.lookahead_on)
-
-// For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
-canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
-
-
-//--------------------------------------------------------------------
 //                              Functions 
 //--------------------------------------------------------------------
 
@@ -93,10 +71,10 @@ f_canShowNextATR() =>
 
 // @function Return the ATR value used as a reference
 // @return float
-f_getAtr() =>
+f_getAtr(float _current, float _previous) =>
     switch i_value
-        "Today"     => dayAtr
-        "Yesterday" => f_canShowNextATR() ? dayAtr : prevDayAtr
+        "Today"     => _current
+        "Yesterday" => f_canShowNextATR() ? _current : _previous
 
 
 // @function Check if the market has an open gap
@@ -179,11 +157,32 @@ f_drawNotificationTable(array<bool> _conditions, array<string> _texts, array<str
 
 
 //--------------------------------------------------------------------
-//                                Logic
+//                        Variables declarations
 //--------------------------------------------------------------------
 
-atr = f_getAtr()
+var float dayHigh       = na
+var float dayLow        = na
+var float dayOpen       = na
+var float prevDayClose  = na
+var int dayBarIndex     = na
+var float bottomPrice   = na
+var float topPrice      = na
 
+[dayAtr, prevDayAtr] = request.security(
+     syminfo.tickerid,
+     'D',
+     [ta.atr(i_period), ta.atr(i_period)[1]],
+     lookahead = barmerge.lookahead_on)
+
+// For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
+canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
+
+atr = f_getAtr(dayAtr, prevDayAtr)
+
+
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
 
 // When showing the next daily levels (looking like at the opening time)
 
