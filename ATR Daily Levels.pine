@@ -79,32 +79,46 @@ canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 //                              Functions 
 //--------------------------------------------------------------------
 
+// @function Check if the market is closed
+// @return bool
 f_isMarketClosed() => 
     barstate.islast and barstate.islastconfirmedhistory
 
 
+// @function Check if the indicator should display the next session ATR
+// return bool
 f_canShowNextATR() =>
     i_showNextDay and f_isMarketClosed()
 
 
+// @function Return the ATR value used as a reference
+// @return float
 f_getAtr() =>
     switch i_value
         "Today"     => dayAtr
         "Yesterday" => f_canShowNextATR() ? dayAtr : prevDayAtr
 
 
+// @function Check if the market has an open gap
+// @return bool
 f_hasGapped(float _open, float _prevClose) =>
     _open != _prevClose
 
 
+// @function Return the "true" high price (considering gaps volatility)
+// @return float
 f_getTopPrice(float _open, float _prevClose, float _high) =>
     f_hasGapped(_open, _prevClose) ? _prevClose > _high ? _prevClose : _high : _high
 
 
+// @function Return the "true" low price (considering gaps volatility)
+// @return float
 f_getBottomPrice(float _open, float _prevClose, float _low) =>
     f_hasGapped(_open, _prevClose) ? _prevClose < _low ? _prevClose : _low : _low
 
 
+// @function Draw a level's line
+// @return void
 f_drawLine(int _x1, int _x2, float _y, color _c) =>
     var _l = line.new(na, na, na, na, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
 
@@ -114,6 +128,8 @@ f_drawLine(int _x1, int _x2, float _y, color _c) =>
         line.set_color(_l, _c)
 
 
+// @function Draw a level's label and tooltips
+// @return void
 f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
     var _l = label.new(na, na, style=DEFAULT_LABEL_STYLE, color=DEFAULT_LABEL_COLOR)
 
@@ -124,6 +140,8 @@ f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
         label.set_tooltip(_l, _tooltip)
 
 
+// @function Draw the table showing the indicator notifications
+// return int
 f_drawNotificationTable(array<bool> _conditions, array<string> _texts, array<string> _tooltips) =>
     // For the implementation purpose, throw an error when missing an element
     
