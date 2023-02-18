@@ -50,12 +50,21 @@ var i_value             = input.string  ("Yesterday",               "Reference",
 var i_color             = input         (color.gray,                "Color",                                                    group=g2)
 var i_overflowColor     = input         (color.new(#50535e, 50),    "Overflow Color",                       t_overflowColor,    group=g2)
 var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g3)
-var i_showNextDay       = input         (true,                      "Show Next ATR Levels",                 t_showNext,         group=g3)
+var i_showNextDay       = input         (false,                     "Show Next ATR Levels",                 t_showNext,         group=g3)
 
 
 //--------------------------------------------------------------------
 //                              Functions 
 //--------------------------------------------------------------------
+
+// @function Return a number rounded to the precision of the symbol's mintick (different than `math.round_to_mintick`)
+// @return float
+f_roundToMinPrecision(float _n) =>
+    _power = math.abs(math.log10(syminfo.mintick))
+    // Ceil the power when mintick are different than 0.1, 0.01, etc...
+    _precision = math.ceil(_power)
+    math.round(_n, _precision)
+
 
 // @function Check if the market is closed
 // @return bool
@@ -237,9 +246,9 @@ c_lower                 = dayLow <= atrLow      ? i_overflowColor : i_color
 
 // Compose the labels and tooltips text
 
-atrStr                  = str.tostring(atr,     format.mintick)
-upperPriceStr           = str.tostring(atrHigh, format.mintick)
-lowerPriceStr           = str.tostring(atrLow,  format.mintick)
+atrStr                  = str.tostring(f_roundToMinPrecision(atr))
+upperPriceStr           = str.tostring(f_roundToMinPrecision(atrHigh))
+lowerPriceStr           = str.tostring(f_roundToMinPrecision(atrLow))
 
 upperLabelText          = str.format("{0} ({1})", upperPriceStr, atrStr)
 lowerLabelText          = lowerPriceStr
