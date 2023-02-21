@@ -58,14 +58,25 @@ var i_showNextDay       = input         (false,                     "Show Next A
 //                              Functions 
 //--------------------------------------------------------------------
 
+// @function Return the number of decimals from a given number
+// @return int
+f_countDecimals(float _n) =>
+    _str    = str.tostring(_n)
+    _count  = 0
+
+    // Number is a decimal
+    if str.contains(_str, ".")
+        _split = str.split(_str, ".")
+        _count := str.length(array.get(_split, 1))
+
+    _count
+
+
 // @function Return a number rounded to the precision of the symbol's mintick (different than `math.round_to_mintick`)
 // @return float
 f_roundToMinPrecision(float _n) =>
-    _power = math.abs(math.log10(syminfo.mintick))
-
-    // Ceil the power when mintick are different than 0.1, 0.01, etc...
-    _precision = math.ceil(_power)
-    math.round(_n, _precision)
+    var minPrecision = f_countDecimals(syminfo.mintick)
+    math.round(_n, minPrecision)
 
 
 // @function Check if the market is closed
