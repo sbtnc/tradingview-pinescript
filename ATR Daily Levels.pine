@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-09-06
-// Last modified: 2023-02-21
+// Last modified: 2023-01-21
 // Version 5.0
 
 // @version=5
@@ -98,6 +98,18 @@ f_getTopPrice(_prevClose, float _high) =>
 // @return float
 f_getBottomPrice(float _prevClose, float _low) =>
     math.min(_prevClose, _low)
+
+
+// @function Calculate the upside ATR level
+// @return float
+f_calculateAtrHigh(float _bottom, float _atr) =>
+    _bottom + _atr
+
+
+// @function Calculate the downside ATR level
+// @return float
+f_calculateAtrLow(float _top, float _atr) =>
+    _top - _atr
 
 
 // @function Draw a level's line
@@ -218,10 +230,8 @@ if timeframe.change("D") or barstate.isfirst
 
 // Track the new higher high and lower low
 
-if high > dayHigh
-    dayHigh := high
-if low < dayLow
-    dayLow  := low
+dayHigh     := math.max(high, dayHigh)
+dayLow      := math.min(low, dayLow)
 
 
 // Get the top and bottom anchor prices for calculating the levels (gap minded)
@@ -232,8 +242,8 @@ topPrice    := f_getTopPrice    (prevDayClose, dayHigh)
 
 // Compute the ATR levels prices
 
-atrHigh     = bottomPrice   + atr
-atrLow      = topPrice      - atr
+atrHigh     = f_calculateAtrHigh(bottomPrice, atr)
+atrLow      = f_calculateAtrLow(topPrice, atr)
 
 
 // Handle the condiditional coloring
@@ -259,8 +269,8 @@ c_lowerLevel    = c_atrLow
 // In this case, we override values
 
 if f_canShowNextATR()
-    upperLevel      := close + atr
-    lowerLevel      := close - atr
+    upperLevel      := f_calculateAtrHigh(close, atr)
+    lowerLevel      := f_calculateAtrLow(close, atr)
 
     c_upperLevel    := i_color
     c_lowerLevel    := i_color
