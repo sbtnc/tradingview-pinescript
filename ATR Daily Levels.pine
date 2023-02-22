@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-09-06
-// Last modified: 2023-01-21
+// Last modified: 2023-02-22
 // Version 5.0
 
 // @version=5
@@ -36,12 +36,12 @@ var g3                  = "Preferences"
 
 // Tooltips
 
-var t_value              = "Calculate the levels using yesterday's ATR or today's ATR."
-var t_overflowColor      = "Coloring after the price reached or exceeded the ATR boundary."
-var t_showStartOffset    = "Draw levels on the right side of the price only.\n\n" +
+var t_value             = "Calculate the levels using yesterday's ATR or today's ATR."
+var t_overflowColor     = "Coloring after the price reached or exceeded the ATR boundary."
+var t_showStartOffset   = "Draw levels on the right side of the price only.\n\n" +
                              "When disabled, draw levels from the start of the day."
-var t_showNext           = "Plot the next day's ATR levels when the market is closed.\n\n" +
-                               "Use this option if you like to plan your trades ahead of the next day or prepare on the weekend for Monday."
+var t_showNext          = "Plot the next day's ATR levels when the market is closed.\n\n" +
+                             "Use this option if you like to plan your trades ahead of the next day or prepare on the weekend for Monday."
 
 
 // Inputs
@@ -254,7 +254,7 @@ topPrice    := f_getTopPrice    (prevDayClose, dayHigh)
 // Compute the ATR levels prices
 
 atrHigh     = f_calculateAtrHigh(bottomPrice, atr)
-atrLow      = f_calculateAtrLow(topPrice, atr)
+atrLow      = f_calculateAtrLow (topPrice, atr)
 
 
 // Handle the condiditional coloring
@@ -281,7 +281,7 @@ c_lowerLevel    = c_atrLow
 
 if f_canShowNextATR()
     upperLevel      := f_calculateAtrHigh(close, atr)
-    lowerLevel      := f_calculateAtrLow(close, atr)
+    lowerLevel      := f_calculateAtrLow (close, atr)
 
     c_upperLevel    := i_color
     c_lowerLevel    := i_color
