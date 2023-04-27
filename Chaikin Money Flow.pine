@@ -1,13 +1,14 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
-// 2019-1-5
+// Created: 2019-01-05
+// Last modified: 2023-04-27
+// Version 2.0
 
-//@version=3
-study(title="Chaikin Money Flow", shorttitle="CMF")
+indicator("Chaikin Money Flow", "CMF")
 
 //------------------------------ Inputs ------------------------------
 
-length = input(20, minval=1)
+length = input.int(20, minval=1)
 
 //------------------------------ Colors ------------------------------
 
@@ -19,7 +20,7 @@ color_neutral = #656565
 
 // orignal CMF logic
 ad = close==high and close==low or high==low ? 0 : ((2*close-low-high)/(high-low))*volume
-mf = sum(ad, length) / sum(volume, length)
+mf = math.sum(ad, length) / math.sum(volume, length)
 
 positive = mf > 0
 
