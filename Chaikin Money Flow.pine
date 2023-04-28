@@ -31,18 +31,19 @@ g_style     = "Style"
 // Tooltips
 
 t_gradientLength    = "The number of bars used for the dynamic gradient coloring." +
-                         " The coloring is relative to the maximum and minimum values found over the period."
+                         " The coloring is relative to the maximum and minimum values found over the period.\n\n" +
+                         " Use a short period to emphasize the current market conditions or a long period to highlight past extreme values."
 
 
 // Inputs
 
-i_length            = input.int (20,                        "Length",           1,                                          group=g_indicator)
-i_positiveCmfColor  = input     (DEFAULT_MF_COLOR,          "Money Flow",                           inline="Colors",        group=g_style)
-i_negativeCmfColor  = input     (DEFAULT_MF_COLOR,          "",                                     inline="Colors",        group=g_style)
-i_gradientLength    = input     (50,                        "",                 t_gradientLength,   inline="Colors",        group=g_style)
-i_positiveBgColor   = input     (DEFAULT_BG_COLOR_POSITIVE, "Background",                           inline="Background",    group=g_style)
-i_negativeBgColor   = input     (DEFAULT_BG_COLOR_NEGATIVE, "",                                     inline="Background",    group=g_style)
-i_zeroColor         = input     (DEFAULT_ZERO_COLOR,        "Zero       ",                          inline="Zero",          group=g_style)
+i_length            = input.int (20,                        "Length",       1,                                                              group=g_indicator)
+i_positiveCmfColor  = input     (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_style)
+i_negativeCmfColor  = input     (DEFAULT_MF_COLOR,          "",                                                     inline="Colors",        group=g_style)
+i_gradientLength    = input.int (100,                       "",             minval=1,   tooltip=t_gradientLength,   inline="Colors",        group=g_style)
+i_positiveBgColor   = input     (DEFAULT_BG_COLOR_POSITIVE, "Background",                                           inline="Background",    group=g_style)
+i_negativeBgColor   = input     (DEFAULT_BG_COLOR_NEGATIVE, "",                                                     inline="Background",    group=g_style)
+i_zeroColor         = input     (DEFAULT_ZERO_COLOR,        "Zero       ",                                          inline="Zero",          group=g_style)
 
 
 //--------------------------------------------------------------------
