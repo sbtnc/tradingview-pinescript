@@ -1,37 +1,125 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
-// 2019-1-5
+// Created: 2019-01-05
+// Last modified: 2023-04-28
+// Version 2.0
 
-//@version=3
-study(title="Chaikin Money Flow", shorttitle="CMF")
+// @version=5
+indicator("Chaikin Money Flow", "CMF", precision=2, timeframe="", timeframe_gaps=true)
 
-//------------------------------ Inputs ------------------------------
 
-length = input(20, minval=1)
+//--------------------------------------------------------------------
+//                             Constants
+//--------------------------------------------------------------------
 
-//------------------------------ Colors ------------------------------
+DEFAULT_MF_COLOR            = color.new(#656565, 20)
+DEFAULT_BG_COLOR_NEGATIVE   = #ff4e3e
+DEFAULT_BG_COLOR_POSITIVE   = #3fbe53
+DEFAULT_ZERO_COLOR          = color.new(#656565, 90)
 
-color_negative = #ff4e3e
-color_positive = #3fbe53
-color_neutral = #656565
 
-//------------------------------- Logic ------------------------------
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
 
-// orignal CMF logic
-ad = close==high and close==low or high==low ? 0 : ((2*close-low-high)/(high-low))*volume
-mf = sum(ad, length) / sum(volume, length)
+// Groups
 
-positive = mf > 0
+g_indicator = "Money Flow"
+g_style     = "Style"
 
-//------------------------- Plotting & styling ------------------------
 
-transp_area = 92
-transp_cmf = 20
-transp_zero = 100
+// Tooltips
 
-color = positive ? color_positive : color_negative
+t_gradientLength    = "The number of bars used for the dynamic gradient coloring." +
+                         " The coloring is relative to the maximum and minimum values found over the period.\n\n" +
+                         "Use a short period to emphasize the current market conditions or a long period to highlight past extreme values."
 
-zero = plot(0, color=color_neutral, transp=transp_zero, title="zero")
-cmf = plot(mf, color=color_neutral, transp=transp_cmf, title="CMF")
 
-fill(zero, cmf, color=color, transp=transp_area, title="area")
+// Inputs
+
+i_length            = input.int (20,                        "Length",       1,                                                              group=g_indicator)
+i_positiveCmfColor  = input     (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_style)
+i_negativeCmfColor  = input     (DEFAULT_MF_COLOR,          "",                                                     inline="Colors",        group=g_style)
+i_dynamic           = input     (false,                     "Dynamic gradient",                                     inline="Dynamic",       group=g_style)
+i_gradientLength    = input.int (100,                       "",             minval=1,   tooltip=t_gradientLength,   inline="Dynamic",       group=g_style)
+i_positiveBgColor   = input     (DEFAULT_BG_COLOR_POSITIVE, "Background",                                           inline="Background",    group=g_style)
+i_negativeBgColor   = input     (DEFAULT_BG_COLOR_NEGATIVE, "",                                                     inline="Background",    group=g_style)
+
+
+//--------------------------------------------------------------------
+//                              Functions 
+//--------------------------------------------------------------------
+
+// @function    Get the conditional positive/negative color
+// @return      color
+f_getColor(float _val, color _positive, color _negative) =>
+    _val >= 0 ? _positive : _negative
+
+
+// @function    Get the conditional positive/negative gradient color between a specific range
+// @return      color
+f_getColor(float _val, float _range, color _positive, color _negative) =>
+    color.from_gradient(_val, -_range, _range, _negative, _positive)
+
+
+// @function    Return the CMF line color per user config
+// @return      color
+g_getCmfColor(float _val, float _extremVal) =>
+    switch i_dynamic
+        false   => f_getColor(_val, i_positiveCmfColor, i_negativeCmfColor)
+        true    => f_getColor(_val, _extremVal, i_positiveCmfColor, i_negativeCmfColor)
+
+
+//--------------------------------------------------------------------
+//                        Variables declarations
+//--------------------------------------------------------------------
+
+var cumulativeVolume = 0.0
+
+
+//--------------------------------------------------------------------
+//                      Logic (orignal built-in CMF)
+//--------------------------------------------------------------------
+
+cumulativeVolume += nz(volume)
+
+
+// Notify the user when the indicator can't be used
+
+if barstate.islast and cumulativeVolume == 0
+    runtime.error("No volume is provided by the data vendor.")
+
+
+// Calculate the Money Flow
+
+ad = close == high and close == low or high == low ? 0 : ((2 * close - low - high) / (high - low)) * volume
+mf = math.sum(ad, i_length) / math.sum(volume, i_length)
+
+
+//--------------------------------------------------------------------
+//                          Plotting & styling
+//--------------------------------------------------------------------
+
+// Base the dynamic gradient on the values found over the selected period
+
+highest = ta.highest(mf, i_gradientLength)
+lowest  = ta.lowest(mf, i_gradientLength)
+extreme = math.max(highest, math.abs(lowest))
+c_cmf   = g_getCmfColor(mf, extreme)
+
+
+// Plot the CMF
+
+cmf = plot(mf, "MF", c_cmf)
+
+
+// Plot the zero line
+
+hline(0, "Zero", DEFAULT_ZERO_COLOR)
+
+
+// Fill with gradient backgrounds
+
+zero = plot(0, "Zero", editable=false, display=display.none)
+fill(zero, cmf, 1, -0.01, i_positiveBgColor, color.new(i_positiveBgColor, 100))
+fill(zero, cmf, 0.01, -1, color.new(i_negativeBgColor, 100), i_negativeBgColor)
