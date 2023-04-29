@@ -1,37 +1,36 @@
-// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-// © sbtnc
+// @version=5
+//
+// @mrSebastienC
 // 2019-1-5
-
-//@version=3
-study(title="Multiple Moving Averages", shorttitle="MAs", overlay=true)
+indicator(title="Multiple Moving Averages", shorttitle="MAs", overlay=true)
 
 //------------------------------ Inputs ------------------------------
 
-src = input(close, type=source, title='source')
-length_1 = input(9, minval=1, title="MA 1 length")
-type_1 = input('EMA', options=['SMA', 'EMA', 'na'], title="MA 1 type")
-length_2 = input(20, minval=1, title="MA 2 length")
-type_2 = input('EMA', options=['SMA', 'EMA', 'na'], title="MA 2 type")
-length_3 = input(50, minval=1, title="MA 3 length")
-type_3 = input('EMA', options=['SMA', 'EMA', 'na'], title="MA 3 type")
-length_4 = input(100, minval=1, title="MA 4 length")
-type_4 = input('EMA', options=['SMA', 'EMA', 'na'], title="MA 4 type")
-length_5 = input(200, minval=1, title="MA 5 length")
-type_5 = input('EMA', options=['SMA', 'EMA', 'na'], title="MA 5 type")
-offset = input(0, title="offset")
+src = input(close, title='source')
+length_1 = input.int(9, minval=1, title="MA 1 length")
+type_1 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 1 type")
+length_2 = input.int(20, minval=1, title="MA 2 length")
+type_2 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 2 type")
+length_3 = input.int(50, minval=1, title="MA 3 length")
+type_3 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 3 type")
+length_4 = input.int(100, minval=1, title="MA 4 length")
+type_4 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 4 type")
+length_5 = input.int(200, minval=1, title="MA 5 length")
+type_5 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 5 type")
+offset = input.int(0, title="offset")
 
 //------------------------------ Colors ------------------------------
 
-color_1 = #c9daf8
-color_2 = #a4c2f4
-color_3 = #6d9eeb
-color_4 = #3c78d8
-color_5 = #0b5394
+color_1 = color.new(#c9daf8, 0)
+color_2 = color.new(#a4c2f4, 4)
+color_3 = color.new(#6d9eeb, 8)
+color_4 = color.new(#3c78d8, 12)
+color_5 = color.new(#0b5394, 16)
 
 //------------------------------- Logic ------------------------------
 
 create(_type, _src, _length) =>
-    _type == 'EMA' ? ema(_src, _length) : _type == 'SMA' ? sma(_src, _length) : na
+    _type == 'EMA' ? ta.ema(_src, _length) : _type == 'SMA' ? ta.sma(_src, _length) : na
 
 ma1 = create(type_1, src, length_1)
 ma2 = create(type_2, src, length_2)
@@ -41,16 +40,10 @@ ma5 = create(type_5, src, length_5)
 
 //------------------------- Plotting & styling ------------------------
 
-transp_1 = 0
-transp_2 = 4
-transp_3 = 8
-transp_4 = 12
-transp_5 = 16
-
 line_width = 1
 
-ma_1 = plot(ma1, color=color_1, transp=transp_1, linewidth=line_width, offset=offset, title="MA 1")
-ma_2 = plot(ma2, color=color_2, transp=transp_2, linewidth=line_width, offset=offset, title="MA 2")
-ma_3 = plot(ma3, color=color_3, transp=transp_3, linewidth=line_width, offset=offset, title="MA 3")
-ma_4 = plot(ma4, color=color_4, transp=transp_4, linewidth=line_width, offset=offset, title="MA 4")
-ma_5 = plot(ma5, color=color_5, transp=transp_5, linewidth=line_width, offset=offset, title="MA 5")
+ma_1 = plot(ma1, color=color_1, linewidth=line_width, offset=offset, title="MA 1")
+ma_2 = plot(ma2, color=color_2, linewidth=line_width, offset=offset, title="MA 2")
+ma_3 = plot(ma3, color=color_3, linewidth=line_width, offset=offset, title="MA 3")
+ma_4 = plot(ma4, color=color_4, linewidth=line_width, offset=offset, title="MA 4")
+ma_5 = plot(ma5, color=color_5, linewidth=line_width, offset=offset, title="MA 5")
