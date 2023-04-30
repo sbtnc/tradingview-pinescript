@@ -1,11 +1,11 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2019-01-05
-// Last modified: 2023-04-28
-// Version 2.0
+// Last modified: 2023-04-30
+// Version 2.1
 
 // @version=5
-indicator("Chaikin Money Flow", "CMF", precision=2, timeframe="", timeframe_gaps=true)
+indicator("Chaikin Money Flow", "CMF", precision=2)
 
 
 //--------------------------------------------------------------------
@@ -24,8 +24,9 @@ DEFAULT_ZERO_COLOR          = color.new(#656565, 90)
 
 // Groups
 
-g_indicator = "Money Flow"
-g_style     = "Style"
+g_1 = "Money Flow #1"
+g_2 = "Money Flow #2"
+g_3 = "Money Flow #3"
 
 
 // Tooltips
@@ -37,13 +38,32 @@ t_gradientLength    = "The number of bars used for the dynamic gradient coloring
 
 // Inputs
 
-i_length            = input.int (20,                        "Length",       1,                                                              group=g_indicator)
-i_positiveCmfColor  = input     (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_style)
-i_negativeCmfColor  = input     (DEFAULT_MF_COLOR,          "",                                                     inline="Colors",        group=g_style)
-i_dynamic           = input     (false,                     "Dynamic gradient",                                     inline="Dynamic",       group=g_style)
-i_gradientLength    = input.int (100,                       "",             minval=1,   tooltip=t_gradientLength,   inline="Dynamic",       group=g_style)
-i_positiveBgColor   = input     (DEFAULT_BG_COLOR_POSITIVE, "Background",                                           inline="Background",    group=g_style)
-i_negativeBgColor   = input     (DEFAULT_BG_COLOR_NEGATIVE, "",                                                     inline="Background",    group=g_style)
+i_timeframe1        = input.timeframe   ("",                        "Timeframe",                                                                    group=g_1)
+i_length1           = input.int         (20,                        "Length",       1,                                                              group=g_1)
+i_positiveCmfColor1 = input             (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_1)
+i_negativeCmfColor1 = input             (DEFAULT_MF_COLOR,          "",                                                     inline="Colors",        group=g_1)
+i_dynamic1          = input             (false,                     "Dynamic gradient",                                     inline="Dynamic",       group=g_1)
+i_gradientLength1   = input.int         (100,                       "",             minval=1,   tooltip=t_gradientLength,   inline="Dynamic",       group=g_1)
+i_positiveBgColor1  = input             (DEFAULT_BG_COLOR_POSITIVE, "Background",                                           inline="Background",    group=g_1)
+i_negativeBgColor1  = input             (DEFAULT_BG_COLOR_NEGATIVE, "",                                                     inline="Background",    group=g_1)
+
+i_timeframe2        = input.timeframe   ("",                        "Timeframe",                                                                    group=g_2)
+i_length2           = input.int         (20,                        "Length",       1,                                                              group=g_2)
+i_positiveCmfColor2 = input             (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_2)
+i_negativeCmfColor2 = input             (DEFAULT_MF_COLOR,          "",                                                     inline="Colors",        group=g_2)
+i_dynamic2          = input             (false,                     "Dynamic gradient",                                     inline="Dynamic",       group=g_2)
+i_gradientLength2   = input.int         (100,                       "",             minval=1,   tooltip=t_gradientLength,   inline="Dynamic",       group=g_2)
+i_positiveBgColor2  = input             (DEFAULT_BG_COLOR_POSITIVE, "Background",                                           inline="Background",    group=g_2)
+i_negativeBgColor2  = input             (DEFAULT_BG_COLOR_NEGATIVE, "",                                                     inline="Background",    group=g_2)
+
+i_timeframe3        = input.timeframe   ("",                        "Timeframe",                                                                    group=g_3)
+i_length3           = input.int         (20,                        "Length",       1,                                                              group=g_3)
+i_positiveCmfColor3 = input             (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_3)
+i_negativeCmfColor3 = input             (DEFAULT_MF_COLOR,          "",                                                     inline="Colors",        group=g_3)
+i_dynamic3          = input             (false,                     "Dynamic gradient",                                     inline="Dynamic",       group=g_3)
+i_gradientLength3   = input.int         (100,                       "",             minval=1,   tooltip=t_gradientLength,   inline="Dynamic",       group=g_3)
+i_positiveBgColor3  = input             (DEFAULT_BG_COLOR_POSITIVE, "Background",                                           inline="Background",    group=g_3)
+i_negativeBgColor3  = input             (DEFAULT_BG_COLOR_NEGATIVE, "",                                                     inline="Background",    group=g_3)
 
 
 //--------------------------------------------------------------------
@@ -64,10 +84,24 @@ f_getColor(float _val, float _range, color _positive, color _negative) =>
 
 // @function    Return the CMF line color per user config
 // @return      color
-g_getCmfColor(float _val, float _extremVal) =>
-    switch i_dynamic
-        false   => f_getColor(_val, i_positiveCmfColor, i_negativeCmfColor)
-        true    => f_getColor(_val, _extremVal, i_positiveCmfColor, i_negativeCmfColor)
+f_getCmfColor(bool _isDynamic, float _val, float _extremVal, color _positiveColor, color _negativeColor) =>
+    switch _isDynamic
+        false   => f_getColor(_val, _positiveColor, _negativeColor)
+        true    => f_getColor(_val, _extremVal, _positiveColor, _negativeColor)
+
+
+// @function    Get the CMF and its gradient coloring
+// @return      float
+f_getCmf(int _length, int _gradientLength, bool _isDynamic, color _positiveColor, color _negativeColor) =>
+    ad      = close == high and close == low or high == low ? 0 : ((2 * close - low - high) / (high - low)) * volume
+    mf      = math.sum(ad, _length) / math.sum(volume, _length)
+
+    highest = ta.highest(mf, _gradientLength)
+    lowest  = ta.lowest(mf, _gradientLength)
+    extreme = math.max(highest, math.abs(lowest))
+    c_cmf   = f_getCmfColor(_isDynamic, mf, extreme, _positiveColor, _negativeColor)
+
+    [mf, c_cmf]
 
 
 //--------------------------------------------------------------------
@@ -92,25 +126,22 @@ if barstate.islast and cumulativeVolume == 0
 
 // Calculate the Money Flow
 
-ad = close == high and close == low or high == low ? 0 : ((2 * close - low - high) / (high - low)) * volume
-mf = math.sum(ad, i_length) / math.sum(volume, i_length)
+[mf1, c_cmf1] = request.security(syminfo.tickerid, i_timeframe1, f_getCmf(i_length1, i_gradientLength1, i_dynamic1, i_positiveCmfColor1, i_negativeCmfColor1))
+[mf2, c_cmf2] = request.security(syminfo.tickerid, i_timeframe2, f_getCmf(i_length2, i_gradientLength2, i_dynamic2, i_positiveCmfColor2, i_negativeCmfColor2))
+[mf3, c_cmf3] = request.security(syminfo.tickerid, i_timeframe3, f_getCmf(i_length3, i_gradientLength3, i_dynamic3, i_positiveCmfColor3, i_negativeCmfColor3))
 
 
 //--------------------------------------------------------------------
 //                          Plotting & styling
 //--------------------------------------------------------------------
 
-// Base the dynamic gradient on the values found over the selected period
-
-highest = ta.highest(mf, i_gradientLength)
-lowest  = ta.lowest(mf, i_gradientLength)
-extreme = math.max(highest, math.abs(lowest))
-c_cmf   = g_getCmfColor(mf, extreme)
-
-
 // Plot the CMF
 
-cmf = plot(mf, "MF", c_cmf)
+cmf1 = plot(mf1, "MF 1", c_cmf1)
+
+cmf2 = plot(mf2, "MF 2", c_cmf2)
+
+cmf3 = plot(mf3, "MF 3", c_cmf3)
 
 
 // Plot the zero line
@@ -121,5 +152,12 @@ hline(0, "Zero", DEFAULT_ZERO_COLOR)
 // Fill with gradient backgrounds
 
 zero = plot(0, "Zero", editable=false, display=display.none)
-fill(zero, cmf, 1, -0.01, i_positiveBgColor, color.new(i_positiveBgColor, 100))
-fill(zero, cmf, 0.01, -1, color.new(i_negativeBgColor, 100), i_negativeBgColor)
+
+fill(zero, cmf1, 1, -0.01, i_positiveBgColor1, color.new(i_positiveBgColor1, 100))
+fill(zero, cmf1, 0.01, -1, color.new(i_negativeBgColor1, 100), i_negativeBgColor1)
+
+fill(zero, cmf2, 1, -0.01, i_positiveBgColor2, color.new(i_positiveBgColor2, 100))
+fill(zero, cmf2, 0.01, -1, color.new(i_negativeBgColor2, 100), i_negativeBgColor2)
+
+fill(zero, cmf3, 1, -0.01, i_positiveBgColor3, color.new(i_positiveBgColor3, 100))
+fill(zero, cmf3, 0.01, -1, color.new(i_negativeBgColor3, 100), i_negativeBgColor3)
