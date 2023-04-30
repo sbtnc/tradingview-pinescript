@@ -38,6 +38,10 @@ t_gradientLength    = "The number of bars used for the dynamic gradient coloring
 
 // Inputs
 
+i_enable1           = input             (true,                      "Money Flow #1")
+i_enable2           = input             (false,                     "Money Flow #2")
+i_enable3           = input             (false,                     "Money Flow #3")
+
 i_timeframe1        = input.timeframe   ("",                        "Timeframe",                                                                    group=g_1)
 i_length1           = input.int         (20,                        "Length",       1,                                                              group=g_1)
 i_positiveCmfColor1 = input             (DEFAULT_MF_COLOR,          "Money Flow",                                           inline="Colors",        group=g_1)
@@ -92,16 +96,19 @@ f_getCmfColor(bool _isDynamic, float _val, float _extremVal, color _positiveColo
 
 // @function    Get the CMF and its gradient coloring
 // @return      float
-f_getCmf(int _length, int _gradientLength, bool _isDynamic, color _positiveColor, color _negativeColor) =>
+f_getCmf(bool _isEnabled, int _length, int _gradientLength, bool _isDynamic, color _positiveColor, color _negativeColor) =>
     ad      = close == high and close == low or high == low ? 0 : ((2 * close - low - high) / (high - low)) * volume
     mf      = math.sum(ad, _length) / math.sum(volume, _length)
 
     highest = ta.highest(mf, _gradientLength)
     lowest  = ta.lowest(mf, _gradientLength)
-    extreme = math.max(highest, math.abs(lowest))
-    c_cmf   = f_getCmfColor(_isDynamic, mf, extreme, _positiveColor, _negativeColor)
 
-    [mf, c_cmf]
+    if _isEnabled
+        extreme = math.max(highest, math.abs(lowest))
+        c_cmf   = f_getCmfColor(_isDynamic, mf, extreme, _positiveColor, _negativeColor)
+        [mf, c_cmf]
+    else
+        [na, na]
 
 
 //--------------------------------------------------------------------
@@ -126,9 +133,9 @@ if barstate.islast and cumulativeVolume == 0
 
 // Calculate the Money Flow
 
-[mf1, c_cmf1] = request.security(syminfo.tickerid, i_timeframe1, f_getCmf(i_length1, i_gradientLength1, i_dynamic1, i_positiveCmfColor1, i_negativeCmfColor1))
-[mf2, c_cmf2] = request.security(syminfo.tickerid, i_timeframe2, f_getCmf(i_length2, i_gradientLength2, i_dynamic2, i_positiveCmfColor2, i_negativeCmfColor2))
-[mf3, c_cmf3] = request.security(syminfo.tickerid, i_timeframe3, f_getCmf(i_length3, i_gradientLength3, i_dynamic3, i_positiveCmfColor3, i_negativeCmfColor3))
+[mf1, c_cmf1] = request.security(syminfo.tickerid, i_timeframe1, f_getCmf(i_enable1, i_length1, i_gradientLength1, i_dynamic1, i_positiveCmfColor1, i_negativeCmfColor1))
+[mf2, c_cmf2] = request.security(syminfo.tickerid, i_timeframe2, f_getCmf(i_enable2, i_length2, i_gradientLength2, i_dynamic2, i_positiveCmfColor2, i_negativeCmfColor2))
+[mf3, c_cmf3] = request.security(syminfo.tickerid, i_timeframe3, f_getCmf(i_enable3, i_length3, i_gradientLength3, i_dynamic3, i_positiveCmfColor3, i_negativeCmfColor3))
 
 
 //--------------------------------------------------------------------
@@ -137,11 +144,11 @@ if barstate.islast and cumulativeVolume == 0
 
 // Plot the CMF
 
-cmf1 = plot(mf1, "MF 1", c_cmf1)
+cmf1 = plot(mf1, "MF 1", c_cmf1, display=i_enable1 ? display.all : display.none)
 
-cmf2 = plot(mf2, "MF 2", c_cmf2)
+cmf2 = plot(mf2, "MF 2", c_cmf2, display=i_enable2 ? display.all : display.none)
 
-cmf3 = plot(mf3, "MF 3", c_cmf3)
+cmf3 = plot(mf3, "MF 3", c_cmf3, display=i_enable3 ? display.all : display.none)
 
 
 // Plot the zero line
