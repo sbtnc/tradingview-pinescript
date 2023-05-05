@@ -5,7 +5,21 @@
 // Version 2.0
 
 // @version=5
-indicator(title="Multiple Moving Averages", shorttitle="MAs", overlay=true)
+indicator("Multiple Moving Averages", "MAs", true)
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+var DEFAULT_LINEWIDTH   = 1
+var DEFAULT_COLOR1      = color.new(#c9daf8, 0)
+var DEFAULT_COLOR2      = color.new(#a4c2f4, 4)
+var DEFAULT_COLOR3      = color.new(#6d9eeb, 8)
+var DEFAULT_COLOR4      = color.new(#3c78d8, 12)
+var DEFAULT_COLOR5      = color.new(#0b5394, 16)
+
+//#endregion
 
 
 //--------------------------------------------------------------------
@@ -14,53 +28,56 @@ indicator(title="Multiple Moving Averages", shorttitle="MAs", overlay=true)
 
 // Groups
 
-g1 = "MA #1"
-g2 = "MA #2"
-g3 = "MA #3"
-g4 = "MA #4"
-g5 = "MA #5"
+g1 = "#1"
+g2 = "#2"
+g3 = "#3"
+g4 = "#4"
+g5 = "#5"
 
 
 // Inputs
 
-i_length1 = input.int(9, "Length", 1, group=g1)
-i_source1 = input(close, "Source", group=g1)
-i_offset1 = input.int(0, "Offset", group=g1)
-type_1 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 1 type", group=g1)
+i_type_1    = input.string  ("EMA", "Type", ["SMA", "EMA", "RMA", "VMA", "VWMA"],   group=g1)
+i_length1   = input.int     (9,     "Length", 1,                                    group=g1)
+i_source1   = input         (close, "Source",                                       group=g1)
+i_offset1   = input.int     (0,     "Offset",                                       group=g1)
 
-i_length2 = input.int(20, "Length", 1, group=g2)
-i_source2 = input(close, "Source", group=g2)
-i_offset2 = input.int(0, "Offset", group=g2)
-type_2 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 2 type", group=g2)
+i_type_2    = input.string  ("EMA", "Type", ["SMA", "EMA", "RMA", "VMA", "VWMA"],   group=g2)
+i_length2   = input.int     (20,    "Length", 1,                                    group=g2)
+i_source2   = input         (close, "Source",                                       group=g2)
+i_offset2   = input.int     (0,     "Offset",                                       group=g2)
 
-i_length3 = input.int(50, "Length", 1, group=g3)
-i_source3 = input(close, "Source", group=g3)
-i_offset3 = input.int(0, "Offset", group=g3)
-type_3 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 3 type", group=g3)
+i_type_3    = input.string  ("EMA", "Type", ["SMA", "EMA", "RMA", "VMA", "VWMA"],   group=g3)
+i_length3   = input.int     (50,    "Length", 1,                                    group=g3)
+i_source3   = input         (close, "Source",                                       group=g3)
+i_offset3   = input.int     (0,     "Offset",                                       group=g3)
 
-i_length4 = input.int(100, "Length", 1, group=g4)
-i_source4 = input(close, "Source", group=g4)
-i_offset4 = input.int(0, "Offset", group=g4)
-type_4 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 4 type", group=g4)
+i_type_4    = input.string  ("EMA", "Type", ["SMA", "EMA", "RMA", "VMA", "VWMA"],   group=g4)
+i_length4   = input.int     (100,   "Length", 1,                                    group=g4)
+i_source4   = input         (close, "Source",                                       group=g4)
+i_offset4   = input.int     (0,     "Offset",                                       group=g4)
 
-i_length5 = input.int(200, "Length", 1, group=g5)
-i_source5 = input(close, "Source", group=g5)
-i_offset5 = input.int(0, "Offset", group=g5)
-type_5 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 5 type", group=g5)
-
+i_type_5    = input.string  ("EMA", "Type", ["SMA", "EMA", "RMA", "VMA", "VWMA"],   group=g5)
+i_length5   = input.int     (200,   "Length", 1,                                    group=g5)
+i_source5   = input         (close, "Source",                                       group=g5)
+i_offset5   = input.int     (0,     "Offset",                                       group=g5)
 
 //#endregion
 
 
 //--------------------------------------------------------------------
-//#region                 Variables declarations
+//#region                       Functions 
 //--------------------------------------------------------------------
 
-color_1 = color.new(#c9daf8, 0)
-color_2 = color.new(#a4c2f4, 4)
-color_3 = color.new(#6d9eeb, 8)
-color_4 = color.new(#3c78d8, 12)
-color_5 = color.new(#0b5394, 16)
+// @function Get the Moving Average (MA)
+// @returns float
+f_getMa(string _type, float _source, _length) =>
+    switch _type
+        "SMA"   => ta.sma(_source, _length)
+        "EMA"   => ta.ema(_source, _length)
+        "RMA"   => ta.rma(_source, _length)
+        "WMA"   => ta.wma(_source, _length)
+        "VWMA"  => ta.vwma(_source, _length)
 
 //#endregion
 
@@ -69,14 +86,11 @@ color_5 = color.new(#0b5394, 16)
 //#region                         Logic
 //--------------------------------------------------------------------
 
-create(_type, _src, _length) =>
-    _type == 'EMA' ? ta.ema(_src, _length) : _type == 'SMA' ? ta.sma(_src, _length) : na
-
-ma1 = create(type_1, i_source1, i_length1)
-ma2 = create(type_2, i_source2, i_length2)
-ma3 = create(type_3, i_source3, i_length3)
-ma4 = create(type_4, i_source4, i_length4)
-ma5 = create(type_5, i_source5, i_length5)
+ma1 = f_getMa(i_type_1, i_source1, i_length1)
+ma2 = f_getMa(i_type_2, i_source2, i_length2)
+ma3 = f_getMa(i_type_3, i_source3, i_length3)
+ma4 = f_getMa(i_type_4, i_source4, i_length4)
+ma5 = f_getMa(i_type_5, i_source5, i_length5)
 
 //#endregion
 
@@ -85,12 +99,10 @@ ma5 = create(type_5, i_source5, i_length5)
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-line_width = 1
-
-ma_1 = plot(ma1, color=color_1, linewidth=line_width, offset=i_offset1, title="MA 1")
-ma_2 = plot(ma2, color=color_2, linewidth=line_width, offset=i_offset2, title="MA 2")
-ma_3 = plot(ma3, color=color_3, linewidth=line_width, offset=i_offset3, title="MA 3")
-ma_4 = plot(ma4, color=color_4, linewidth=line_width, offset=i_offset4, title="MA 4")
-ma_5 = plot(ma5, color=color_5, linewidth=line_width, offset=i_offset5, title="MA 5")
+plot(ma1, "#1", DEFAULT_COLOR1, DEFAULT_LINEWIDTH, offset=i_offset1)
+plot(ma2, "#2", DEFAULT_COLOR2, DEFAULT_LINEWIDTH, offset=i_offset2)
+plot(ma3, "#3", DEFAULT_COLOR3, DEFAULT_LINEWIDTH, offset=i_offset3)
+plot(ma4, "#4", DEFAULT_COLOR4, DEFAULT_LINEWIDTH, offset=i_offset4)
+plot(ma5, "#5", DEFAULT_COLOR5, DEFAULT_LINEWIDTH, offset=i_offset5)
 
 //#endregion
