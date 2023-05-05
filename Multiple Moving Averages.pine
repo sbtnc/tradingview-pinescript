@@ -1,10 +1,16 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
+// Created: 2019-01-05
+// Last modified: 2023-05-05
+// Version 2.0
+
 // @version=5
-//
-// @mrSebastienC
-// 2019-1-5
 indicator(title="Multiple Moving Averages", shorttitle="MAs", overlay=true)
 
-//------------------------------ Inputs ------------------------------
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
 
 src = input(close, title='source')
 length_1 = input.int(9, minval=1, title="MA 1 length")
@@ -19,7 +25,12 @@ length_5 = input.int(200, minval=1, title="MA 5 length")
 type_5 = input.string('EMA', options=['SMA', 'EMA', 'na'], title="MA 5 type")
 offset = input.int(0, title="offset")
 
-//------------------------------ Colors ------------------------------
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
 
 color_1 = color.new(#c9daf8, 0)
 color_2 = color.new(#a4c2f4, 4)
@@ -27,7 +38,12 @@ color_3 = color.new(#6d9eeb, 8)
 color_4 = color.new(#3c78d8, 12)
 color_5 = color.new(#0b5394, 16)
 
-//------------------------------- Logic ------------------------------
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
 
 create(_type, _src, _length) =>
     _type == 'EMA' ? ta.ema(_src, _length) : _type == 'SMA' ? ta.sma(_src, _length) : na
@@ -38,7 +54,12 @@ ma3 = create(type_3, src, length_3)
 ma4 = create(type_4, src, length_4)
 ma5 = create(type_5, src, length_5)
 
-//------------------------- Plotting & styling ------------------------
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                   Plotting & styling
+//--------------------------------------------------------------------
 
 line_width = 1
 
@@ -47,3 +68,5 @@ ma_2 = plot(ma2, color=color_2, linewidth=line_width, offset=offset, title="MA 2
 ma_3 = plot(ma3, color=color_3, linewidth=line_width, offset=offset, title="MA 3")
 ma_4 = plot(ma4, color=color_4, linewidth=line_width, offset=offset, title="MA 4")
 ma_5 = plot(ma5, color=color_5, linewidth=line_width, offset=offset, title="MA 5")
+
+//#endregion
