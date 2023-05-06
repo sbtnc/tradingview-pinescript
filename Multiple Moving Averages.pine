@@ -44,37 +44,37 @@ tt_timeframe    = "You can display a Moving Average from a higher timeframe. " +
 
 // Inputs
 
-i_type_1        = input.string      ("EMA", "Type", ["SMA", "EMA", "RMA", "WMA", "VWMA"],   group=g1)
-i_length1       = input.int         (9,     "Length", 1,                                    group=g1)
-i_source1       = input             (close, "Source",                                       group=g1)
-i_offset1       = input.int         (0,     "Offset",                                       group=g1)
-i_timeframe1    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,              group=g1)
+i_type_1        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g1)
+i_length1       = input.int         (9,     "Length", 1,                                            group=g1)
+i_source1       = input             (close, "Source",                                               group=g1)
+i_offset1       = input.int         (0,     "Offset",                                               group=g1)
+i_timeframe1    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g1)
 
-i_type_2        = input.string      ("EMA", "Type", ["SMA", "EMA", "RMA", "WMA", "VWMA"],   group=g2)
-i_length2       = input.int         (20,    "Length", 1,                                    group=g2)
-i_source2       = input             (close, "Source",                                       group=g2)
-i_offset2       = input.int         (0,     "Offset",                                       group=g2)
-i_timeframe2    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,              group=g2)
+i_type_2        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g2)
+i_length2       = input.int         (20,    "Length", 1,                                            group=g2)
+i_source2       = input             (close, "Source",                                               group=g2)
+i_offset2       = input.int         (0,     "Offset",                                               group=g2)
+i_timeframe2    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g2)
 
-i_type_3        = input.string      ("EMA", "Type", ["SMA", "EMA", "RMA", "WMA", "VWMA"],   group=g3)
-i_length3       = input.int         (50,    "Length", 1,                                    group=g3)
-i_source3       = input             (close, "Source",                                       group=g3)
-i_offset3       = input.int         (0,     "Offset",                                       group=g3)
-i_timeframe3    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,              group=g3)
+i_type_3        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g3)
+i_length3       = input.int         (50,    "Length", 1,                                            group=g3)
+i_source3       = input             (close, "Source",                                               group=g3)
+i_offset3       = input.int         (0,     "Offset",                                               group=g3)
+i_timeframe3    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g3)
 
-i_type_4        = input.string      ("EMA", "Type", ["SMA", "EMA", "RMA", "WMA", "VWMA"],   group=g4)
-i_length4       = input.int         (100,   "Length", 1,                                    group=g4)
-i_source4       = input             (close, "Source",                                       group=g4)
-i_offset4       = input.int         (0,     "Offset",                                       group=g4)
-i_timeframe4    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,              group=g4)
+i_type_4        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g4)
+i_length4       = input.int         (100,   "Length", 1,                                            group=g4)
+i_source4       = input             (close, "Source",                                               group=g4)
+i_offset4       = input.int         (0,     "Offset",                                               group=g4)
+i_timeframe4    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g4)
 
-i_type_5        = input.string      ("EMA", "Type", ["SMA", "EMA", "RMA", "WMA", "VWMA"],   group=g5)
-i_length5       = input.int         (200,   "Length", 1,                                    group=g5)
-i_source5       = input             (close, "Source",                                       group=g5)
-i_offset5       = input.int         (0,     "Offset",                                       group=g5)
-i_timeframe5    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,              group=g5)
+i_type_5        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g5)
+i_length5       = input.int         (200,   "Length", 1,                                            group=g5)
+i_source5       = input             (close, "Source",                                               group=g5)
+i_offset5       = input.int         (0,     "Offset",                                               group=g5)
+i_timeframe5    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g5)
 
-i_enableGaps    = input             (true,  "Wait for timeframe closes",                    group=g6)
+i_enableGaps    = input             (true,  "Wait for timeframe closes",                            group=g6)
 
 //#endregion
 
@@ -87,11 +87,11 @@ i_enableGaps    = input             (true,  "Wait for timeframe closes",        
 // @returns float
 f_getMa(string _type, float _source, _length) =>
     switch _type
-        "SMA"   => ta.sma(_source, _length)
-        "EMA"   => ta.ema(_source, _length)
-        "RMA"   => ta.rma(_source, _length)
-        "WMA"   => ta.wma(_source, _length)
-        "VWMA"  => ta.vwma(_source, _length)
+        "SMA"           => ta.sma(_source, _length)
+        "EMA"           => ta.ema(_source, _length)
+        "SMMA (RMA)"    => ta.rma(_source, _length)
+        "WMA"           => ta.wma(_source, _length)
+        "VWMA"          => ta.vwma(_source, _length)
 
 
 // @function Check if a timeframe is higher or equal than the chart's one
