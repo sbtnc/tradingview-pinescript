@@ -87,6 +87,12 @@ f_getMa(string _type, float _source, _length) =>
         "WMA"   => ta.wma(_source, _length)
         "VWMA"  => ta.vwma(_source, _length)
 
+
+// @function Check if a timeframe is higher or equal than the chart's one
+// @returns bool
+f_canDisplay(_tf) =>
+    timeframe.in_seconds(_tf) >= timeframe.in_seconds()
+
 //#endregion
 
 
@@ -109,10 +115,10 @@ ma5 = request.security(syminfo.tickerid, i_timeframe5, f_getMa(i_type_5, i_sourc
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(ma1, "#1", DEFAULT_COLOR1, DEFAULT_LINEWIDTH, offset=i_offset1)
-plot(ma2, "#2", DEFAULT_COLOR2, DEFAULT_LINEWIDTH, offset=i_offset2)
-plot(ma3, "#3", DEFAULT_COLOR3, DEFAULT_LINEWIDTH, offset=i_offset3)
-plot(ma4, "#4", DEFAULT_COLOR4, DEFAULT_LINEWIDTH, offset=i_offset4)
-plot(ma5, "#5", DEFAULT_COLOR5, DEFAULT_LINEWIDTH, offset=i_offset5)
+plot(f_canDisplay(i_timeframe1) ? ma1 : na, "#1", DEFAULT_COLOR1, DEFAULT_LINEWIDTH, offset=i_offset1)
+plot(f_canDisplay(i_timeframe2) ? ma2 : na, "#2", DEFAULT_COLOR2, DEFAULT_LINEWIDTH, offset=i_offset2)
+plot(f_canDisplay(i_timeframe3) ? ma3 : na, "#3", DEFAULT_COLOR3, DEFAULT_LINEWIDTH, offset=i_offset3)
+plot(f_canDisplay(i_timeframe4) ? ma4 : na, "#4", DEFAULT_COLOR4, DEFAULT_LINEWIDTH, offset=i_offset4)
+plot(f_canDisplay(i_timeframe5) ? ma5 : na, "#5", DEFAULT_COLOR5, DEFAULT_LINEWIDTH, offset=i_offset5)
 
 //#endregion
