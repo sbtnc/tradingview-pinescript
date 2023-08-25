@@ -12,8 +12,8 @@ indicator("HTF Liquidity Levels", "HTF Liquidity", overlay=true, max_lines_count
 //#region                      Constants
 //--------------------------------------------------------------------
 
-var START_OFFSET    = 0
-var END_OFFSET      = 25
+var OFFSET_START    = 0
+var OFFSET_END      = 25
 
 //#endregion
 
@@ -70,8 +70,6 @@ var lowsArray           = array.new_float()
 var highLinesArray      = array.new_line()
 var lowLinesArray       = array.new_line()
 var purgedLinesArray    = array.new_line()
-var float dayHigh       = na
-var float dayLow        = na
 
 [prevHigh1, prevLow1]   = request.security(syminfo.tickerid, i_timeframe1,  [high[1], low[1]],  lookahead=barmerge.lookahead_on)
 [prevHigh2, prevLow2]   = request.security(syminfo.tickerid, i_timeframe2,  [high[1], low[1]],  lookahead=barmerge.lookahead_on)
@@ -96,8 +94,8 @@ f_create(float _high, float _low, color _upperColor, color _lowerColor, int _lin
 
 f_updateStickyLevels(array<line> _levels) =>
     for _line in _levels
-        line.set_x1(_line, bar_index + START_OFFSET)
-        line.set_x2(_line, bar_index + END_OFFSET)
+        line.set_x1(_line, bar_index + OFFSET_START)
+        line.set_x2(_line, bar_index + OFFSET_END)
 
 f_moveLevel(array<line> _from, array<line> _to, line _level, int _index) =>
     array.push(_to, _level)
@@ -176,5 +174,5 @@ f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
 
 if ta.change(time("D"))
     f_clearLevels(purgedLinesArray)
-    
+
 //#endregion
