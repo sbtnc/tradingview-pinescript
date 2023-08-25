@@ -9,15 +9,17 @@ indicator("HTF Liquidity Levels", "HTF Liquidity", overlay=true, max_lines_count
 
 
 //--------------------------------------------------------------------
-//                             Constants
+//#region                      Constants
 //--------------------------------------------------------------------
 
-var START_OFFSET                = 0
-var END_OFFSET                  = 25
+var START_OFFSET    = 0
+var END_OFFSET      = 25
+
+//#endregion
 
 
 //--------------------------------------------------------------------
-//                               Inputs
+//#region                        Inputs
 //--------------------------------------------------------------------
 
 group1              = "Liquidity Levels"
@@ -56,9 +58,11 @@ i_width5            = input             (1,                             "Width",
 i_purgedLevelColor  = input             (color.new(color.gray, 70),     "Color",                                    group=group2)
 i_purgedLevelStyle  = input.string      ("Dashed",                      "Style",    ["Solid", "Dashed", "Dotted"],  group=group2)
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                        Variables declarations
+//#region                 Variables declarations
 //--------------------------------------------------------------------
 
 var highsArray          = array.new_float()
@@ -75,9 +79,11 @@ var float dayLow        = na
 [prevHigh4, prevLow4]   = request.security(syminfo.tickerid, i_timeframe4,  [high[1], low[1]],  lookahead=barmerge.lookahead_on)
 [prevHigh5, prevLow5]   = request.security(syminfo.tickerid, i_timeframe5,  [high[1], low[1]],  lookahead=barmerge.lookahead_on)
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                              Functions 
+//#region                   Functions & methods
 //--------------------------------------------------------------------
 
 f_drawLine(float _y, color _c, int _w=1) => line.new(bar_index, _y, bar_index, _y, color=_c, width=_w)
@@ -127,9 +133,11 @@ f_clearLevels(array<line> _levels) =>
 
 f_isHigherTimeframe(string _timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(_timeframe)
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                                Logic
+//#region                   Plotting & styling
 //--------------------------------------------------------------------
     
 // Create levels on historical bars
@@ -168,3 +176,5 @@ f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
 
 if ta.change(time("D"))
     f_clearLevels(purgedLinesArray)
+    
+//#endregion
