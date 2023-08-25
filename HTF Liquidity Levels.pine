@@ -149,19 +149,19 @@ f_isHigherTimeframe(string tf) => timeframe.in_seconds() <= timeframe.in_seconds
     
 // Create levels on historical bars
 
-if i_isEnabled5 and f_isHigherTimeframe(i_timeframe5) and ta.change(time(i_timeframe5))
+if i_isEnabled5 and f_isHigherTimeframe(i_timeframe5) and timeframe.change(i_timeframe5)
     f_createLevels(prevHigh5, prevLow5, i_upperColor5, i_lowerColor5, i_width5)
 
-if i_isEnabled4 and f_isHigherTimeframe(i_timeframe4) and ta.change(time(i_timeframe4))
+if i_isEnabled4 and f_isHigherTimeframe(i_timeframe4) and timeframe.change(i_timeframe4)
     f_createLevels(prevHigh4, prevLow4, i_upperColor4, i_lowerColor4, i_width4)
 
-if i_isEnabled3 and f_isHigherTimeframe(i_timeframe3) and ta.change(time(i_timeframe3))
+if i_isEnabled3 and f_isHigherTimeframe(i_timeframe3) and timeframe.change(i_timeframe3)
     f_createLevels(prevHigh3, prevLow3, i_upperColor3, i_lowerColor3, i_width3)
 
-if i_isEnabled2 and f_isHigherTimeframe(i_timeframe2) and ta.change(time(i_timeframe2))
+if i_isEnabled2 and f_isHigherTimeframe(i_timeframe2) and timeframe.change(i_timeframe2)
     f_createLevels(prevHigh2, prevLow2, i_upperColor2, i_lowerColor2, i_width2)
 
-if i_isEnabled1 and f_isHigherTimeframe(i_timeframe1) and ta.change(time(i_timeframe1))
+if i_isEnabled1 and f_isHigherTimeframe(i_timeframe1) and timeframe.change(i_timeframe1)
     f_createLevels(prevHigh1, prevLow1, i_upperColor1, i_lowerColor1, i_width1)
 
 
@@ -181,7 +181,7 @@ f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
 
 // Clean up, at the end of each day, levels that had their liquidity taken
 
-if ta.change(time("D"))
+if timeframe.change("D")
     f_clearLevels(purgedLinesArray)
 
 //#endregion
