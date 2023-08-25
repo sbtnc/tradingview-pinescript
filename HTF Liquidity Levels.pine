@@ -84,52 +84,61 @@ var purgedLinesArray    = array.new_line()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-f_drawLine(float _y, color _c, int _w=1) => line.new(bar_index, _y, bar_index, _y, color=_c, width=_w)
+f_drawLine(float y, color c, int w) => line.new(bar_index, y, bar_index, y, color=c, width=w)
 
-f_create(float _high, float _low, color _upperColor, color _lowerColor, int _linewidth) =>
-    array.push(highsArray, _high)
-    array.push(lowsArray, _low)
-    array.push(highLinesArray, f_drawLine(_high, _upperColor, _linewidth))
-    array.push(lowLinesArray, f_drawLine(_low, _lowerColor, _linewidth))
 
-f_updateStickyLevels(array<line> _levels) =>
-    for _line in _levels
-        line.set_x1(_line, bar_index + OFFSET_START)
-        line.set_x2(_line, bar_index + OFFSET_END)
+f_createLevels(float h, float l, color upperColor, color lowerColor, int width) =>
+    array.push(highsArray, h)
+    array.push(lowsArray, l)
+    array.push(highLinesArray, f_drawLine(h, upperColor, width))
+    array.push(lowLinesArray,  f_drawLine(l, lowerColor, width))
 
-f_moveLevel(array<line> _from, array<line> _to, line _level, int _index) =>
-    array.push(_to, _level)
-    array.remove(_from, _index)
 
-f_highlightPurgedLevel(line _level) =>
+f_updateLevels(array<line> levels) =>
+    _x1 = bar_index + OFFSET_START
+    _x2 = bar_index + OFFSET_END
+    for _line in levels
+        _line.set_x1(_x1)
+        _line.set_x2(_x2)
+
+
+f_moveLevel(array<line> src, array<line> dest, int index) =>
+    dest.push(src.remove(index))
+    
+
+f_highlightPurgedLevel(line level) =>
     _style = i_purgedLevelStyle == "Solid" ? line.style_solid : i_purgedLevelStyle == "Dashed" ? line.style_dashed : line.style_dotted
-    line.set_color(_level, i_purgedLevelColor)
-    line.set_style(_level, _style)
+    level.set_color(i_purgedLevelColor)
+    level.set_style(_style)
 
-f_updateUpperLevels(float _high, array<float> _highs, array<line> _levels, array<line> _purgedLevels) =>
-    while array.min(_highs) < _high
-        for [_index, _value] in _highs
-            if _high > _value
-                _line = array.get(_levels, _index)
+
+f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line> purgedLevels) =>
+    while array.min(highs) < h
+        for [_index, _value] in highs
+            if h > _value
+                _line = array.get(levels, _index)
                 f_highlightPurgedLevel(_line)
-                f_moveLevel(_levels, _purgedLevels, _line, _index)
-                array.remove(_highs, _index)
+                f_moveLevel(levels, purgedLevels, _index)
+                array.remove(highs, _index)
 
-f_updateLowerLevels(float _low, array<float> _lows, array<line> _levels, array<line> _purgedLevels) =>
-    while array.max(_lows) > _low
-        for [_index, _value] in _lows
-            if _low < _value
-                _line = array.get(_levels, _index)
+
+f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> purgedLevels) =>
+    while array.max(lows) > l
+        for [_index, _value] in lows
+            if l < _value
+                _line = array.get(levels, _index)
                 f_highlightPurgedLevel(_line)
-                f_moveLevel(_levels, _purgedLevels, _line, _index) 
-                array.remove(_lows, _index)
+                f_moveLevel(levels, purgedLevels, _index) 
+                array.remove(lows, _index)
 
-f_clearLevels(array<line> _levels) =>
-    while array.size(_levels) > 0
-        for [_index, _line] in _levels
-            line.delete(array.remove(_levels, _index))
 
-f_isHigherTimeframe(string _timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(_timeframe)
+f_clearLevels(array<line> levels) =>
+    while array.size(levels) > 0
+        for [_index, _line] in levels
+            line.delete(array.remove(levels, _index))
+
+
+f_isHigherTimeframe(string tf) => timeframe.in_seconds() <= timeframe.in_seconds(tf)
 
 //#endregion
 
@@ -141,27 +150,27 @@ f_isHigherTimeframe(string _timeframe) => timeframe.in_seconds() <= timeframe.in
 // Create levels on historical bars
 
 if i_isEnabled5 and f_isHigherTimeframe(i_timeframe5) and ta.change(time(i_timeframe5))
-    f_create(prevHigh5, prevLow5, i_upperColor5, i_lowerColor5, i_width5)
+    f_createLevels(prevHigh5, prevLow5, i_upperColor5, i_lowerColor5, i_width5)
 
 if i_isEnabled4 and f_isHigherTimeframe(i_timeframe4) and ta.change(time(i_timeframe4))
-    f_create(prevHigh4, prevLow4, i_upperColor4, i_lowerColor4, i_width4)
+    f_createLevels(prevHigh4, prevLow4, i_upperColor4, i_lowerColor4, i_width4)
 
 if i_isEnabled3 and f_isHigherTimeframe(i_timeframe3) and ta.change(time(i_timeframe3))
-    f_create(prevHigh3, prevLow3, i_upperColor3, i_lowerColor3, i_width3)
+    f_createLevels(prevHigh3, prevLow3, i_upperColor3, i_lowerColor3, i_width3)
 
 if i_isEnabled2 and f_isHigherTimeframe(i_timeframe2) and ta.change(time(i_timeframe2))
-    f_create(prevHigh2, prevLow2, i_upperColor2, i_lowerColor2, i_width2)
+    f_createLevels(prevHigh2, prevLow2, i_upperColor2, i_lowerColor2, i_width2)
 
 if i_isEnabled1 and f_isHigherTimeframe(i_timeframe1) and ta.change(time(i_timeframe1))
-    f_create(prevHigh1, prevLow1, i_upperColor1, i_lowerColor1, i_width1)
+    f_createLevels(prevHigh1, prevLow1, i_upperColor1, i_lowerColor1, i_width1)
 
 
 // Update levels positions to "stick" at the right of the latest bar
 
 if barstate.islast
-    f_updateStickyLevels(highLinesArray)
-    f_updateStickyLevels(lowLinesArray)
-    f_updateStickyLevels(purgedLinesArray)
+    f_updateLevels(highLinesArray)
+    f_updateLevels(lowLinesArray)
+    f_updateLevels(purgedLinesArray)
 
 
 // Set and highlight, immediately, levels that got their liquidity taken
