@@ -5,7 +5,7 @@
 // Version 3.0
 
 //@version=5
-indicator("HTF Liquidity Levels", "HTF Liquidity", overlay=true, max_lines_count=500)
+indicator("HTF Liquidity Levels", "HTF Liquidity", true, max_lines_count=500)
 
 
 //--------------------------------------------------------------------
@@ -24,6 +24,8 @@ var OFFSET_END      = 25
 
 group1              = "Liquidity Levels"
 group2              = "Purged Liquidity"
+
+t_purgeTime         = "Clear all purged levels on the new selected timeframe rotation."
 
 i_isEnabled1        = input             (true,                          "",         inline="Level1",                group=group1)
 i_timeframe1        = input.timeframe   ("M",                           "",         inline="Level1",                group=group1)
@@ -57,6 +59,7 @@ i_width5            = input             (1,                             "Width",
 
 i_purgedLevelColor  = input             (color.new(color.gray, 70),     "Color",                                    group=group2)
 i_purgedLevelStyle  = input.string      ("Dashed",                      "Style",    ["Solid", "Dashed", "Dotted"],  group=group2)
+i_purgeTime         = input.timeframe   ("D",                           "Removal", tooltip=t_purgeTime,            group=group2)
 
 //#endregion
 
@@ -106,30 +109,39 @@ f_moveLevel(array<line> src, array<line> dest, int index) =>
     dest.push(src.remove(index))
     
 
+// @funcion Get the line style from the input settings
+// @returns const string
+f_getLineStyle() =>
+    switch i_purgedLevelStyle
+        "Solid"     => line.style_solid
+        "Dotted"    => line.style_dotted
+        "Dashed"    => line.style_dashed
+
+
 f_highlightPurgedLevel(line level) =>
-    _style = i_purgedLevelStyle == "Solid" ? line.style_solid : i_purgedLevelStyle == "Dashed" ? line.style_dashed : line.style_dotted
+    var _style = f_getLineStyle()
     level.set_color(i_purgedLevelColor)
     level.set_style(_style)
 
 
 f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line> purgedLevels) =>
-    while array.min(highs) < h
-        for [_index, _value] in highs
-            if h > _value
-                _line = array.get(levels, _index)
+    if highs.size() > 0
+        for i = highs.size() -1 to 0
+            if h > highs.get(i)
+                _line = levels.get(i)
                 f_highlightPurgedLevel(_line)
-                f_moveLevel(levels, purgedLevels, _index)
-                array.remove(highs, _index)
+                f_moveLevel(levels, purgedLevels, i)
+                highs.remove(i)
 
 
 f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> purgedLevels) =>
-    while array.max(lows) > l
-        for [_index, _value] in lows
-            if l < _value
-                _line = array.get(levels, _index)
+    if lows.size() > 0
+        for i = lows.size() -1 to 0
+            if l < lows.get(i)
+                _line = levels.get(i)
                 f_highlightPurgedLevel(_line)
-                f_moveLevel(levels, purgedLevels, _index) 
-                array.remove(lows, _index)
+                f_moveLevel(levels, purgedLevels, i)
+                lows.remove(i)
 
 
 f_clearLevels(array<line> levels) =>
@@ -165,7 +177,7 @@ if i_isEnabled1 and f_isHigherTimeframe(i_timeframe1) and timeframe.change(i_tim
     f_createLevels(prevHigh1, prevLow1, i_upperColor1, i_lowerColor1, i_width1)
 
 
-// Update levels positions to "stick" at the right of the latest bar
+// Update levels positions to "float" at the right of the latest bar
 
 if barstate.islast
     f_updateLevels(highLinesArray)
@@ -181,7 +193,7 @@ f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
 
 // Clean up, at the end of each day, levels that had their liquidity taken
 
-if timeframe.change("D")
+if timeframe.change(i_purgeTime)
     f_clearLevels(purgedLinesArray)
 
 //#endregion
