@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2022-04-26
-// Last modified: 2023-08-25
+// Last modified: 2023-08-27
 // Version 3.0
 
 //@version=5
@@ -125,6 +125,8 @@ f_highlightPurgedLevel(line level) =>
 
 
 f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line> purgedLevels) =>
+    _hasPurged = false
+
     if highs.size() > 0
         for i = highs.size() -1 to 0
             if h > highs.get(i)
@@ -132,9 +134,14 @@ f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line>
                 f_highlightPurgedLevel(_line)
                 f_moveLevel(levels, purgedLevels, i)
                 highs.remove(i)
+                _hasPurged := true
+    
+    _hasPurged
 
 
 f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> purgedLevels) =>
+    _hasPurged = false
+
     if lows.size() > 0
         for i = lows.size() -1 to 0
             if l < lows.get(i)
@@ -142,6 +149,9 @@ f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> 
                 f_highlightPurgedLevel(_line)
                 f_moveLevel(levels, purgedLevels, i)
                 lows.remove(i)
+                _hasPurged := true
+    
+    _hasPurged
 
 
 f_clearLevels(array<line> levels) =>
@@ -187,13 +197,24 @@ if barstate.islast
 
 // Set and highlight, immediately, levels that got their liquidity taken
 
-f_updateUpperLevels(high, highsArray, highLinesArray, purgedLinesArray)
-f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
+hasPurgedHighs = f_updateUpperLevels(high, highsArray, highLinesArray, purgedLinesArray)
+hasPurgedLows = f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
 
 
 // Clean up, at the end of each day, levels that had their liquidity taken
 
 if timeframe.change(i_purgeTime)
     f_clearLevels(purgedLinesArray)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Alerts
+//--------------------------------------------------------------------
+
+alertcondition(hasPurgedHighs,                  "Purging Up",   "{{ticker}} Purging Up Liquidity")
+alertcondition(hasPurgedLows,                   "Purging Down", "{{ticker}} Purging Down Liquidity")
+alertcondition(hasPurgedHighs or hasPurgedLows, "Purging",      "{{ticker}} Purging Liquidity")
 
 //#endregion
