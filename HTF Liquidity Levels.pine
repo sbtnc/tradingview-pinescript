@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2022-04-26
-// Last modified: 2023-08-27
+// Last modified: 2023-08-25
 // Version 3.0
 
 //@version=5
@@ -31,35 +31,36 @@ i_isEnabled1        = input             (true,                          "",     
 i_timeframe1        = input.timeframe   ("M",                           "",         inline="Level1",                group=group1)
 i_upperColor1       = input             (color.rgb(135, 254, 7, 90),    "",         inline="Level1",                group=group1)
 i_lowerColor1       = input             (color.new(color.orange, 90),   "",         inline="Level1",                group=group1)
-i_width1            = input             (10,                            "Width",    inline="Level1",                group=group1)
+i_width1            = input             (10,                            "Width",    inline="Level1",                group=group1,   display=display.none)
 
 i_isEnabled2        = input             (true,                          "",         inline="Level2",                group=group1)
 i_timeframe2        = input.timeframe   ("W",                           "",         inline="Level2",                group=group1)
 i_upperColor2       = input             (color.new(color.lime, 70),     "",         inline="Level2",                group=group1)
 i_lowerColor2       = input             (color.new(color.red, 70),      "",         inline="Level2",                group=group1)
-i_width2            = input             (5,                             "Width",    inline="Level2",                group=group1)
+i_width2            = input             (5,                             "Width",    inline="Level2",                group=group1,   display=display.none)
 
 i_isEnabled3        = input             (true,                          "",         inline="Level3",                group=group1)
 i_timeframe3        = input.timeframe   ("D",                           "",         inline="Level3",                group=group1)
 i_upperColor3       = input             (color.new(color.green, 70),    "",         inline="Level3",                group=group1)
 i_lowerColor3       = input             (color.rgb(242, 54, 69, 70),    "",         inline="Level3",                group=group1)
-i_width3            = input             (2,                             "Width",    inline="Level3",                group=group1)
+i_width3            = input             (2,                             "Width",    inline="Level3",                group=group1,   display=display.none)
 
 i_isEnabled4        = input             (false,                         "",         inline="Level4",                group=group1)
 i_timeframe4        = input.timeframe   ("240",                         "",         inline="Level4",                group=group1)
 i_upperColor4       = input             (color.rgb(0, 151, 167, 70),    "",         inline="Level4",                group=group1)
 i_lowerColor4       = input             (color.rgb(123, 31, 162, 70),   "",         inline="Level4",                group=group1)
-i_width4            = input             (1,                             "Width",    inline="Level4",                group=group1)
+i_width4            = input             (1,                             "Width",    inline="Level4",                group=group1,   display=display.none)
+
 
 i_isEnabled5        = input             (false,                         "",         inline="Level5",                group=group1)
 i_timeframe5        = input.timeframe   ("60",                          "",         inline="Level5",                group=group1)
 i_upperColor5       = input             (color.rgb(0, 96, 100, 70),     "",         inline="Level5",                group=group1)
 i_lowerColor5       = input             (color.rgb(74, 20, 140, 70),    "",         inline="Level5",                group=group1)
-i_width5            = input             (1,                             "Width",    inline="Level5",                group=group1)
+i_width5            = input             (1,                             "Width",    inline="Level5",                group=group1,   display=display.none)
 
 i_purgedLevelColor  = input             (color.new(color.gray, 70),     "Color",                                    group=group2)
-i_purgedLevelStyle  = input.string      ("Dashed",                      "Style",    ["Solid", "Dashed", "Dotted"],  group=group2)
-i_purgeTime         = input.timeframe   ("D",                           "Removal", tooltip=t_purgeTime,            group=group2)
+i_purgedLevelStyle  = input.string      ("Dashed",                      "Style",    ["Solid", "Dashed", "Dotted"],  group=group2,   display=display.none)
+i_purgeTime         = input.timeframe   ("D",                           "Removal", tooltip=t_purgeTime,            group=group2,    display=display.none)
 
 //#endregion
 
