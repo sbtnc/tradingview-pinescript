@@ -12,8 +12,8 @@ indicator("HTF Liquidity Levels", "HTF Liquidity", true, max_lines_count=500)
 //#region                      Constants
 //--------------------------------------------------------------------
 
-var OFFSET_START    = 0
-var OFFSET_END      = 25
+int OFFSET_START    = 0
+int OFFSET_END      = 25
 
 //#endregion
 
