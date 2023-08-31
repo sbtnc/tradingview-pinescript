@@ -88,14 +88,14 @@ var purgedLinesArray    = array.new_line()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-f_drawLine(float y, color c, int w) => line.new(bar_index, y, bar_index, y, color=c, width=w)
+f_drawLine(float y, color color, int width) => line.new(bar_index, y, bar_index, y, color=color, width=width)
 
 
 f_createLevels(float h, float l, color upperColor, color lowerColor, int width) =>
-    array.push(highsArray, h)
-    array.push(lowsArray, l)
-    array.push(highLinesArray, f_drawLine(h, upperColor, width))
-    array.push(lowLinesArray,  f_drawLine(l, lowerColor, width))
+    highsArray.push(h)
+    lowsArray.push(l)
+    highLinesArray.push(f_drawLine(h, upperColor, width))
+    lowLinesArray.push(f_drawLine(l, lowerColor, width))
 
 
 f_updateLevels(array<line> levels) =>
@@ -110,7 +110,7 @@ f_moveLevel(array<line> src, array<line> dest, int index) =>
     dest.push(src.remove(index))
     
 
-// @funcion Get the line style from the input settings
+// @function Get the line style from the input settings
 // @returns const string
 f_getLineStyle() =>
     switch i_purgedLevelStyle
@@ -127,9 +127,10 @@ f_highlightPurgedLevel(line level) =>
 
 f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line> purgedLevels) =>
     _hasPurged = false
+    _size = highs.size()
 
-    if highs.size() > 0
-        for i = highs.size() -1 to 0
+    if _size > 0
+        for i = _size -1 to 0
             if h > highs.get(i)
                 _line = levels.get(i)
                 f_highlightPurgedLevel(_line)
@@ -142,9 +143,10 @@ f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line>
 
 f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> purgedLevels) =>
     _hasPurged = false
+    _size = lows.size()
 
-    if lows.size() > 0
-        for i = lows.size() -1 to 0
+    if _size > 0
+        for i = _size -1 to 0
             if l < lows.get(i)
                 _line = levels.get(i)
                 f_highlightPurgedLevel(_line)
@@ -156,12 +158,14 @@ f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> 
 
 
 f_clearLevels(array<line> levels) =>
-    while array.size(levels) > 0
-        for [_index, _line] in levels
-            line.delete(array.remove(levels, _index))
+    _size = levels.size()
+
+    if _size > 0
+        for i = _size -1 to 0
+            levels.remove(i).delete()
 
 
-f_isHigherTimeframe(string tf) => timeframe.in_seconds() <= timeframe.in_seconds(tf)
+f_isHigherTimeframe(string timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(timeframe)
 
 //#endregion
 
