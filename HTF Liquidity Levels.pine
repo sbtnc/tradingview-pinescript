@@ -69,11 +69,13 @@ i_purgeTime         = input.timeframe   ("D",                           "Removal
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-var highsArray          = array.new_float()
-var lowsArray           = array.new_float()
-var highLinesArray      = array.new_line()
-var lowLinesArray       = array.new_line()
-var purgedLinesArray    = array.new_line()
+type Level
+    float price
+    line line
+
+var highsArray          = array.new<Level>()
+var lowsArray           = array.new<Level>()
+var purgedArray         = array.new<Level>()
 
 [prevHigh1, prevLow1]   = request.security(syminfo.tickerid, i_timeframe1,  [high[1], low[1]],  lookahead=barmerge.lookahead_on)
 [prevHigh2, prevLow2]   = request.security(syminfo.tickerid, i_timeframe2,  [high[1], low[1]],  lookahead=barmerge.lookahead_on)
@@ -92,21 +94,19 @@ f_drawLine(float y, color color, int width) => line.new(bar_index, y, bar_index,
 
 
 f_createLevels(float h, float l, color upperColor, color lowerColor, int width) =>
-    highsArray.push(h)
-    lowsArray.push(l)
-    highLinesArray.push(f_drawLine(h, upperColor, width))
-    lowLinesArray.push(f_drawLine(l, lowerColor, width))
+    highsArray.push(Level.new(h, f_drawLine(h, upperColor, width)))
+    lowsArray.push(Level.new(l, f_drawLine(l, lowerColor, width)))
 
 
-f_updateLevels(array<line> levels) =>
+f_updateLevels(array<Level> levels) =>
     _x1 = bar_index + OFFSET_START
     _x2 = bar_index + OFFSET_END
-    for _line in levels
-        _line.set_x1(_x1)
-        _line.set_x2(_x2)
+    for _level in levels
+        _level.line.set_x1(_x1)
+        _level.line.set_x2(_x2)
 
 
-f_moveLevel(array<line> src, array<line> dest, int index) =>
+f_moveLevel(array<Level> src, array<Level> dest, int index) =>
     dest.push(src.remove(index))
     
 
@@ -125,44 +125,42 @@ f_highlightPurgedLevel(line level) =>
     level.set_style(_style)
 
 
-f_updateUpperLevels(float h, array<float> highs, array<line> levels, array<line> purgedLevels) =>
+f_updateUpperLevels(float h, array<Level> highsArray, array<Level> purgedArray) =>
     _hasPurged = false
-    _size = highs.size()
+    _size = highsArray.size()
 
     if _size > 0
         for i = _size -1 to 0
-            if h > highs.get(i)
-                _line = levels.get(i)
-                f_highlightPurgedLevel(_line)
-                f_moveLevel(levels, purgedLevels, i)
-                highs.remove(i)
+            _level = highsArray.get(i)
+            if h > _level.price
+                f_highlightPurgedLevel(_level.line)
+                f_moveLevel(highsArray, purgedArray, i)
                 _hasPurged := true
     
     _hasPurged
 
 
-f_updateLowerLevels(float l, array<float> lows, array<line> levels, array<line> purgedLevels) =>
+f_updateLowerLevels(float l, array<Level> lowsArray, array<Level> purgedArray) => //array<float> lows, array<line> levels, array<line> purgedLevels) =>
     _hasPurged = false
-    _size = lows.size()
+    _size = lowsArray.size()
 
     if _size > 0
         for i = _size -1 to 0
-            if l < lows.get(i)
-                _line = levels.get(i)
-                f_highlightPurgedLevel(_line)
-                f_moveLevel(levels, purgedLevels, i)
-                lows.remove(i)
+            _level = lowsArray.get(i)
+            if l < _level.price
+                f_highlightPurgedLevel(_level.line)
+                f_moveLevel(lowsArray, purgedArray, i)
                 _hasPurged := true
     
     _hasPurged
 
 
-f_clearLevels(array<line> levels) =>
-    _size = levels.size()
+f_clearLevels(array<Level> levelsArray) =>
+    _size = levelsArray.size()
 
     if _size > 0
         for i = _size -1 to 0
-            levels.remove(i).delete()
+            levelsArray.remove(i).line.delete()
 
 
 f_isHigherTimeframe(string timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(timeframe)
@@ -195,21 +193,21 @@ if i_isEnabled1 and f_isHigherTimeframe(i_timeframe1) and timeframe.change(i_tim
 // Update levels positions to "float" at the right of the latest bar
 
 if barstate.islast
-    f_updateLevels(highLinesArray)
-    f_updateLevels(lowLinesArray)
-    f_updateLevels(purgedLinesArray)
+    f_updateLevels(highsArray)
+    f_updateLevels(lowsArray)
+    f_updateLevels(purgedArray)
 
 
 // Set and highlight, immediately, levels that got their liquidity taken
 
-hasPurgedHighs = f_updateUpperLevels(high, highsArray, highLinesArray, purgedLinesArray)
-hasPurgedLows = f_updateLowerLevels(low, lowsArray, lowLinesArray, purgedLinesArray)
+hasPurgedHighs = f_updateUpperLevels(high, highsArray, purgedArray)
+hasPurgedLows = f_updateLowerLevels(low, lowsArray, purgedArray)
 
 
 // Clean up, at the end of each day, levels that had their liquidity taken
 
 if timeframe.change(i_purgeTime)
-    f_clearLevels(purgedLinesArray)
+    f_clearLevels(purgedArray)
 
 //#endregion
 
