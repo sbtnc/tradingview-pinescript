@@ -66,12 +66,19 @@ i_purgeTime         = input.timeframe   ("D",                           "Removal
 
 
 //--------------------------------------------------------------------
-//#region                 Variables declarations
+//#region                         Types 
 //--------------------------------------------------------------------
 
 type Level
     float price
     line line
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
 
 var highsArray          = array.new<Level>()
 var lowsArray           = array.new<Level>()
@@ -90,14 +97,20 @@ var purgedArray         = array.new<Level>()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
+// @function Draw a liquidty level
+// @returns line
 f_drawLine(float y, color color, int width) => line.new(bar_index, y, bar_index, y, color=color, width=width)
 
 
+// @function Store new upper and lower liquidity levels
+// @returns void
 f_createLevels(float h, float l, color upperColor, color lowerColor, int width) =>
     highsArray.push(Level.new(h, f_drawLine(h, upperColor, width)))
     lowsArray.push(Level.new(l, f_drawLine(l, lowerColor, width)))
 
 
+// @function Update the levels positions
+// @returns void
 f_updateLevels(array<Level> levels) =>
     _x1 = bar_index + OFFSET_START
     _x2 = bar_index + OFFSET_END
@@ -106,6 +119,8 @@ f_updateLevels(array<Level> levels) =>
         _level.line.set_x2(_x2)
 
 
+// @function Move a level to purge level
+// @returns void
 f_moveLevel(array<Level> src, array<Level> dest, int index) =>
     dest.push(src.remove(index))
     
@@ -119,12 +134,16 @@ f_getLineStyle() =>
         "Dashed"    => line.style_dashed
 
 
+// @function Highlight a level that have its liquidity "purged"
+// @returns Level
 f_highlightPurgedLevel(line level) =>
     var _style = f_getLineStyle()
     level.set_color(i_purgedLevelColor)
     level.set_style(_style)
 
 
+// @function Check, update, and return if the upper Levels were purged
+// @returns bool
 f_updateUpperLevels(float h, array<Level> highsArray, array<Level> purgedArray) =>
     _hasPurged = false
     _size = highsArray.size()
@@ -140,7 +159,9 @@ f_updateUpperLevels(float h, array<Level> highsArray, array<Level> purgedArray) 
     _hasPurged
 
 
-f_updateLowerLevels(float l, array<Level> lowsArray, array<Level> purgedArray) => //array<float> lows, array<line> levels, array<line> purgedLevels) =>
+// @function Check, update, and return if the lower Levels were purged
+// @returns bool
+f_updateLowerLevels(float l, array<Level> lowsArray, array<Level> purgedArray) =>
     _hasPurged = false
     _size = lowsArray.size()
 
@@ -155,6 +176,8 @@ f_updateLowerLevels(float l, array<Level> lowsArray, array<Level> purgedArray) =
     _hasPurged
 
 
+// @function Remove levels and their drawings
+// @returns void
 f_clearLevels(array<Level> levelsArray) =>
     _size = levelsArray.size()
 
@@ -163,6 +186,8 @@ f_clearLevels(array<Level> levelsArray) =>
             levelsArray.remove(i).line.delete()
 
 
+// @function Check if a given timeframe is higher than the context of the chart
+// @returns bool
 f_isHigherTimeframe(string timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(timeframe)
 
 //#endregion
