@@ -111,22 +111,22 @@ f_createLevels(float h, float l, color upperColor, color lowerColor, int width) 
 
 // @function Update the levels positions
 // @returns void
-f_updateLevels(array<Level> levels) =>
+method updatePosition(array<Level> this) =>
     _x1 = bar_index + OFFSET_START
     _x2 = bar_index + OFFSET_END
-    for _level in levels
+    for _level in this
         _level.line.set_x1(_x1)
         _level.line.set_x2(_x2)
 
 
-// @function Move a level to purge level
+// @function Transfer a level from an array to another
 // @returns void
-f_moveLevel(array<Level> src, array<Level> dest, int index) =>
-    dest.push(src.remove(index))
+method transferTo(array<Level> this, array<Level> dest, int index) =>
+    dest.push(this.remove(index))
     
 
-// @function Get the line style from the input settings
-// @returns const string
+// @function Get the line style argument for the `style` parameter from the input settings
+// @returns (const string) One of the `line.style_*` built-in constants
 f_getLineStyle() =>
     switch i_purgedLevelStyle
         "Solid"     => line.style_solid
@@ -135,60 +135,46 @@ f_getLineStyle() =>
 
 
 // @function Highlight a level that have its liquidity "purged"
-// @returns Level
-f_highlightPurgedLevel(line level) =>
+// @returns line
+method highlightPurgedLevel(line this) =>
     var _style = f_getLineStyle()
-    level.set_color(i_purgedLevelColor)
-    level.set_style(_style)
+    this.set_color(i_purgedLevelColor)
+    this.set_style(_style)
 
 
-// @function Check, update, and return if the upper Levels were purged
-// @returns bool
-f_updateUpperLevels(float h, array<Level> highsArray, array<Level> purgedArray) =>
-    _hasPurged = false
-    _size = highsArray.size()
-
-    if _size > 0
-        for i = _size -1 to 0
-            _level = highsArray.get(i)
-            if h > _level.price
-                f_highlightPurgedLevel(_level.line)
-                f_moveLevel(highsArray, purgedArray, i)
-                _hasPurged := true
-    
-    _hasPurged
-
-
-// @function Check, update, and return if the lower Levels were purged
-// @returns bool
-f_updateLowerLevels(float l, array<Level> lowsArray, array<Level> purgedArray) =>
-    _hasPurged = false
-    _size = lowsArray.size()
+// @function Update the levels that got their liquidity taken
+// @returns (bool) Some levels were purged
+method updateLevels(array<Level> this, array<Level> purgedArray, bool isUpperLevel) =>
+    _hasPurgedSome = false
+    _size = this.size()
 
     if _size > 0
         for i = _size -1 to 0
-            _level = lowsArray.get(i)
-            if l < _level.price
-                f_highlightPurgedLevel(_level.line)
-                f_moveLevel(lowsArray, purgedArray, i)
-                _hasPurged := true
+            _level = this.get(i)
+            if isUpperLevel ? (high > _level.price) : (low < _level.price)
+                // Highlight the status change
+                _level.line.highlightPurgedLevel()
+                // Transfer to the purged array
+                this.transferTo(purgedArray, i)
+                _hasPurgedSome := true
     
-    _hasPurged
+    _hasPurgedSome
 
 
-// @function Remove levels and their drawings
+// @function Remove the levels in the array and delete their lines
 // @returns void
-f_clearLevels(array<Level> levelsArray) =>
-    _size = levelsArray.size()
+method clearLevels(array<Level> this) =>
+    _size = this.size()
 
     if _size > 0
         for i = _size -1 to 0
-            levelsArray.remove(i).line.delete()
+            _level = this.remove(i)
+            _level.line.delete()
 
 
-// @function Check if a given timeframe is higher than the context of the chart
+// @function Check if a given timeframe is higher than the chart's timeframe
 // @returns bool
-f_isHigherTimeframe(string timeframe) => timeframe.in_seconds() <= timeframe.in_seconds(timeframe)
+f_isHigherTimeframe(string timeframe) => timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
 //#endregion
 
@@ -218,21 +204,21 @@ if i_isEnabled1 and f_isHigherTimeframe(i_timeframe1) and timeframe.change(i_tim
 // Update levels positions to "float" at the right of the latest bar
 
 if barstate.islast
-    f_updateLevels(highsArray)
-    f_updateLevels(lowsArray)
-    f_updateLevels(purgedArray)
+    highsArray.updatePosition()
+    lowsArray.updatePosition()
+    purgedArray.updatePosition()
 
 
-// Set and highlight, immediately, levels that got their liquidity taken
+// Update the levels that got their liquidity taken
 
-hasPurgedHighs = f_updateUpperLevels(high, highsArray, purgedArray)
-hasPurgedLows = f_updateLowerLevels(low, lowsArray, purgedArray)
+hasPurgedSomeHighs = highsArray.updateLevels(purgedArray, true)
+hasPurgedSomeLows = lowsArray.updateLevels(purgedArray, false)
 
 
-// Clean up, at the end of each day, levels that had their liquidity taken
+// Clean up, on a new resolution, the levels that had their liquidity taken
 
 if timeframe.change(i_purgeTime)
-    f_clearLevels(purgedArray)
+    purgedArray.clearLevels()
 
 //#endregion
 
@@ -241,8 +227,8 @@ if timeframe.change(i_purgeTime)
 //#region                         Alerts
 //--------------------------------------------------------------------
 
-alertcondition(hasPurgedHighs,                  "Purging Up",   "{{ticker}} Purging Up Liquidity")
-alertcondition(hasPurgedLows,                   "Purging Down", "{{ticker}} Purging Down Liquidity")
-alertcondition(hasPurgedHighs or hasPurgedLows, "Purging",      "{{ticker}} Purging Liquidity")
+alertcondition(hasPurgedSomeHighs,                      "Purging Up",   "{{ticker}} Purging Up Liquidity")
+alertcondition(hasPurgedSomeLows,                       "Purging Down", "{{ticker}} Purging Down Liquidity")
+alertcondition(hasPurgedSomeHighs or hasPurgedSomeLows, "Purging",      "{{ticker}} Purging Liquidity")
 
 //#endregion
