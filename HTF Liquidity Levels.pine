@@ -97,6 +97,20 @@ var purgedArray         = array.new<Level>()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
+// @function Check if a given timeframe is higher than the chart's timeframe
+// @returns bool
+f_isHigherTimeframe(string timeframe) => timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+    
+
+// @function Get the line style argument for the `style` parameter from the input settings
+// @returns (const string) One of the `line.style_*` built-in constants
+f_getLineStyle() =>
+    switch i_purgedLevelStyle
+        "Solid"     => line.style_solid
+        "Dotted"    => line.style_dotted
+        "Dashed"    => line.style_dashed
+
+
 // @function Draw a liquidty level
 // @returns line
 f_drawLine(float y, color color, int width) => line.new(bar_index, y, bar_index, y, color=color, width=width)
@@ -123,15 +137,6 @@ method updatePosition(array<Level> this) =>
 // @returns void
 method transferTo(array<Level> this, array<Level> dest, int index) =>
     dest.push(this.remove(index))
-    
-
-// @function Get the line style argument for the `style` parameter from the input settings
-// @returns (const string) One of the `line.style_*` built-in constants
-f_getLineStyle() =>
-    switch i_purgedLevelStyle
-        "Solid"     => line.style_solid
-        "Dotted"    => line.style_dotted
-        "Dashed"    => line.style_dashed
 
 
 // @function Highlight a level that have its liquidity "purged"
@@ -171,13 +176,7 @@ method clearLevels(array<Level> this) =>
             _level = this.remove(i)
             _level.line.delete()
 
-
-// @function Check if a given timeframe is higher than the chart's timeframe
-// @returns bool
-f_isHigherTimeframe(string timeframe) => timeframe.in_seconds(timeframe) > timeframe.in_seconds()
-
 //#endregion
-
 
 //--------------------------------------------------------------------
 //#region                   Plotting & styling
