@@ -110,7 +110,7 @@ f_getLineStyle() =>
         "Dashed"    => line.style_dashed
 
 
-// @function Draw a liquidty level
+// @function Draw a liquidity level
 // @returns (line) A new `line` object
 f_drawLine(float y, color color, int width) => line.new(bar_index, y, bar_index, y, color=color, width=width)
 
@@ -122,7 +122,7 @@ f_createLevels(float h, float l, color upperColor, color lowerColor, int width) 
     lowsArray.push(Level.new(l, f_drawLine(l, lowerColor, width)))
 
 
-// @function Update the levels starting end ending positions
+// @function Update the levels' starting and ending positions
 // @returns void
 method updatePosition(array<Level> this) =>
     _x1 = bar_index + LINE_OFFSET_START
@@ -138,7 +138,7 @@ method transferTo(array<Level> this, array<Level> dest, int index) =>
     dest.push(this.remove(index))
 
 
-// @function Highlight a level that have its liquidity "purged"
+// @function Highlight a level that has its liquidity "purged"
 // @returns void
 method highlightPurgedLevel(line this) =>
     var _style = f_getLineStyle()
@@ -198,7 +198,7 @@ if isEnabledInput1 and f_isHigherTimeframe(timeframeInput1) and timeframe.change
     f_createLevels(prevHigh1, prevLow1, upperColorInput1, lowerColorInput1, widthInput1)
 
 
-// Update the levels positions to "float" at the right of the chart last bar
+// Update the level positions to "float" at the right of the chart's last bar
 
 if barstate.islast
     highsArray.updatePosition()
@@ -212,7 +212,7 @@ hasPurgedSomeHighs = highsArray.updateLevels(purgedArray, true)
 hasPurgedSomeLows = lowsArray.updateLevels(purgedArray, false)
 
 
-// Clean up, on a new resolution, the levels that had their liquidity taken
+// Clean up on a new resolution, the levels that had their liquidity taken
 
 if timeframe.change(purgeTimeframeInput)
     purgedArray.clearLevels()
