@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2022-04-26
-// Last modified: 2023-08-25
+// Last modified: 2023-09-03
 // Version 3.0
 
 //@version=5
@@ -12,8 +12,8 @@ indicator("HTF Liquidity Levels", "HTF Liquidity", true, max_lines_count=500)
 //#region                      Constants
 //--------------------------------------------------------------------
 
-int OFFSET_START    = 0
-int OFFSET_END      = 25
+int LINE_OFFSET_START   = 0
+int LINE_OFFSET_END     = 25
 
 //#endregion
 
@@ -23,41 +23,41 @@ int OFFSET_END      = 25
 //--------------------------------------------------------------------
 
 group1                  = "Liquidity Levels"
-group2                  = "Purged Liquidity"
+group2                  = "Purged Levels"
 
-purgeTimeframeTooltip   = "Clear all purged levels on the new selected timeframe rotation."
+purgeTimeframeTooltip   = "Clear all the purged levels on a new timeframe rotation."
 
 isEnabledInput1         = input             (true,                          "",         inline="Level1",                group=group1)
 timeframeInput1         = input.timeframe   ("M",                           "",         inline="Level1",                group=group1)
-upperColorInput1        = input             (color.rgb(135, 254, 7, 90),    "",         inline="Level1",                group=group1)
-lowerColorInput1        = input             (color.new(color.orange, 90),   "",         inline="Level1",                group=group1)
+upperColorInput1        = input             (color.rgb(135, 254, 7, 90),  "",         inline="Level1",                group=group1)
+lowerColorInput1        = input             (color.new(color.orange, 90), "",         inline="Level1",                group=group1)
 widthInput1             = input             (10,                            "Width",    inline="Level1",                group=group1,   display=display.none)
 
 isEnabledInput2         = input             (true,                          "",         inline="Level2",                group=group1)
 timeframeInput2         = input.timeframe   ("W",                           "",         inline="Level2",                group=group1)
-upperColorInput2        = input             (color.new(color.lime, 70),     "",         inline="Level2",                group=group1)
-lowerColorInput2        = input             (color.new(color.red, 70),      "",         inline="Level2",                group=group1)
+upperColorInput2        = input             (color.new(color.lime, 70),   "",         inline="Level2",                group=group1)
+lowerColorInput2        = input             (color.new(color.red, 70),    "",         inline="Level2",                group=group1)
 widthInput2             = input             (5,                             "Width",    inline="Level2",                group=group1,   display=display.none)
 
 isEnabledInput3         = input             (true,                          "",         inline="Level3",                group=group1)
 timeframeInput3         = input.timeframe   ("D",                           "",         inline="Level3",                group=group1)
-upperColorInput3        = input             (color.new(color.green, 70),    "",         inline="Level3",                group=group1)
-lowerColorInput3        = input             (color.rgb(242, 54, 69, 70),    "",         inline="Level3",                group=group1)
+upperColorInput3        = input             (color.new(color.green, 70),  "",         inline="Level3",                group=group1)
+lowerColorInput3        = input             (color.rgb(242, 54, 69, 70),  "",         inline="Level3",                group=group1)
 widthInput3             = input             (2,                             "Width",    inline="Level3",                group=group1,   display=display.none)
 
 isEnabledInput4         = input             (false,                         "",         inline="Level4",                group=group1)
 timeframeInput4         = input.timeframe   ("240",                         "",         inline="Level4",                group=group1)
-upperColorInput4        = input             (color.rgb(0, 151, 167, 70),    "",         inline="Level4",                group=group1)
-lowerColorInput4        = input             (color.rgb(123, 31, 162, 70),   "",         inline="Level4",                group=group1)
+upperColorInput4        = input             (color.rgb(0, 151, 167, 70),  "",         inline="Level4",                group=group1)
+lowerColorInput4        = input             (color.rgb(123, 31, 162, 70), "",         inline="Level4",                group=group1)
 widthInput4             = input             (1,                             "Width",    inline="Level4",                group=group1,   display=display.none)
 
 isEnabledInput5         = input             (false,                         "",         inline="Level5",                group=group1)
 timeframeInput5         = input.timeframe   ("60",                          "",         inline="Level5",                group=group1)
-upperColorInput5        = input             (color.rgb(0, 96, 100, 70),     "",         inline="Level5",                group=group1)
-lowerColorInput5        = input             (color.rgb(74, 20, 140, 70),    "",         inline="Level5",                group=group1)
+upperColorInput5        = input             (color.rgb(0, 96, 100, 70),   "",         inline="Level5",                group=group1)
+lowerColorInput5        = input             (color.rgb(74, 20, 140, 70),  "",         inline="Level5",                group=group1)
 widthInput5             = input             (1,                             "Width",    inline="Level5",                group=group1,   display=display.none)
 
-purgedColorInput        = input             (color.new(color.gray, 70),     "Color",                                    group=group2)
+purgedColorInput        = input             (color.new(color.gray, 70),   "Color",                                    group=group2)
 purgedStyleInput        = input.string      ("Dashed",                      "Style",    ["Solid", "Dashed", "Dotted"],  group=group2,   display=display.none)
 purgeTimeframeInput     = input.timeframe   ("D",                           "Removal",  tooltip=purgeTimeframeTooltip,  group=group2,   display=display.none)
 
@@ -101,8 +101,8 @@ var purgedArray         = array.new<Level>()
 f_isHigherTimeframe(string timeframe) => timeframe.in_seconds(timeframe) > timeframe.in_seconds()
     
 
-// @function Get the line style argument for the `style` parameter from the input settings
-// @returns (const string) One of the `line.style_*` built-in constants
+// @function Produce the line style argument for the `style` parameter from the input settings
+// @returns (const string) `line.style_*` built-in constants
 f_getLineStyle() =>
     switch purgedStyleInput
         "Solid"     => line.style_solid
@@ -111,22 +111,22 @@ f_getLineStyle() =>
 
 
 // @function Draw a liquidty level
-// @returns line
+// @returns (line) A new `line` object
 f_drawLine(float y, color color, int width) => line.new(bar_index, y, bar_index, y, color=color, width=width)
 
 
-// @function Store new upper and lower liquidity levels
+// @function Create and store new upper and lower liquidity levels
 // @returns void
 f_createLevels(float h, float l, color upperColor, color lowerColor, int width) =>
     highsArray.push(Level.new(h, f_drawLine(h, upperColor, width)))
     lowsArray.push(Level.new(l, f_drawLine(l, lowerColor, width)))
 
 
-// @function Update the levels positions
+// @function Update the levels starting end ending positions
 // @returns void
 method updatePosition(array<Level> this) =>
-    _x1 = bar_index + OFFSET_START
-    _x2 = bar_index + OFFSET_END
+    _x1 = bar_index + LINE_OFFSET_START
+    _x2 = bar_index + LINE_OFFSET_END
     for _level in this
         _level.line.set_x1(_x1)
         _level.line.set_x2(_x2)
@@ -139,15 +139,15 @@ method transferTo(array<Level> this, array<Level> dest, int index) =>
 
 
 // @function Highlight a level that have its liquidity "purged"
-// @returns line
+// @returns void
 method highlightPurgedLevel(line this) =>
     var _style = f_getLineStyle()
     this.set_color(purgedColorInput)
     this.set_style(_style)
 
 
-// @function Update the levels that got their liquidity taken
-// @returns (bool) Some levels were purged
+// @function Update the levels that got their liquidity "purged"
+// @returns (bool) If at least one level was purged
 method updateLevels(array<Level> this, array<Level> purgedArray, bool isUpperLevel) =>
     _hasPurgedSome = false
     _size = this.size()
@@ -156,9 +156,7 @@ method updateLevels(array<Level> this, array<Level> purgedArray, bool isUpperLev
         for i = _size -1 to 0
             _level = this.get(i)
             if isUpperLevel ? (high > _level.price) : (low < _level.price)
-                // Highlight the status change
                 _level.line.highlightPurgedLevel()
-                // Transfer to the purged array
                 this.transferTo(purgedArray, i)
                 _hasPurgedSome := true
     
@@ -176,6 +174,7 @@ method clearLevels(array<Level> this) =>
             _level.line.delete()
 
 //#endregion
+
 
 //--------------------------------------------------------------------
 //#region                   Plotting & styling
@@ -199,7 +198,7 @@ if isEnabledInput1 and f_isHigherTimeframe(timeframeInput1) and timeframe.change
     f_createLevels(prevHigh1, prevLow1, upperColorInput1, lowerColorInput1, widthInput1)
 
 
-// Update levels positions to "float" at the right of the latest bar
+// Update the levels positions to "float" at the right of the chart last bar
 
 if barstate.islast
     highsArray.updatePosition()
