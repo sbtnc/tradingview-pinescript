@@ -96,9 +96,9 @@ var purgedArray         = array.new<Level>()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Check if a given timeframe is higher than the chart's timeframe
+// @function Check if a given timeframe is equal or higher than the chart's timeframe
 // @returns bool
-f_isHigherTimeframe(string timeframe) => timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+f_isHigherTimeframe(string timeframe) => timeframe.in_seconds(timeframe) >= timeframe.in_seconds()
     
 
 // @function Produce the line style argument for the `style` parameter from the input settings
