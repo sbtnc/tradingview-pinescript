@@ -1,0 +1,386 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
+// Created: 2023-09-26
+// Last modified: 2023-09-26
+// Version 1.0
+
+
+//@version=5
+indicator("Tops & Bottoms - Time of Day Report", format = format.percent, max_labels_count = 72)
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+int     COLUMN_WIDTH                = 2
+int     COLUMN_GAP                  = 2
+color   COLUMN_BORDERCOLOR          = color.new(chart.fg_color, 80)
+color   COLUMN_TOP_MAX_COLOR        = color.green
+color   COLUMN_TOP_MIN_COLOR        = #0c3299
+color   COLUMN_BOTTOM_MAX_COLOR     = color.red
+color   COLUMN_BOTTOM_MIN_COLOR     = #311b92
+color   CATEGORY_LABEL_BGCOLOR      = color.new(chart.bg_color, 50)
+color   CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
+
+timezoneTooltip = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
+noticeTitle     = "Navigate to the 1-hour timeframe (or 30-minute timeframe if the market starts at 9:30 AM) for the indicator to analyze the bars and collect tops and bottoms."
+
+timezoneInput   = input.string("Exchange", "Time Zone",
+     [
+     "UTC",
+     "Exchange",
+     "Africa/Cairo",
+     "Africa/Johannesburg",
+     "Africa/Lagos",
+     "Africa/Nairobi",
+     "Africa/Tunis",
+     "America/Argentina/Buenos_Aires",
+     "America/Bogota",
+     "America/Caracas",
+     "America/Chicago",
+     "America/Denver",
+     "America/El_Salvador",
+     "America/Juneau",
+     "America/Lima",
+     "America/Los_Angeles",
+     "America/New_York",
+     "America/Mexico_City",
+     "America/Phoenix",
+     "America/Santiago",
+     "America/Sao_Paulo",
+     "America/Toronto",
+     "America/Vancouver",
+     "Asia/Almaty",
+     "Asia/Ashgabat",
+     "Asia/Bahrain",
+     "Asia/Bangkok",
+     "Asia/Dubai",
+     "Asia/Chongqing",
+     "Asia/Colombo",
+     "Asia/Ho_Chi_Minh",
+     "Asia/Hong_Kong",
+     "Asia/Istanbul",
+     "Asia/Jakarta",
+     "Asia/Jerusalem",
+     "Asia/Karachi",
+     "Asia/Kathmandu",
+     "Asia/Kolkata",
+     "Asia/Kuwait",
+     "Asia/Manila",
+     "Asia/Muscat",
+     "Asia/Nicosia",
+     "Asia/Qatar",
+     "Asia/Riyadh",
+     "Asia/Seoul",
+     "Asia/Shanghai",
+     "Asia/Singapore",
+     "Asia/Taipei",
+     "Asia/Tehran",
+     "Asia/Tokyo",
+     "Asia/Yangon",
+     "Atlantic/Reykjavik",
+     "Australia/Adelaide",
+     "Australia/Brisbane",
+     "Australia/Perth",
+     "Australia/Sydney",
+     "Europe/Amsterdam",
+     "Europe/Athens",
+     "Europe/Belgrade",
+     "Europe/Berlin",
+     "Europe/Bratislava",
+     "Europe/Brussels",
+     "Europe/Bucharest",
+     "Europe/Budapest",
+     "Europe/Copenhagen",
+     "Europe/Dublin",
+     "Europe/Helsinki",
+     "Europe/Madrid",
+     "Europe/Malta",
+     "Europe/Moscow",
+     "Europe/Lisbon",
+     "Europe/London",
+     "Europe/Luxembourg",
+     "Europe/Oslo",
+     "Europe/Paris",
+     "Europe/Riga",
+     "Europe/Rome",
+     "Europe/Stockholm",
+     "Europe/Tallinn",
+     "Europe/Vilnius",
+     "Europe/Warsaw",
+     "Europe/Zurich",
+     "Pacific/Auckland",
+     "Pacific/Chatham",
+     "Pacific/Fakaofo",
+     "Pacific/Honolulu",
+     "Pacific/Norfolk"
+     ],
+     timezoneTooltip,
+     display = display.none
+ )
+barTypeInput    = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
+startDateInput  = input.time    (timestamp("01 Jan 1975"),    "From", group = "Filters")
+endDateInput    = input.time    (timestamp("31 Dec 2050"),    "To", group = "Filters")
+noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+type Marker
+    float price
+    int time
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+var topsByHourMap       = map.new<int, int>()
+var bottomsByHourMap    = map.new<int, int>()
+var openTimesByHourMap  = map.new<int, string>()
+var closeTimesByHourMap = map.new<int, string>() 
+var top                 = Marker.new(high, time)
+var bottom              = Marker.new(low, time)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+// @function Produce the timezone parameter from the user-selected settings.
+// @returns string
+getTimezone() => 
+    var _tz = switch timezoneInput
+        "UTC"       => "UTC+0"
+        "Exchange"  => syminfo.timezone  
+        => timezoneInput
+
+
+// @function Get the hour in the user-selected timezone from a given UNIX time.
+// @returns int
+getHour(int barTime) =>
+    hour(barTime, getTimezone())
+
+
+// @function Get the color based on a gradient between the minimum and maximum values.
+// @returns color 
+getGradientColor(float value, float minValue, float maxValue, color minColor, color maxColor) =>
+    // When `minValue` and `maxValue` are identical (on the first collected values), return the mid gradient color instead of no color.
+    minValue != maxValue ? color.from_gradient(value, minValue, maxValue, minColor, maxColor) : color.from_gradient(0.5, 0, 1, minColor, maxColor)
+    
+
+// @function Draw top and bottom columns for a given hour.
+// @returns void
+drawHourlyColumns(int key) =>
+    var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
+    var _lowerColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
+    var _upperDataLabel = label.new(na, na, color = color(na), style = label.style_label_down)
+    var _lowerDataLabel = label.new(na, na, color = color(na), style = label.style_label_up)
+    var _categoryLabel  = label.new(na, na, color = CATEGORY_LABEL_BGCOLOR, style = label.style_label_center, textcolor = CATEGORY_LABEL_TEXTCOLOR)
+    var _gridMultiplier = COLUMN_WIDTH + COLUMN_GAP 
+    
+    if barstate.islast
+        _topsArray      = topsByHourMap.values()
+        _bottomsArray   = bottomsByHourMap.values()
+
+        // Sum the number of data sampled.
+        _dataSum        = _topsArray.sum()
+
+
+        // Calculate the top and bottom shares of occurrence.
+
+        _top            = topsByHourMap.get(key)
+        _bottom         = bottomsByHourMap.get(key)
+        _topY           = nz(_top       / _dataSum * 100)
+        _bottomY        = nz(_bottom    / _dataSum * 100)
+
+
+        // Get the coordinates for plotting the columns chart (on the left or right side of the last bar, given enough space).
+
+        _hasSpace       = bar_index - 24 * _gridMultiplier > 0
+        _x1             = _hasSpace ? bar_index + (key - 24) * _gridMultiplier : bar_index + key * _gridMultiplier
+        _x2             = _x1 + COLUMN_WIDTH
+        _center         = _x1 + COLUMN_WIDTH / 2
+
+
+        // Get the coloring of the columns and data labels.
+
+        _topsMin        = _topsArray.min()      / _dataSum * 100
+        _topsMax        = _topsArray.max()      / _dataSum * 100
+        _bottomsMin     = _bottomsArray.min()   / _dataSum * 100
+        _bottomsMax     = _bottomsArray.max()   / _dataSum * 100
+        _topColor       = getGradientColor(_topY, _topsMin, _topsMax, COLUMN_TOP_MIN_COLOR, COLUMN_TOP_MAX_COLOR)
+        _bottomColor    = getGradientColor(_bottomY, _bottomsMin, _bottomsMax, COLUMN_BOTTOM_MIN_COLOR, COLUMN_BOTTOM_MAX_COLOR)
+
+
+        // Plot the upper and lower columns for the top and bottom.
+
+        _upperColumnBox.set_lefttop     (_x1, _topY)
+        _upperColumnBox.set_rightbottom (_x2, 0)
+        _upperColumnBox.set_bgcolor     (_topColor)
+
+        _lowerColumnBox.set_lefttop     (_x1, 0)
+        _lowerColumnBox.set_rightbottom (_x2, -_bottomY)
+        _lowerColumnBox.set_bgcolor     (_bottomColor)
+
+
+        // Plot the X-axis category label.
+
+        _openTime                   = openTimesByHourMap.get(key)
+        _closeTime                  = closeTimesByHourMap.get(key)
+        _isCategoryDefined          = not (na(_openTime) or na(_closeTime))
+
+        _categoryLabel.set_xy       (_center, 0)
+        _categoryLabel.set_text     (str.tostring(key))
+        _categoryLabel.set_tooltip  (_isCategoryDefined ? str.format("{0} to {1} ({2})", _openTime, _closeTime, getTimezone()) : "Not Collected")
+
+
+        // Plot the top and bottom data labels.
+
+        if not na(_top)
+            _upperDataLabel.set_xy          (_center, _topY)
+            _upperDataLabel.set_text        (str.tostring(math.round(_topY)))
+            _upperDataLabel.set_textcolor   (_topColor)
+            _upperDataLabel.set_tooltip     (str.format("{0} based on {1} sampled days", str.tostring(_topY, format.percent), _dataSum))
+
+        if not na(_bottom)
+            _lowerDataLabel.set_xy          (_center, -_bottomY)
+            _lowerDataLabel.set_text        (str.tostring(math.round(_bottomY)))
+            _lowerDataLabel.set_textcolor   (_bottomColor)
+            _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled days", str.tostring(_bottomY, format.percent), _dataSum))
+
+//#endregion
+
+
+// @function Check if the day's top and bottom can be collected per the user-selected bar type filter.
+// @returns bool 
+isValidBarType() =>
+    var _dayOpen = open
+    bool _isValid = na
+
+    if timeframe.change("D")
+        _dayOpen := open
+        _isValid := switch barTypeInput
+            "All"   => true
+            "Up"    => close[1] > _dayOpen[1]
+            "Down"  => close[1] < _dayOpen[1]
+
+    _isValid
+
+
+// @function Check if the current bar time is in the user-selected time range filter.
+// @returns bool
+method isInRangeFilter(int this) =>
+    this >= startDateInput and this <= endDateInput
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+if timeframe.period != "30" and timeframe.period != "60"
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
+
+
+// Reset the top and bottom on a new day to the first bar's high and low.
+
+
+if timeframe.change("D")
+    top.price           := high
+    top.time            := time
+    bottom.price        := low
+    bottom.time         := time
+
+
+// Update the top and bottom on a higher high and lower low.
+
+else 
+    if high > top.price
+        top.price       := high
+        top.time        := time
+    
+    if low < bottom.price
+        bottom.price    := low
+        bottom.time     := time
+
+
+// Collect data on the closing of the bar.
+
+isValidDayType = isValidBarType()
+
+if time.isInRangeFilter() and barstate.isconfirmed
+
+    // On a day change, collect the preceding day's top and bottom.
+
+    if isValidDayType
+        _topHour     = getHour(top.time[1])
+        _bottomHour  = getHour(bottom.time[1])
+
+        _topCount    = nz(topsByHourMap.get(_topHour)) +1
+        _bottomCount = nz(bottomsByHourMap.get(_bottomHour)) +1
+
+        topsByHourMap.put   (_topHour,    _topCount)
+        bottomsByHourMap.put(_bottomHour, _bottomCount)
+
+        log.info("\n▲ Top at {0} ({1}/{4})\n▼ Bottom at {2} ({3}/{4})", _topHour, _topCount, _bottomHour, _bottomCount, topsByHourMap.values().sum())
+
+
+    // On hourly time change, collect the open time and preceding close time.
+    // The times will be displayed in the tooltips of category labels.
+
+    _barHour     = getHour(time)
+    _prevBarHour = getHour(time[1])
+
+    if _prevBarHour != _barHour
+        openTimesByHourMap.put (_barHour,     str.format_time(time, "HH:mm", getTimezone()))
+        closeTimesByHourMap.put(_prevBarHour, str.format_time(time_close[1], "HH:mm", getTimezone()))
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+drawHourlyColumns(0)
+drawHourlyColumns(1)
+drawHourlyColumns(2)
+drawHourlyColumns(3)
+drawHourlyColumns(4)
+drawHourlyColumns(5)
+drawHourlyColumns(6)
+drawHourlyColumns(7)
+drawHourlyColumns(8)
+drawHourlyColumns(9)
+drawHourlyColumns(10)
+drawHourlyColumns(11)
+drawHourlyColumns(12)
+drawHourlyColumns(13)
+drawHourlyColumns(14)
+drawHourlyColumns(15)
+drawHourlyColumns(16)
+drawHourlyColumns(17)
+drawHourlyColumns(18)
+drawHourlyColumns(19)
+drawHourlyColumns(20)
+drawHourlyColumns(21)
+drawHourlyColumns(22)
+drawHourlyColumns(23)
+
+//#endregion
