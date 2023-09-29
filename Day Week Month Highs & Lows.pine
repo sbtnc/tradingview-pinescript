@@ -64,16 +64,29 @@ hasMonthlyTimeChanged                   = monthlyTime != monthlyTime[1]
 
 f_getRightBarIndex() => bar_index + i_rightOffset
 
-f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _style, int _width) =>
-    var line _high  = na
-    var line _low   = na
-    var _highs      = array.new_line()
-    var _lows       = array.new_line()
-    _end            = i_areHeadsEnabled ? f_getRightBarIndex() : bar_index
+f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _style, int _width, string _text) =>
+    var line _high          = na
+    var line _low           = na
+    var label _highLabel    = na
+    var label _lowLabel     = na
+    var _highs              = array.new_line()
+    var _highLabels         = array.new_label()
+    var _lows               = array.new_line()
+    var _lowLabels          = array.new_label()
+    _end                    = i_areHeadsEnabled ? f_getRightBarIndex() : bar_index
     
     if _isNew
         line.set_x2(_high, _end)
         line.set_x2(_low, _end)
+        label.set_x(_highLabel, _end)
+        label.set_x(_lowLabel, _end)
+
+        // Re-calculate the count for labeling
+        _labelSize = _highLabels.size()
+        for i = 0 to _labelSize > 0 ? _labelSize -1 : na
+            _count = _labelSize -1 -i
+            _highLabels.get(i).set_text(str.format("{0}H{1}", _text, _count))
+            _lowLabels.get(i).set_text(str.format("{0}L{1}", _text, _count))
 
         if i_hasGradient
             _size = array.size(_highs)
@@ -82,21 +95,31 @@ f_draw(bool _isNew, float _h, float _l, int _lookback, color _color, string _sty
                     _c = color.from_gradient(i, 0, _size - 1, color.new(_color, 100), color.new(_color, 0))
                     line.set_color(array.get(_highs, i), _c)
                     line.set_color(array.get(_lows, i), _c)
+                    label.set_textcolor(array.get(_highLabels, i), _c)
+                    label.set_textcolor(array.get(_lowLabels, i), _c)
 
-        _high := line.new(bar_index, _h, bar_index, _h, color=_color, style=_style, width=_width)
-        _low := line.new(bar_index, _l, bar_index, _l, color=_color, style=_style, width=_width)
+        _high       := line.new(bar_index, _h, bar_index, _h, color=_color, style=_style, width=_width)
+        _low        := line.new(bar_index, _l, bar_index, _l, color=_color, style=_style, width=_width)
+        _highLabel  := label.new(na, _h, "", color=color(na), style=label.style_label_left, textcolor=_color)
+        _lowLabel   := label.new(na, _l, "", color=color(na), style=label.style_label_left, textcolor=_color)
         array.push(_highs, _high)
         array.push(_lows, _low)
+        array.push(_highLabels, _highLabel)
+        array.push(_lowLabels, _lowLabel)
 
         if array.size(_highs) > _lookback + 1
             line.delete(array.shift(_highs))
             line.delete(array.shift(_lows))
+            label.delete(array.shift(_highLabels))
+            label.delete(array.shift(_lowLabels))
 
 	if i_areHeadsEnabled and barstate.islast and array.size(_highs) > 1
 		// Avoid updating the last/current high and low 
 		for i = 0 to array.size(_highs) - 2
 			line.set_x2(array.get(_highs, i), f_getRightBarIndex())
 			line.set_x2(array.get(_lows, i), f_getRightBarIndex())
+            label.set_x(array.get(_highLabels, i), f_getRightBarIndex())
+            label.set_x(array.get(_lowLabels, i), f_getRightBarIndex())       
 
 //--------------------------------------------------------------------
 //                                Logic
@@ -119,13 +142,13 @@ if canShowMonthly and hasMonthlyTimeChanged and not isLastMonthly
 //--------------------------------------------------------------------
 
 if canShowMonthly
-    f_draw(hasMonthlyTimeChanged, monthlyHigh, monthlyLow, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH)
+    f_draw(hasMonthlyTimeChanged, monthlyHigh, monthlyLow, i_monthlyLookback, i_monthlyColor, MONTHLY_LINE_STYLE, MONTHLY_LINE_WIDTH, "M")
 
 if canShowWeekly
-    f_draw(hasWeekklyTimeChanged, weeklyHigh, weeklyLow, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH)
+    f_draw(hasWeekklyTimeChanged, weeklyHigh, weeklyLow, i_weeklyLookback, i_weeklyColor, WEEKLY_LINE_STYLE, WEEKLY_LINE_WIDTH, "W")
 
 if canShowDaily
-    f_draw(hasDailyTimeChanged, dailyHigh, dailyLow, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH)
+    f_draw(hasDailyTimeChanged, dailyHigh, dailyLow, i_dailyLookback, i_dailyColor, DAILY_LINE_STYLE, DAILY_LINE_WITDH, "D")
 
 // Plot invisible highs and lows for displaying their last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
