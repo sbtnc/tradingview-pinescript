@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-09-26
-// Last modified: 2023-09-26
+// Last modified: 2023-10-10
 // Version 1.0
 
 
@@ -127,8 +127,9 @@ timezoneInput   = input.string("Exchange", "Time Zone",
      display = display.none
  )
 barTypeInput    = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
-startDateInput  = input.time    (timestamp("01 Jan 1975"),    "From", group = "Filters")
-endDateInput    = input.time    (timestamp("31 Dec 2050"),    "To", group = "Filters")
+sessionInput    = input.session ("0000-0000", "Session", group = "Filters")
+startDateInput  = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
+endDateInput    = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
 noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
 
 //#endregion
@@ -153,8 +154,8 @@ var topsByHourMap       = map.new<int, int>()
 var bottomsByHourMap    = map.new<int, int>()
 var openTimesByHourMap  = map.new<int, string>()
 var closeTimesByHourMap = map.new<int, string>() 
-var top                 = Marker.new(high, time)
-var bottom              = Marker.new(low, time)
+var top                 = Marker.new(na, na)
+var bottom              = Marker.new(na, na)
 
 //#endregion
 
@@ -298,26 +299,28 @@ if timeframe.period != "30" and timeframe.period != "60"
     runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
 
 
-// Reset the top and bottom on a new day to the first bar's high and low.
+isInSession = time(timeframe.period, sessionInput, getTimezone())
 
 
+// Reset
 if timeframe.change("D")
-    top.price           := high
-    top.time            := time
-    bottom.price        := low
-    bottom.time         := time
+    top.price           := na
+    top.time            := na
+    bottom.price        := na
+    bottom.time         := na
 
-
-// Update the top and bottom on a higher high and lower low.
-
-else 
-    if high > top.price
+// Restart
+if isInSession
+    if na(top.price) or high > top.price
         top.price       := high
         top.time        := time
     
-    if low < bottom.price
+    if na(bottom.price) or low < bottom.price
         bottom.price    := low
         bottom.time     := time
+        log.info("Collecting {0}", getHour(time))
+
+    log.info("in session {0}", getHour(time))
 
 
 // Collect data on the closing of the bar.
@@ -337,6 +340,9 @@ if time.isInRangeFilter() and barstate.isconfirmed
 
         topsByHourMap.put   (_topHour,    _topCount)
         bottomsByHourMap.put(_bottomHour, _bottomCount)
+
+        log.info("top hour {0}", _topHour)
+        log.info("bottom hour {0}", _bottomHour)
 
         log.info("\n▲ Top at {0} ({1}/{4})\n▼ Bottom at {2} ({3}/{4})", _topHour, _topCount, _bottomHour, _bottomCount, topsByHourMap.values().sum())
 
