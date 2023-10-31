@@ -297,62 +297,24 @@ method isInRangeFilter(int this) =>
     this >= startDateInput and this <= endDateInput
 
 
-//--------------------------------------------------------------------
-//#region                         Logic
-//--------------------------------------------------------------------
-
-if timeframe.period != "30" and timeframe.period != "60"
-    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
-
-
-isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
-
-
+// @function Get the current day's date at a specified time
+// @returns (int) UNIX time
 localizeTime(h = hour, m = minute, s = second) =>
-    timestamp(
-     getTimezone(),
-     year,
-     month,
-     dayofmonth,
-     h,
-     m,
-     s
-     )
-
-getSessionTimes() =>
-    sessionStringArray = str.split(sessionInput, '-')
-    sessionStartString = sessionStringArray.first()
-    sessionEndString = sessionStringArray.last()
-    [
-         localizeTime(
-             int(str.tonumber(str.substring(sessionStartString, 0, 2))),
-             int(str.tonumber(str.substring(sessionStartString, 2))),
-             0
-         ),
-         localizeTime(
-             int(str.tonumber(str.substring(sessionEndString, 0, 2))),
-             int(str.tonumber(str.substring(sessionEndString, 2))),
-             0
-         )
-     ]
+    timestamp(getTimezone(), year, month, dayofmonth, h, m, s)
 
 
-method get(Session this) =>
-    timestamp(
-     getTimezone(),
-     year,
-     month,
-     dayofmonth,
-     this.hour,
-     this.minute,
-     0
-     )
-int timeDate = localizeTime()
+// @function Get the current day's session dates from a given session string.
+// @returns ([int, int]) Start and end UNIX time
+getSessionTimes(sessionString) =>
+    [localizeTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4))), 0),
+     localizeTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))), 0)]
+
 
 sessionChange() =>
+    int timeDate = localizeTime()
     var startDateArray = array.new_int()
     var endDateArray = array.new_int()
-    [tempStartDate, tempEndDate] = getSessionTimes()
+    [tempStartDate, tempEndDate] = getSessionTimes(sessionInput)
     var startDate = tempStartDate
     var endDate = tempEndDate
 
@@ -375,6 +337,17 @@ sessionChange() =>
         endDate := tempEndDate
 
     [ta.change(startDate), ta.change(endDate)]
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+if timeframe.period != "30" and timeframe.period != "60"
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
+
+
+isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
 
 [sessionStarted, sessionEnded] = sessionChange()
 
@@ -410,8 +383,8 @@ if time.isInRangeFilter() and barstate.isconfirmed
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
-        _topCount    = nz(map.get(topsByHourMap, _topHour)) +1
-        _bottomCount = nz(map.get(bottomsByHourMap, _bottomHour)) +1
+        _topCount    = nz(topsByHourMap.get(_topHour)) +1
+        _bottomCount = nz(bottomsByHourMap.get(_bottomHour)) +1
 
         topsByHourMap.put   (_topHour,    _topCount)
         bottomsByHourMap.put(_bottomHour, _bottomCount)
