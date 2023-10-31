@@ -308,15 +308,33 @@ if timeframe.period != "30" and timeframe.period != "60"
 isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
 
 
-sessionStringArray = str.split(sessionInput, '-')
-sessionStartString = sessionStringArray.first()
-sessionEndString = sessionStringArray.last()
+localizeTime(h = hour, m = minute, s = second) =>
+    timestamp(
+     getTimezone(),
+     year,
+     month,
+     dayofmonth,
+     h,
+     m,
+     s
+     )
 
-
-
-_sessionStart = Session.new( int(str.tonumber(str.substring(sessionStartString, 0, 2))), int(str.tonumber(str.substring(sessionStartString, 2))) )
-_sessionEnd = Session.new( int(str.tonumber(str.substring(sessionEndString, 0, 2))), int(str.tonumber(str.substring(sessionEndString, 2))) )
-
+getSessionTimes() =>
+    sessionStringArray = str.split(sessionInput, '-')
+    sessionStartString = sessionStringArray.first()
+    sessionEndString = sessionStringArray.last()
+    [
+         localizeTime(
+             int(str.tonumber(str.substring(sessionStartString, 0, 2))),
+             int(str.tonumber(str.substring(sessionStartString, 2))),
+             0
+         ),
+         localizeTime(
+             int(str.tonumber(str.substring(sessionEndString, 0, 2))),
+             int(str.tonumber(str.substring(sessionEndString, 2))),
+             0
+         )
+     ]
 
 
 method get(Session this) =>
@@ -329,49 +347,36 @@ method get(Session this) =>
      this.minute,
      0
      )
-int timeDate = timestamp(
-     getTimezone(),
-     year,
-     month,
-     dayofmonth,
-     hour,
-     minute,
-     second
-     )
+int timeDate = localizeTime()
 
-var startDateArray = array.new_int()
-var endDateArray = array.new_int()
+sessionChange() =>
+    var startDateArray = array.new_int()
+    var endDateArray = array.new_int()
+    [tempStartDate, tempEndDate] = getSessionTimes()
+    var startDate = tempStartDate
+    var endDate = tempEndDate
 
-tempStartDate = _sessionStart.get()
-tempEndDate = _sessionEnd.get()
+    // new 
 
-var startDate = tempStartDate
-var endDate = tempEndDate
+    if startDateArray.indexof(tempStartDate) == -1
+        startDateArray.push(tempStartDate)
 
-// new 
+    if endDateArray.indexof(tempEndDate) == -1
+        endDateArray.push(tempEndDate)
 
-if startDateArray.indexof(tempStartDate) == -1
-    startDateArray.push(tempStartDate)
+    // reassign
 
-if endDateArray.indexof(tempEndDate) == -1
-    endDateArray.push(tempEndDate)
+    if timeDate >= startDateArray.first()
+        startDateArray.shift()
+        startDate := tempStartDate
 
-// reassign
+    if timeDate >= endDateArray.first()
+        endDateArray.shift()
+        endDate := tempEndDate
 
-if timeDate >= startDateArray.first()
-    startDateArray.shift()
-    startDate := tempStartDate
+    [ta.change(startDate), ta.change(endDate)]
 
-if timeDate >= endDateArray.first()
-    endDateArray.shift()
-    endDate := tempEndDate
-
-
-// Determine the start and end of a day/session
-
-sessionStarted = ta.change(startDate)
-sessionEnded = ta.change(endDate)
-
+[sessionStarted, sessionEnded] = sessionChange()
 
 // Reset the top and bottom on a new day/session to the first bar's high and low.
 
@@ -463,9 +468,9 @@ drawHourlyColumns(23)
 //#region                         Debug
 //--------------------------------------------------------------------
 
-plot(timeDate,  "timeDate",     display = display.data_window)
-plot(startDate, "startDate",    display = display.data_window)
-plot(endDate,   "endDate",      display = display.data_window)
+//plot(timeDate,  "timeDate",     display = display.data_window)
+//plot(startDate, "startDate",    display = display.data_window)
+//plot(endDate,   "endDate",      display = display.data_window)
 
 //bgcolor(sessionStarted ? color.new(color.yellow, 90) : color(na))
 //bgcolor(sessionEnded ? color.new(color.purple, 90) : color(na))
