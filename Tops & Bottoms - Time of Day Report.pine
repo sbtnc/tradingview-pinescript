@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-09-26
-// Last modified: 2023-09-26
+// Last modified: 2023-10-10
 // Version 1.0
 
 
@@ -127,8 +127,9 @@ timezoneInput   = input.string("Exchange", "Time Zone",
      display = display.none
  )
 barTypeInput    = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
-startDateInput  = input.time    (timestamp("01 Jan 1975"),    "From", group = "Filters")
-endDateInput    = input.time    (timestamp("31 Dec 2050"),    "To", group = "Filters")
+sessionInput    = input.session ("0000-0000", "Session", group = "Filters")
+startDateInput  = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
+endDateInput    = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
 noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
 
 //#endregion
@@ -142,6 +143,10 @@ type Marker
     float price
     int time
 
+type Session
+    int hour
+    int minute
+
 //#endregion
 
 
@@ -153,8 +158,8 @@ var topsByHourMap       = map.new<int, int>()
 var bottomsByHourMap    = map.new<int, int>()
 var openTimesByHourMap  = map.new<int, string>()
 var closeTimesByHourMap = map.new<int, string>() 
-var top                 = Marker.new(high, time)
-var bottom              = Marker.new(low, time)
+var top                 = Marker.new(na, na)
+var bottom              = Marker.new(na, na)
 
 //#endregion
 
@@ -270,16 +275,18 @@ drawHourlyColumns(int key) =>
 
 // @function Check if the day's top and bottom can be collected per the user-selected bar type filter.
 // @returns bool 
-isValidBarType() =>
-    var _dayOpen = open
+isValidBarType(sessionStarted, sessionEnded) =>
+    var _sessionOpen = open
     bool _isValid = na
 
-    if timeframe.change("D")
-        _dayOpen := open
+    if sessionStarted
+        _sessionOpen := open
+
+    if sessionEnded
         _isValid := switch barTypeInput
             "All"   => true
-            "Up"    => close[1] > _dayOpen[1]
-            "Down"  => close[1] < _dayOpen[1]
+            "Up"    => close[1] > _sessionOpen[1]
+            "Down"  => close[1] < _sessionOpen[1]
 
     _isValid
 
@@ -298,31 +305,97 @@ if timeframe.period != "30" and timeframe.period != "60"
     runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
 
 
-// Reset the top and bottom on a new day to the first bar's high and low.
+isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
 
 
-if timeframe.change("D")
-    top.price           := high
-    top.time            := time
-    bottom.price        := low
-    bottom.time         := time
+sessionStringArray = str.split(sessionInput, '-')
+sessionStartString = sessionStringArray.first()
+sessionEndString = sessionStringArray.last()
 
 
-// Update the top and bottom on a higher high and lower low.
 
-else 
-    if high > top.price
+_sessionStart = Session.new( int(str.tonumber(str.substring(sessionStartString, 0, 2))), int(str.tonumber(str.substring(sessionStartString, 2))) )
+_sessionEnd = Session.new( int(str.tonumber(str.substring(sessionEndString, 0, 2))), int(str.tonumber(str.substring(sessionEndString, 2))) )
+
+
+
+method get(Session this) =>
+    timestamp(
+     getTimezone(),
+     year,
+     month,
+     dayofmonth,
+     this.hour,
+     this.minute,
+     0
+     )
+int timeDate = timestamp(
+     getTimezone(),
+     year,
+     month,
+     dayofmonth,
+     hour,
+     minute,
+     second
+     )
+
+var startDateArray = array.new_int()
+var endDateArray = array.new_int()
+
+tempStartDate = _sessionStart.get()
+tempEndDate = _sessionEnd.get()
+
+var startDate = tempStartDate
+var endDate = tempEndDate
+
+// new 
+
+if startDateArray.indexof(tempStartDate) == -1
+    startDateArray.push(tempStartDate)
+
+if endDateArray.indexof(tempEndDate) == -1
+    endDateArray.push(tempEndDate)
+
+// reassign
+
+if timeDate >= startDateArray.first()
+    startDateArray.shift()
+    startDate := tempStartDate
+
+if timeDate >= endDateArray.first()
+    endDateArray.shift()
+    endDate := tempEndDate
+
+
+// Determine the start and end of a day/session
+
+sessionStarted = ta.change(startDate)
+sessionEnded = ta.change(endDate)
+
+
+// Reset the top and bottom on a new day/session to the first bar's high and low.
+
+if sessionStarted
+    top.price           := na
+    top.time            := na
+    bottom.price        := na
+    bottom.time         := na
+
+// Restart the top and bottom on a higher high and lower low.
+
+if isInSession
+    if na(top.price) or high > top.price
         top.price       := high
         top.time        := time
     
-    if low < bottom.price
+    if na(bottom.price) or low < bottom.price
         bottom.price    := low
         bottom.time     := time
 
 
 // Collect data on the closing of the bar.
 
-isValidDayType = isValidBarType()
+isValidDayType = isValidBarType(sessionStarted, sessionEnded)
 
 if time.isInRangeFilter() and barstate.isconfirmed
 
@@ -332,8 +405,8 @@ if time.isInRangeFilter() and barstate.isconfirmed
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
-        _topCount    = nz(topsByHourMap.get(_topHour)) +1
-        _bottomCount = nz(bottomsByHourMap.get(_bottomHour)) +1
+        _topCount    = nz(map.get(topsByHourMap, _topHour)) +1
+        _bottomCount = nz(map.get(bottomsByHourMap, _bottomHour)) +1
 
         topsByHourMap.put   (_topHour,    _topCount)
         bottomsByHourMap.put(_bottomHour, _bottomCount)
@@ -382,5 +455,24 @@ drawHourlyColumns(20)
 drawHourlyColumns(21)
 drawHourlyColumns(22)
 drawHourlyColumns(23)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Debug
+//--------------------------------------------------------------------
+
+plot(timeDate,  "timeDate",     display = display.data_window)
+plot(startDate, "startDate",    display = display.data_window)
+plot(endDate,   "endDate",      display = display.data_window)
+
+//bgcolor(sessionStarted ? color.new(color.yellow, 90) : color(na))
+//bgcolor(sessionEnded ? color.new(color.purple, 90) : color(na))
+
+//if sessionStarted
+//    label.new(bar_index, high, "🏁")
+//if sessionEnded
+//    label.new(bar_index, high, "🏳️")
 
 //#endregion
