@@ -310,33 +310,21 @@ getSessionTimes(sessionString) =>
      localizeTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))), 0)]
 
 
+// @function Detect changes in the user selected session
+// @returns ([bool, bool]) Start and end sessions changed
 sessionChange() =>
-    int timeDate = localizeTime()
-    var startDateArray = array.new_int()
-    var endDateArray = array.new_int()
-    [tempStartDate, tempEndDate] = getSessionTimes(sessionInput)
-    var startDate = tempStartDate
-    var endDate = tempEndDate
+    var int _startTime = na
+    var int _endTime = na
+    _time = localizeTime()
+    [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
 
-    // new 
+    // On overnight sessions, preserve original dates 
+    _startTime := _time >= _currentStartTime ? _currentStartTime : _startTime
+    _endTime := _time >= _currentEndTime ? _currentEndTime : _endTime
 
-    if startDateArray.indexof(tempStartDate) == -1
-        startDateArray.push(tempStartDate)
+    //log.info("startDate {0}" , str.format_time(_startTime))
 
-    if endDateArray.indexof(tempEndDate) == -1
-        endDateArray.push(tempEndDate)
-
-    // reassign
-
-    if timeDate >= startDateArray.first()
-        startDateArray.shift()
-        startDate := tempStartDate
-
-    if timeDate >= endDateArray.first()
-        endDateArray.shift()
-        endDate := tempEndDate
-
-    [ta.change(startDate), ta.change(endDate)]
+    [_startTime != _startTime[1], _endTime != _endTime[1]]
 
 
 //--------------------------------------------------------------------
