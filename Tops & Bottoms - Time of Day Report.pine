@@ -143,10 +143,6 @@ type Marker
     float price
     int time
 
-type Session
-    int hour
-    int minute
-
 //#endregion
 
 
@@ -276,7 +272,7 @@ drawHourlyColumns(int key) =>
 // @function Check if the day's top and bottom can be collected per the user-selected bar type filter.
 // @returns bool 
 isValidBarType(sessionStarted, sessionEnded) =>
-    var _sessionOpen = open
+    var float _sessionOpen = open //na
     bool _isValid = na
 
     if sessionStarted
@@ -284,7 +280,7 @@ isValidBarType(sessionStarted, sessionEnded) =>
 
     if sessionEnded
         _isValid := switch barTypeInput
-            "All"   => true
+            "All"   => true //not na(_sessionOpen[1])
             "Up"    => close[1] > _sessionOpen[1]
             "Down"  => close[1] < _sessionOpen[1]
 
@@ -322,7 +318,7 @@ sessionChange() =>
     _startTime := _time >= _currentStartTime ? _currentStartTime : _startTime
     _endTime := _time >= _currentEndTime ? _currentEndTime : _endTime
 
-    //log.info("startDate {0}" , str.format_time(_startTime))
+    //log.info("\nstart time {0}\nend time {1}" , str.format_time(_startTime), str.format_time(_endTime))
 
     [_startTime != _startTime[1], _endTime != _endTime[1]]
 
@@ -334,22 +330,24 @@ sessionChange() =>
 if timeframe.period != "30" and timeframe.period != "60"
     runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
 
+isInRange = time(timeframe.period, "0000-0000", getTimezone()).isInRangeFilter()
 
 isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
 
 [sessionStarted, sessionEnded] = sessionChange()
 
-// Reset the top and bottom on a new day/session to the first bar's high and low.
+if isInRange and isInSession
 
-if sessionStarted
-    top.price           := na
-    top.time            := na
-    bottom.price        := na
-    bottom.time         := na
+    // Reset the top and bottom on a new day/session.
+    
+    if sessionStarted
+        top.price           := na
+        top.time            := na
+        bottom.price        := na
+        bottom.time         := na
 
-// Restart the top and bottom on a higher high and lower low.
+    // Track the top and bottom.
 
-if isInSession
     if na(top.price) or high > top.price
         top.price       := high
         top.time        := time
@@ -359,15 +357,17 @@ if isInSession
         bottom.time     := time
 
 
-// Collect data on the closing of the bar.
+// Collect data on the closing of the bar of the day/session.
 
 isValidDayType = isValidBarType(sessionStarted, sessionEnded)
 
-if time.isInRangeFilter() and barstate.isconfirmed
+if isInRange and barstate.isconfirmed
 
-    // On a day change, collect the preceding day's top and bottom.
-
-    if isValidDayType
+    // On a day/session change, collect the preceding day/session top and bottom.
+    // Valid day/session per type filter
+    // Can collect the first day/session after the start of the time range
+    
+    if isValidDayType and not na(top.time[1]) and not na(bottom.time[1])
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
@@ -429,16 +429,13 @@ drawHourlyColumns(23)
 //#region                         Debug
 //--------------------------------------------------------------------
 
-//plot(timeDate,  "timeDate",     display = display.data_window)
-//plot(startDate, "startDate",    display = display.data_window)
-//plot(endDate,   "endDate",      display = display.data_window)
+plot(isInRange      ? 1 : 0,    "isInRange",        display = display.data_window)
+plot(isInSession    ? 1 : 0,    "isInSession",      display = display.data_window)
+plot(sessionStarted ? 1 : 0,    "sessionStarted",   display = display.data_window)
+plot(sessionEnded   ? 1 : 0,    "sessionEnded",     display = display.data_window)
 
+//bgcolor(isInRange ? color.new(color.yellow, 90) : color(na))
 //bgcolor(sessionStarted ? color.new(color.yellow, 90) : color(na))
 //bgcolor(sessionEnded ? color.new(color.purple, 90) : color(na))
-
-//if sessionStarted
-//    label.new(bar_index, high, "🏁")
-//if sessionEnded
-//    label.new(bar_index, high, "🏳️")
 
 //#endregion
