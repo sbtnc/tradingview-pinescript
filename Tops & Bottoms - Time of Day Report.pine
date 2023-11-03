@@ -140,8 +140,8 @@ noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confi
 //--------------------------------------------------------------------
 
 type Marker
-    float price
-    int time
+    float price = na
+    int   time  = na
 
 //#endregion
 
@@ -154,8 +154,8 @@ var topsByHourMap       = map.new<int, int>()
 var bottomsByHourMap    = map.new<int, int>()
 var openTimesByHourMap  = map.new<int, string>()
 var closeTimesByHourMap = map.new<int, string>() 
-var top                 = Marker.new(na, na)
-var bottom              = Marker.new(na, na)
+var top                 = Marker.new()
+var bottom              = Marker.new()
 
 //#endregion
 
@@ -266,8 +266,6 @@ drawHourlyColumns(int key) =>
             _lowerDataLabel.set_textcolor   (_bottomColor)
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled days", str.tostring(_bottomY, format.percent), _dataSum))
 
-//#endregion
-
 
 // @function Check if the day's top and bottom can be collected per the user-selected bar type filter.
 // @returns bool 
@@ -325,6 +323,8 @@ sessionChange() =>
 
     [_startTime != _startTime[1], _endTime != _endTime[1]]
 
+//#endregion
+
 
 //--------------------------------------------------------------------
 //#region                         Logic
@@ -344,10 +344,10 @@ if isInRange and isInSession
     // Reset the top and bottom on a new day/session.
     
     if sessionStarted
-        top.price           := na
-        top.time            := na
-        bottom.price        := na
-        bottom.time         := na
+        top.price       := na
+        top.time        := na
+        bottom.price    := na
+        bottom.time     := na
 
     // Track the top and bottom.
 
