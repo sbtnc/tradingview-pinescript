@@ -293,17 +293,17 @@ method isInRangeFilter(int this) =>
     this >= startDateInput and this <= endDateInput
 
 
-// @function Get the current day's date at a specified time
+// @function Get the UNIX time of the current date at a given localized time in the user-selected timezone
 // @returns (int) UNIX time
-localizeTime(h = hour, m = minute, s = second) =>
-    timestamp(getTimezone(), year, month, dayofmonth, h, m, s)
-
+localizeTime(int localizedHour, int localizedMinute) =>
+    timestamp(getTimezone(), year, month, dayofmonth, localizedHour, localizedMinute, second)
+    
 
 // @function Get the current day's session dates from a given session string.
 // @returns ([int, int]) Start and end UNIX time
 getSessionTimes(sessionString) =>
-    [localizeTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4))), 0),
-     localizeTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))), 0)]
+    [localizeTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
+     localizeTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
 
 
 // @function Detect changes in the user selected session
@@ -311,14 +311,17 @@ getSessionTimes(sessionString) =>
 sessionChange() =>
     var int _startTime = na
     var int _endTime = na
-    _time = localizeTime()
     [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
 
-    // On overnight sessions, preserve original dates 
-    _startTime := _time >= _currentStartTime ? _currentStartTime : _startTime
-    _endTime := _time >= _currentEndTime ? _currentEndTime : _endTime
+    // DEBUG
+    //log.info("\nStart time: \n> time {0}\n> local time {1}", str.format_time(_currentStartTime), str.format_time(_currentStartTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
+    //log.info("\nEnd time: \n> time {0}\n> local time {1}", str.format_time(_currentEndTime), str.format_time(_currentEndTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
+    //if time == _currentStartTime
+    //    label.new(bar_index, -100, "", style = label.style_circle, size = size.small)
 
-    //log.info("\nstart time {0}\nend time {1}" , str.format_time(_startTime), str.format_time(_endTime))
+    // On overnight sessions, preserve original times 
+    _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
+    _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
 
     [_startTime != _startTime[1], _endTime != _endTime[1]]
 
