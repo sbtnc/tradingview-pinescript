@@ -343,13 +343,21 @@ sessionChange() =>
 if TIMEFRAMES.indexof(timeframe.period) == -1
     runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframes.")
 
+//@variable Check the current bar is in the time range filter 
 isInRange = isInRangeFilter()
 
+//@tuple [sessionStart, sessionEnd, isInSession]  zdqzd
 [sessionStart, sessionEnd, isInSession] = sessionChange()
+
+// @variable 
+isValidType = isValidSessionType(sessionStart, sessionEnd)
+
+
+// Track the top and bottom of the day/session.
 
 if isInRange and isInSession
 
-    // Reset the top and bottom on a new day/session.
+    // Reset the top and bottom on the first bar of new day/session.
     
     if sessionStart
         top.price       := na
@@ -368,17 +376,18 @@ if isInRange and isInSession
         bottom.time     := time
 
 
-// Collect data on the closing of the bar of the day/session.
-
-isValidDayType = isValidSessionType(sessionStart, sessionEnd)
+// Collect data after the last bar of the day/session.
 
 if isInRange and barstate.isconfirmed
 
     // On a day/session change, collect the preceding day/session top and bottom.
     // Valid day/session per type filter
     // Can collect the first day/session after the start of the time range
+
+    if isValidType and (na(top.time[1]) or na(bottom.time[1]))
+        label.new(bar_index, high, "!")
     
-    if isValidDayType and not na(top.time[1]) and not na(bottom.time[1])
+    if isValidType// and not na(top.time[1]) and not na(bottom.time[1])
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
