@@ -30,10 +30,12 @@ color   CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-timezoneTooltip = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
-noticeTitle     = "Navigate to the 1-hour timeframe (or 30-minute timeframe if the market starts at 9:30 AM) for the indicator to analyze the bars and collect tops and bottoms."
+timezoneTooltip     = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
+sessionTooltip      = "By default, the indicator identifies the tops and bottoms over the symbol's session. You can specify your own custom session expressed in the indicator timezone."
+rangeFilterTooltip  = "Expressed in your chart timezone."
+noticeTitle         = "Navigate to the 1-hour timeframe (or 30-minute timeframe if the market starts at 9:30 AM) for the indicator to analyze the bars and collect tops and bottoms."
 
-timezoneInput   = input.string("Exchange", "Time Zone",
+timezoneInput       = input.string  ("Exchange", "Time Zone",
      [
      "UTC",
      "Exchange",
@@ -126,11 +128,12 @@ timezoneInput   = input.string("Exchange", "Time Zone",
      timezoneTooltip,
      display = display.none
  )
-barTypeInput    = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
-sessionInput    = input.session ("0000-0000", "Session", group = "Filters")
-startDateInput  = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
-endDateInput    = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
-noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
+enableSessionInput  = input.bool    (false, "Session", inline = "Session")
+sessionInput        = input.session ("0000-0000", "", tooltip = sessionTooltip, inline = "Session")
+barTypeInput        = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
+startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", tooltip = rangeFilterTooltip, group = "Filters")
+endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", tooltip = rangeFilterTooltip, group = "Filters")
+noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
 
 //#endregion
 
@@ -142,6 +145,11 @@ noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confi
 type Marker
     float price = na
     int   time  = na
+
+type Session 
+    bool isStart
+    bool isEnd
+    bool isIn
 
 //#endregion
 
@@ -307,21 +315,25 @@ getSessionTimes(sessionString) =>
 // @function Detect changes in the user selected session
 // @returns ([bool, bool]) Start and end sessions changed
 sessionChange() =>
-    var int _startTime = na
-    var int _endTime = na
-    [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
+    if enableSessionInput
+        var int _startTime = na
+        var int _endTime = na
+        [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
 
-    // DEBUG
-    //log.info("\nStart time: \n> time {0}\n> local time {1}", str.format_time(_currentStartTime), str.format_time(_currentStartTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
-    //log.info("\nEnd time: \n> time {0}\n> local time {1}", str.format_time(_currentEndTime), str.format_time(_currentEndTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
-    //if time == _currentStartTime
-    //    label.new(bar_index, -100, "", style = label.style_circle, size = size.small)
+        // DEBUG
+        //log.info("\nStart time: \n> time {0}\n> local time {1}", str.format_time(_currentStartTime), str.format_time(_currentStartTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
+        //log.info("\nEnd time: \n> time {0}\n> local time {1}", str.format_time(_currentEndTime), str.format_time(_currentEndTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
+        //if time == _currentStartTime
+        //    label.new(bar_index, -100, "", style = label.style_circle, size = size.small)
 
-    // On overnight sessions, preserve original times 
-    _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
-    _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
+        // On overnight sessions, preserve original times 
+        _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
+        _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
 
-    [_startTime != _startTime[1], _endTime != _endTime[1]]
+        [_startTime != _startTime[1], _endTime != _endTime[1], not na(time(timeframe.period, sessionInput, getTimezone()))]
+    else
+        _dayChange = timeframe.change("D")
+        [_dayChange, _dayChange, true]
 
 //#endregion
 
@@ -335,15 +347,13 @@ if timeframe.period != "30" and timeframe.period != "60"
 
 isInRange = time(timeframe.period, "0000-0000", getTimezone()).isInRangeFilter()
 
-isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
-
-[sessionStarted, sessionEnded] = sessionChange()
+[sessionStart, sessionEnd, isInSession] = sessionChange()
 
 if isInRange and isInSession
 
     // Reset the top and bottom on a new day/session.
     
-    if sessionStarted
+    if sessionStart
         top.price       := na
         top.time        := na
         bottom.price    := na
@@ -362,7 +372,7 @@ if isInRange and isInSession
 
 // Collect data on the closing of the bar of the day/session.
 
-isValidDayType = isValidBarType(sessionStarted, sessionEnded)
+isValidDayType = isValidBarType(sessionStart, sessionEnd)
 
 if isInRange and barstate.isconfirmed
 
@@ -432,10 +442,10 @@ drawHourlyColumns(23)
 //#region                         Debug
 //--------------------------------------------------------------------
 
-plot(isInRange      ? 1 : 0,    "isInRange",        display = display.data_window)
-plot(isInSession    ? 1 : 0,    "isInSession",      display = display.data_window)
-plot(sessionStarted ? 1 : 0,    "sessionStarted",   display = display.data_window)
-plot(sessionEnded   ? 1 : 0,    "sessionEnded",     display = display.data_window)
+plot(isInRange      ? 1 : 0,    "isInRange",    display = display.data_window)
+plot(isInSession    ? 1 : 0,    "isInSession",  display = display.data_window)
+plot(sessionStart   ? 1 : 0,    "sessionStart", display = display.data_window)
+plot(sessionEnd     ? 1 : 0,    "sessionEnd",   display = display.data_window)
 
 //bgcolor(isInRange ? color.new(color.yellow, 90) : color(na))
 //bgcolor(sessionStarted ? color.new(color.yellow, 90) : color(na))
