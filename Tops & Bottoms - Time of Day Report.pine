@@ -383,11 +383,8 @@ if isInRange and barstate.isconfirmed
     // On a day/session change, collect the preceding day/session top and bottom.
     // Valid day/session per type filter
     // Can collect the first day/session after the start of the time range
-
-    if isValidType and (na(top.time[1]) or na(bottom.time[1]))
-        label.new(bar_index, high, "!")
     
-    if isValidType// and not na(top.time[1]) and not na(bottom.time[1])
+    if isValidType and not na(top.time[1]) and not na(bottom.time[1])
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
