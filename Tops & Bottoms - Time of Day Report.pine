@@ -13,15 +13,16 @@ indicator("Tops & Bottoms - Time of Day Report", format = format.percent, max_la
 //#region                      Constants
 //--------------------------------------------------------------------
 
-int     COLUMN_WIDTH                = 2
-int     COLUMN_GAP                  = 2
-color   COLUMN_BORDERCOLOR          = color.new(chart.fg_color, 80)
-color   COLUMN_TOP_MAX_COLOR        = color.green
-color   COLUMN_TOP_MIN_COLOR        = #0c3299
-color   COLUMN_BOTTOM_MAX_COLOR     = color.red
-color   COLUMN_BOTTOM_MIN_COLOR     = #311b92
-color   CATEGORY_LABEL_BGCOLOR      = color.new(chart.bg_color, 50)
-color   CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
+int             COLUMN_WIDTH                = 2
+int             COLUMN_GAP                  = 2
+color           COLUMN_BORDERCOLOR          = color.new(chart.fg_color, 80)
+color           COLUMN_TOP_MAX_COLOR        = color.green
+color           COLUMN_TOP_MIN_COLOR        = #0c3299
+color           COLUMN_BOTTOM_MAX_COLOR     = color.red
+color           COLUMN_BOTTOM_MIN_COLOR     = #311b92
+color           CATEGORY_LABEL_BGCOLOR      = color.new(chart.bg_color, 50)
+color           CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
+array<string>   TIMEFRAMES                  = array.from("15", "30", "60")
 
 //#endregion
 
@@ -339,8 +340,8 @@ sessionChange() =>
 //#region                         Logic
 //--------------------------------------------------------------------
 
-if timeframe.period != "30" and timeframe.period != "60"
-    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
+if TIMEFRAMES.indexof(timeframe.period) == -1
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframes.")
 
 isInRange = isInRangeFilter()
 
@@ -439,10 +440,10 @@ drawHourlyColumns(23)
 //#region                         Debug
 //--------------------------------------------------------------------
 
-plot(isInRange      ? 1 : 0,    "isInRange",    display = display.data_window)
-plot(isInSession    ? 1 : 0,    "isInSession",  display = display.data_window)
-plot(sessionStart   ? 1 : 0,    "sessionStart", display = display.data_window)
-plot(sessionEnd     ? 1 : 0,    "sessionEnd",   display = display.data_window)
+//plot(isInRange      ? 1 : 0,    "isInRange",    display = display.data_window)
+//plot(isInSession    ? 1 : 0,    "isInSession",  display = display.data_window)
+//plot(sessionStart   ? 1 : 0,    "sessionStart", display = display.data_window)
+//plot(sessionEnd     ? 1 : 0,    "sessionEnd",   display = display.data_window)
 
 //bgcolor(isInRange ? color.new(color.yellow, 90) : color(na))
 //bgcolor(sessionStarted ? color.new(color.yellow, 90) : color(na))
