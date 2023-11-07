@@ -128,9 +128,9 @@ timezoneInput       = input.string  ("Exchange", "Time Zone",
      timezoneTooltip,
      display = display.none
  )
-enableSessionInput  = input.bool    (false, "Session", inline = "Session")
+customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
 sessionInput        = input.session ("0000-0000", "", tooltip = sessionTooltip, inline = "Session")
-barTypeInput        = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
+sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", tooltip = rangeFilterTooltip, group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", tooltip = rangeFilterTooltip, group = "Filters")
 noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
@@ -145,11 +145,6 @@ noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", c
 type Marker
     float price = na
     int   time  = na
-
-type Session 
-    bool isStart
-    bool isEnd
-    bool isIn
 
 //#endregion
 
@@ -275,34 +270,35 @@ drawHourlyColumns(int key) =>
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled days", str.tostring(_bottomY, format.percent), _dataSum))
 
 
-// @function Check if the day's top and bottom can be collected per the user-selected bar type filter.
+// @function Check if the day/session matches the user-selected session type filter.
 // @returns bool 
-isValidBarType(sessionStarted, sessionEnded) =>
-    var float _sessionOpen = open //na
+isValidSessionType(start, end) =>
+    var float _open = na
     bool _isValid = na
 
-    if sessionStarted
-        _sessionOpen := open
+    if start
+        _open := open
 
-    if sessionEnded
-        _isValid := switch barTypeInput
-            "All"   => true //not na(_sessionOpen[1])
-            "Up"    => close[1] > _sessionOpen[1]
-            "Down"  => close[1] < _sessionOpen[1]
+    if end
+        _isValid := switch sessionTypeInput
+            "All"   => not na(_open[1])
+            "Up"    => close[1] > _open[1]
+            "Down"  => close[1] < _open[1]
 
     _isValid
 
 
 // @function Check if the current bar time is in the user-selected time range filter.
 // @returns bool
-method isInRangeFilter(int this) =>
-    this >= startDateInput and this <= endDateInput
+isInRangeFilter() =>
+    _time = time(timeframe.period, "0000-0000", getTimezone())
+    _time >= startDateInput and _time <= endDateInput
 
 
-// @function Get the UNIX time of the current date at a given localized time in the user-selected timezone
+// @function Produce the UNIX time of the current date at a specified time in the user-selected timezone
 // @returns (int) UNIX time
-localizeTime(int localizedHour, int localizedMinute) =>
-    timestamp(getTimezone(), year, month, dayofmonth, localizedHour, localizedMinute, second)
+localizeTime(int h, int m) =>
+    timestamp(getTimezone(), year, month, dayofmonth, h, m, second)
     
 
 // @function Get the current day's session dates from a given session string.
@@ -312,12 +308,13 @@ getSessionTimes(sessionString) =>
      localizeTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
 
 
-// @function Detect changes in the user selected session
-// @returns ([bool, bool]) Start and end sessions changed
+// @function Get the session's metrics
+// @returns [bool, bool, bool]
 sessionChange() =>
-    if enableSessionInput
+    if customSessionInput
         var int _startTime = na
         var int _endTime = na
+        _isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
         [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
 
         // DEBUG
@@ -330,7 +327,7 @@ sessionChange() =>
         _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
         _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
 
-        [_startTime != _startTime[1], _endTime != _endTime[1], not na(time(timeframe.period, sessionInput, getTimezone()))]
+        [_startTime != _startTime[1], _endTime != _endTime[1], _isInSession]
     else
         _dayChange = timeframe.change("D")
         [_dayChange, _dayChange, true]
@@ -345,7 +342,7 @@ sessionChange() =>
 if timeframe.period != "30" and timeframe.period != "60"
     runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
 
-isInRange = time(timeframe.period, "0000-0000", getTimezone()).isInRangeFilter()
+isInRange = isInRangeFilter()
 
 [sessionStart, sessionEnd, isInSession] = sessionChange()
 
@@ -372,7 +369,7 @@ if isInRange and isInSession
 
 // Collect data on the closing of the bar of the day/session.
 
-isValidDayType = isValidBarType(sessionStart, sessionEnd)
+isValidDayType = isValidSessionType(sessionStart, sessionEnd)
 
 if isInRange and barstate.isconfirmed
 
