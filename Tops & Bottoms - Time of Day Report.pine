@@ -328,7 +328,9 @@ sessionChange() =>
         _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
         _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
 
-        [_startTime != _startTime[1], _endTime != _endTime[1], _isInSession]
+        _start = ta.change(_startTime) > 0 and _isInSession
+        _end = ta.change(_endTime) > 0 and _isInSession[1]
+        [_start, _end, _isInSession]
     else
         _dayChange = timeframe.change("D")
         [_dayChange, _dayChange, true]
@@ -353,32 +355,30 @@ isInRange = isInTimeRange()
 isValidType = isValidSessionType(sessionStart, sessionEnd)
 
 
+// Track the top and bottom of the day/session.
+
 if isInRange
-
-    // Track the top and bottom of the day/session.
-
-    if isInSession
     
-        // Reset the top and bottom on the first bar of new day/session.
-        
-        if sessionStart
-            top.price       := na
-            top.time        := na
-            bottom.price    := na
-            bottom.time     := na
+    // Reset the top and bottom on the first bar of new day/session.
+    
+    if sessionStart
+        top.price       := na
+        top.time        := na
+        bottom.price    := na
+        bottom.time     := na
 
-        // Track the top and bottom.
+    // Track the top and bottom.
 
-        if na(top.price) or high > top.price
-            top.price       := high
-            top.time        := time
-        
-        if na(bottom.price) or low < bottom.price
-            bottom.price    := low
-            bottom.time     := time
+    if na(top.price) or high > top.price
+        top.price       := high
+        top.time        := time
+    
+    if na(bottom.price) or low < bottom.price
+        bottom.price    := low
+        bottom.time     := time
 
 
-    // Collect data after the last bar of the day/session.
+// Collect data after the last bar of the day/session.
 
 if isInRange and barstate.isconfirmed
 
@@ -390,6 +390,9 @@ if isInRange and barstate.isconfirmed
     _isFirstBar = na(top.time[1]) or  na(bottom.time[1])
     
     if isValidType and not _isFirstBar
+        // DEBUG
+        //label.new(bar_index, 1, "!")
+
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
@@ -458,8 +461,9 @@ plot(timeframe.change("D")  ? 1 : 0,    "timeframe.change('D')",    display = di
 plot(sessionStart           ? 1 : 0,    "sessionStart",             display = display.data_window)
 plot(sessionEnd             ? 1 : 0,    "sessionEnd",               display = display.data_window)
 
-//bgcolor(isInRange ? color.new(color.yellow, 90) : color(na))
-//bgcolor(sessionStarted ? color.new(color.yellow, 90) : color(na))
-//bgcolor(sessionEnded ? color.new(color.purple, 90) : color(na))
+//bgcolor(isInRange       ? color.new(color.yellow, 90) : color(na))
+//bgcolor(isInSession     ? color.new(color.gray, 90) : color(na))
+//bgcolor(sessionStarted  ? color.new(color.yellow, 90) : color(na))
+//bgcolor(sessionEnded    ? color.new(color.purple, 90) : color(na))
 
 //#endregion
