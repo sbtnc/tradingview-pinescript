@@ -1,12 +1,12 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-09-26
-// Last modified: 2023-10-10
-// Version 1.0
+// Last modified: 2023-11-13
+// Version 2.0
 
 
 //@version=5
-indicator("Tops & Bottoms - Time of Day Report", format = format.percent, max_labels_count = 499)
+indicator("Tops & Bottoms - Time of Day Report", format = format.percent, max_labels_count = 72)
 
 
 //--------------------------------------------------------------------
@@ -32,9 +32,11 @@ array<string>   TIMEFRAMES                  = array.from("15", "30", "60")
 //--------------------------------------------------------------------
 
 timezoneTooltip     = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
-sessionTooltip      = "By default, the indicator identifies the tops and bottoms over the symbol's session. You can specify your own custom session expressed in the indicator timezone."
+sessionTooltip      = "By default, the indicator identifies the tops and bottoms over the symbol's session. " +
+                      "You can specify your own custom session expressed in the indicator timezone."
 rangeFilterTooltip  = "Expressed in your chart timezone."
-noticeTitle         = "Navigate to the 1-hour timeframe (or 30-minute timeframe if the market starts at 9:30 AM) for the indicator to analyze the bars and collect tops and bottoms."
+noticeTitle         = "Navigate to the 1-hour timeframe (30-minute timeframe if the market starts at 𝑥:30 AM or " +
+                      "15-minute timeframe if 𝑥:15 AM) for the indicator to analyze the bars and collect tops and bottoms."
 
 timezoneInput       = input.string  ("Exchange", "Time Zone",
      [
@@ -343,7 +345,7 @@ sessionChange() =>
 //--------------------------------------------------------------------
 
 if TIMEFRAMES.indexof(timeframe.period) == -1
-    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframes.")
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframe.")
 
 //@variable Is truthy when the current bar is inside the time range filter.
 isInRange = isInTimeRange()
