@@ -32,9 +32,8 @@ array<string>   TIMEFRAMES                  = array.from("15", "30", "60")
 //--------------------------------------------------------------------
 
 timezoneTooltip     = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
-sessionTooltip      = "By default, the indicator identifies the tops and bottoms over the symbol's session. " +
-                      "You can specify your own custom session expressed in the indicator timezone."
-rangeFilterTooltip  = "Expressed in your chart timezone."
+sessionTooltip      = "By default, the indicator identifies the top and bottom at the end of each symbol's session. " +
+                      "You can specify your own custom session in the indicator's time zone."
 noticeTitle         = "Navigate to the 1-hour timeframe (30-minute timeframe if the market starts at 𝑥:30 AM or " +
                       "15-minute timeframe if 𝑥:15 AM) for the indicator to analyze the bars and collect tops and bottoms."
 
@@ -134,8 +133,8 @@ timezoneInput       = input.string  ("Exchange", "Time Zone",
 customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
 sessionInput        = input.session ("0000-0000", "", tooltip = sessionTooltip, inline = "Session")
 sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
-startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", tooltip = rangeFilterTooltip, group = "Filters")
-endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", tooltip = rangeFilterTooltip, group = "Filters")
+startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
+endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
 noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
 
 //#endregion
