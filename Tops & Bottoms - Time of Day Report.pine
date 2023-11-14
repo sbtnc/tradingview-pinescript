@@ -235,7 +235,7 @@ drawHourlyColumns(int key) =>
         _bottomColor    = getGradientColor(_bottomY, _bottomsMin, _bottomsMax, COLUMN_BOTTOM_MIN_COLOR, COLUMN_BOTTOM_MAX_COLOR)
 
 
-        // Plot the upper and lower columns for the tops and bottoms.
+        // Plot the upper column for tops and lower column for bottoms.
 
         _upperColumnBox.set_lefttop     (_x1, _topY)
         _upperColumnBox.set_rightbottom (_x2, 0)
@@ -257,7 +257,7 @@ drawHourlyColumns(int key) =>
         _categoryLabel.set_tooltip  (_isCategoryDefined ? str.format("{0} to {1} ({2})", _openTime, _closeTime, getTimezone()) : "Not Collected")
 
 
-        // Plot the upper and lower data labels for the tops and bottoms.
+        // Plot the tops and bottoms data labels.
 
         if not na(_top)
             _upperDataLabel.set_xy          (_center, _topY)
@@ -293,8 +293,7 @@ isValidSessionType(start, end) =>
 // @function Check if the current bar time is in the user-selected time range filter.
 // @returns  bool
 isInTimeRange() =>
-    _time = time(timeframe.period, "0000-0000", getTimezone())
-    _time >= startDateInput and _time <= endDateInput
+    time >= startDateInput and time <= endDateInput
 
 
 // @function Produce the UNIX time of the current date at a specified time in the user-selected timezone
