@@ -169,8 +169,8 @@ var bottom              = Marker.new()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Produce the timezone parameter from the user-selected settings.
-// @returns string
+// @function Produce the timezone parameter from the user-selected setting.
+// @returns  (string) Timezone
 getTimezone() => 
     var _tz = switch timezoneInput
         "UTC"       => "UTC+0"
@@ -178,21 +178,21 @@ getTimezone() =>
         => timezoneInput
 
 
-// @function Get the hour in the user-selected timezone from a given UNIX time.
-// @returns int
+// @function Get the hour from a given UNIX time in the user-selected timezone.
+// @returns  (int) Hour
 getHour(int barTime) =>
     hour(barTime, getTimezone())
 
 
 // @function Get the color based on a gradient between the minimum and maximum values.
-// @returns color 
+// @returns  color 
 getGradientColor(float value, float minValue, float maxValue, color minColor, color maxColor) =>
     // When `minValue` and `maxValue` are identical (on the first collected values), return the mid gradient color instead of no color.
     minValue != maxValue ? color.from_gradient(value, minValue, maxValue, minColor, maxColor) : color.from_gradient(0.5, 0, 1, minColor, maxColor)
     
 
-// @function Draw top and bottom columns for a given hour.
-// @returns void
+// @function Draw the tops and bottoms columns for a given hour.
+// @returns  void
 drawHourlyColumns(int key) =>
     var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
     var _lowerColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
@@ -209,7 +209,7 @@ drawHourlyColumns(int key) =>
         _dataSum        = _topsArray.sum()
 
 
-        // Calculate the top and bottom shares of occurrence.
+        // Calculate the tops and bottoms shares of occurrence.
 
         _top            = topsByHourMap.get(key)
         _bottom         = bottomsByHourMap.get(key)
@@ -235,7 +235,7 @@ drawHourlyColumns(int key) =>
         _bottomColor    = getGradientColor(_bottomY, _bottomsMin, _bottomsMax, COLUMN_BOTTOM_MIN_COLOR, COLUMN_BOTTOM_MAX_COLOR)
 
 
-        // Plot the upper and lower columns for the top and bottom.
+        // Plot the upper and lower columns for the tops and bottoms.
 
         _upperColumnBox.set_lefttop     (_x1, _topY)
         _upperColumnBox.set_rightbottom (_x2, 0)
@@ -257,7 +257,7 @@ drawHourlyColumns(int key) =>
         _categoryLabel.set_tooltip  (_isCategoryDefined ? str.format("{0} to {1} ({2})", _openTime, _closeTime, getTimezone()) : "Not Collected")
 
 
-        // Plot the top and bottom data labels.
+        // Plot the upper and lower data labels for the tops and bottoms.
 
         if not na(_top)
             _upperDataLabel.set_xy          (_center, _topY)
@@ -272,11 +272,11 @@ drawHourlyColumns(int key) =>
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled days", str.tostring(_bottomY, format.percent), _dataSum))
 
 
-// @function Check if the day/session matches the user-selected session type filter.
-// @returns bool 
+// @function Check if the day/custom session matches the user-selected session type filter.
+// @returns  bool 
 isValidSessionType(start, end) =>
     var float _open = na
-    bool _isValid = na
+    bool _isValid   = na
 
     if start
         _open := open
@@ -291,7 +291,7 @@ isValidSessionType(start, end) =>
 
 
 // @function Check if the current bar time is in the user-selected time range filter.
-// @returns bool
+// @returns  bool
 isInTimeRange() =>
     _time = time(timeframe.period, "0000-0000", getTimezone())
     _time >= startDateInput and _time <= endDateInput
