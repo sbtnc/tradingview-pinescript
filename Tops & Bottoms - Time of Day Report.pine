@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-09-26
-// Last modified: 2023-11-13
+// Last modified: 2023-11-14
 // Version 2.0
 
 
@@ -296,21 +296,21 @@ isInTimeRange() =>
     time >= startDateInput and time <= endDateInput
 
 
-// @function Produce the UNIX time of the current date at a specified time in the user-selected timezone
-// @returns (int) UNIX time
-localizeTime(int h, int m) =>
+// @function Produce the UNIX time of the current date at a specified time in the user-selected timezone.
+// @returns  (int) UNIX time
+getTime(int h, int m) =>
     timestamp(getTimezone(), year, month, dayofmonth, h, m, second)
     
 
 // @function Get the current day's session dates from a given session string.
-// @returns ([int, int]) Start and end UNIX time
+// @returns  ([int, int]) Start and end UNIX time
 getSessionTimes(sessionString) =>
-    [localizeTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
-     localizeTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
+    [getTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
+     getTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
 
 
-// @function Get the session's metrics
-// @returns [bool, bool, bool]
+// @function Detect changes in the day/custom session and check if bar is in the session.
+// @returns  [bool, bool, bool]
 sessionChange() =>
     if customSessionInput
         var int _startTime = na
@@ -318,21 +318,21 @@ sessionChange() =>
         _isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
         [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
 
-        // DEBUG
-        //log.info("\nStart time: \n> time {0}\n> local time {1}", str.format_time(_currentStartTime), str.format_time(_currentStartTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
-        //log.info("\nEnd time: \n> time {0}\n> local time {1}", str.format_time(_currentEndTime), str.format_time(_currentEndTime, "yyyy-MM-dd'T'HH:mm:ssZ", getTimezone()))
-        //if time == _currentStartTime
-        //    label.new(bar_index, -100, "", style = label.style_circle, size = size.small)
-
-        // On overnight sessions, preserve original times 
+        // On overnight sessions (i.e., EURUSD), preserve original start and end times 
         _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
         _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
 
+        // Start on the first bar of the session
         _start = ta.change(_startTime) > 0 and _isInSession
+
+        // End after the last bar of the session
         _end = ta.change(_endTime) > 0 and _isInSession[1]
+
         [_start, _end, _isInSession]
     else
+        // Start and end on the day change
         _dayChange = timeframe.change("D")
+
         [_dayChange, _dayChange, true]
 
 //#endregion
