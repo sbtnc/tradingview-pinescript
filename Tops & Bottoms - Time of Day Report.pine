@@ -178,7 +178,7 @@ getTimezone() =>
         => timezoneInput
 
 
-// @function Get the hour from a given UNIX time in the user-selected timezone.
+// @function Get the hour in the user-selected timezone from a given UNIX time.
 // @returns  (int) Hour
 getHour(int barTime) =>
     hour(barTime, getTimezone())
@@ -191,7 +191,7 @@ getGradientColor(float value, float minValue, float maxValue, color minColor, co
     minValue != maxValue ? color.from_gradient(value, minValue, maxValue, minColor, maxColor) : color.from_gradient(0.5, 0, 1, minColor, maxColor)
     
 
-// @function Draw the tops and bottoms columns for a given hour.
+// @function Draw the columns for a given hour.
 // @returns  void
 drawHourlyColumns(int key) =>
     var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
@@ -209,7 +209,7 @@ drawHourlyColumns(int key) =>
         _dataSum        = _topsArray.sum()
 
 
-        // Calculate the tops and bottoms shares of occurrence.
+        // Calculate the shares of occurrence of tops and bottoms.
 
         _top            = topsByHourMap.get(key)
         _bottom         = bottomsByHourMap.get(key)
@@ -235,7 +235,7 @@ drawHourlyColumns(int key) =>
         _bottomColor    = getGradientColor(_bottomY, _bottomsMin, _bottomsMax, COLUMN_BOTTOM_MIN_COLOR, COLUMN_BOTTOM_MAX_COLOR)
 
 
-        // Plot the upper column for tops and lower column for bottoms.
+        // Plot the upper and lower columns for tops and bottoms.
 
         _upperColumnBox.set_lefttop     (_x1, _topY)
         _upperColumnBox.set_rightbottom (_x2, 0)
@@ -257,7 +257,7 @@ drawHourlyColumns(int key) =>
         _categoryLabel.set_tooltip  (_isCategoryDefined ? str.format("{0} to {1} ({2})", _openTime, _closeTime, getTimezone()) : "Not Collected")
 
 
-        // Plot the tops and bottoms data labels.
+        // Plot the data labels for tops and bottoms.
 
         if not na(_top)
             _upperDataLabel.set_xy          (_center, _topY)
@@ -309,7 +309,7 @@ getSessionTimes(sessionString) =>
      getTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
 
 
-// @function Detect changes in the day/custom session and check if bar is in the session.
+// @function Detect changes in the day/custom session and if the current bar is in the session.
 // @returns  [bool, bool, bool]
 sessionChange() =>
     if customSessionInput
@@ -318,19 +318,19 @@ sessionChange() =>
         _isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
         [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
 
-        // On overnight sessions (i.e., EURUSD), preserve original start and end times 
+        // On overnight sessions (e.g., EURUSD), preserve original start and end times.
         _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
         _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
 
-        // Start on the first bar of the session
+        // Start on the first bar of the session.
         _start = ta.change(_startTime) > 0 and _isInSession
 
-        // End after the last bar of the session
+        // End after the last bar of the session.
         _end = ta.change(_endTime) > 0 and _isInSession[1]
 
         [_start, _end, _isInSession]
     else
-        // Start and end on the day change
+        // Start and end on the day change.
         _dayChange = timeframe.change("D")
 
         [_dayChange, _dayChange, true]
@@ -345,13 +345,13 @@ sessionChange() =>
 if TIMEFRAMES.indexof(timeframe.period) == -1
     runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframe.")
 
-//@variable Is truthy when the current bar is inside the time range filter.
+//@variable Is true when the current bar is inside the time range filter.
 isInRange = isInTimeRange()
 
-// Session variables from the day/custom session
+// Session variables from the day/custom session.
 [sessionStart, sessionEnd, isInSession] = sessionChange()
 
-// @variable Is truthy when the day/custom session closes per the session type filter.
+// @variable Is true when the day/custom session closes per the session type filter.
 isValidType = isValidSessionType(sessionStart, sessionEnd)
 
 
@@ -359,7 +359,7 @@ isValidType = isValidSessionType(sessionStart, sessionEnd)
 
 if isInRange
     
-    // Reset the top and bottom on the first bar of new day/custom session.
+    // Reset the top and bottom on the first bar of a new day/custom session.
     
     if sessionStart
         top.price       := na
@@ -381,11 +381,11 @@ if isInRange
 // Collect the top, bottom, and time data.
 
 if isInRange and barstate.isconfirmed
-    // @variable Is truthy on the first bar of the time range
+    // @variable Is true on the first bar of the time range.
     _isFirstBar = na(top.time[1]) or na(bottom.time[1])
     
 
-    // Collect the top and bottom on valid type of the day/custom session change.
+    // Collect the top and bottom on matching type on a day/custom session change.
 
     if isValidType and not _isFirstBar
         _topHour     = getHour(top.time[1])
@@ -402,7 +402,7 @@ if isInRange and barstate.isconfirmed
 
     // Collect the hourly opening and closing times
     // On hourly time change, collect the open time and preceding close time.
-    // The times will be displayed in the tooltips of category labels.
+    // The times are be displayed in the tooltips of category labels.
 
     _barHour     = getHour(time)
     _prevBarHour = getHour(time[1])
