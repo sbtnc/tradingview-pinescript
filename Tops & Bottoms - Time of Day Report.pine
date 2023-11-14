@@ -131,7 +131,7 @@ timezoneInput       = input.string  ("Exchange", "Time Zone",
      display = display.none
  )
 customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
-sessionInput        = input.session ("0000-0000", "", tooltip = sessionTooltip, inline = "Session")
+sessionInput        = input.session ("0000-0000", "", tooltip = sessionTooltip, inline = "Session", display = display.none)
 sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
