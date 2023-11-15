@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-09-26
-// Last modified: 2023-11-14
+// Last modified: 2023-11-15
 // Version 2.0
 
 
@@ -366,6 +366,7 @@ if isInRange
         top.time        := na
         bottom.price    := na
         bottom.time     := na
+
 
     // Track the top and bottom.
 
