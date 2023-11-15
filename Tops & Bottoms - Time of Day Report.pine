@@ -1,8 +1,8 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-09-26
-// Last modified: 2023-09-26
-// Version 1.0
+// Last modified: 2023-11-15
+// Version 2.0
 
 
 //@version=5
@@ -13,15 +13,16 @@ indicator("Tops & Bottoms - Time of Day Report", format = format.percent, max_la
 //#region                      Constants
 //--------------------------------------------------------------------
 
-int     COLUMN_WIDTH                = 2
-int     COLUMN_GAP                  = 2
-color   COLUMN_BORDERCOLOR          = color.new(chart.fg_color, 80)
-color   COLUMN_TOP_MAX_COLOR        = color.green
-color   COLUMN_TOP_MIN_COLOR        = #0c3299
-color   COLUMN_BOTTOM_MAX_COLOR     = color.red
-color   COLUMN_BOTTOM_MIN_COLOR     = #311b92
-color   CATEGORY_LABEL_BGCOLOR      = color.new(chart.bg_color, 50)
-color   CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
+int             COLUMN_WIDTH                = 2
+int             COLUMN_GAP                  = 2
+color           COLUMN_BORDERCOLOR          = color.new(chart.fg_color, 80)
+color           COLUMN_TOP_MAX_COLOR        = color.green
+color           COLUMN_TOP_MIN_COLOR        = #0c3299
+color           COLUMN_BOTTOM_MAX_COLOR     = color.red
+color           COLUMN_BOTTOM_MIN_COLOR     = #311b92
+color           CATEGORY_LABEL_BGCOLOR      = color.new(chart.bg_color, 50)
+color           CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
+array<string>   TIMEFRAMES                  = array.from("15", "30", "60")
 
 //#endregion
 
@@ -30,10 +31,13 @@ color   CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-timezoneTooltip = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
-noticeTitle     = "Navigate to the 1-hour timeframe (or 30-minute timeframe if the market starts at 9:30 AM) for the indicator to analyze the bars and collect tops and bottoms."
+timezoneTooltip     = "Exchange and geographical timezones may observe Daylight Saving Time (DST)."
+sessionTooltip      = "By default, the indicator identifies the top and bottom over the symbol's session. " +
+                      "You can specify your custom session (in the indicator's timezone)."
+noticeTitle         = "Navigate to the 1-hour timeframe (30-minute timeframe if the market starts at 𝑥:30 AM or " +
+                      "15-minute timeframe if 𝑥:15 AM) for the indicator to analyze the bars and collect tops and bottoms."
 
-timezoneInput   = input.string("Exchange", "Time Zone",
+timezoneInput       = input.string  ("Exchange", "Timezone",
      [
      "UTC",
      "Exchange",
@@ -126,10 +130,12 @@ timezoneInput   = input.string("Exchange", "Time Zone",
      timezoneTooltip,
      display = display.none
  )
-barTypeInput    = input.string  ("All", "Days", ["All", "Up", "Down"], group = "Filters") 
-startDateInput  = input.time    (timestamp("01 Jan 1975"),    "From", group = "Filters")
-endDateInput    = input.time    (timestamp("31 Dec 2050"),    "To", group = "Filters")
-noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
+customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
+sessionInput        = input.session ("0000-0000", "", tooltip = sessionTooltip, inline = "Session", display = display.none)
+sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
+startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
+endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
+noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
 
 //#endregion
 
@@ -139,8 +145,8 @@ noticeInput     = input.bool    (true, noticeTitle, group = "How To Use?", confi
 //--------------------------------------------------------------------
 
 type Marker
-    float price
-    int time
+    float price = na
+    int   time  = na
 
 //#endregion
 
@@ -153,8 +159,8 @@ var topsByHourMap       = map.new<int, int>()
 var bottomsByHourMap    = map.new<int, int>()
 var openTimesByHourMap  = map.new<int, string>()
 var closeTimesByHourMap = map.new<int, string>() 
-var top                 = Marker.new(high, time)
-var bottom              = Marker.new(low, time)
+var top                 = Marker.new()
+var bottom              = Marker.new()
 
 //#endregion
 
@@ -163,8 +169,8 @@ var bottom              = Marker.new(low, time)
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Produce the timezone parameter from the user-selected settings.
-// @returns string
+// @function Produce the timezone parameter from the user-selected setting.
+// @returns  (string) Timezone
 getTimezone() => 
     var _tz = switch timezoneInput
         "UTC"       => "UTC+0"
@@ -173,20 +179,20 @@ getTimezone() =>
 
 
 // @function Get the hour in the user-selected timezone from a given UNIX time.
-// @returns int
+// @returns  (int) Hour
 getHour(int barTime) =>
     hour(barTime, getTimezone())
 
 
 // @function Get the color based on a gradient between the minimum and maximum values.
-// @returns color 
+// @returns  color 
 getGradientColor(float value, float minValue, float maxValue, color minColor, color maxColor) =>
     // When `minValue` and `maxValue` are identical (on the first collected values), return the mid gradient color instead of no color.
     minValue != maxValue ? color.from_gradient(value, minValue, maxValue, minColor, maxColor) : color.from_gradient(0.5, 0, 1, minColor, maxColor)
     
 
-// @function Draw top and bottom columns for a given hour.
-// @returns void
+// @function Draw the columns for a given hour.
+// @returns  void
 drawHourlyColumns(int key) =>
     var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
     var _lowerColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
@@ -203,7 +209,7 @@ drawHourlyColumns(int key) =>
         _dataSum        = _topsArray.sum()
 
 
-        // Calculate the top and bottom shares of occurrence.
+        // Calculate the shares of occurrence of tops and bottoms.
 
         _top            = topsByHourMap.get(key)
         _bottom         = bottomsByHourMap.get(key)
@@ -229,7 +235,7 @@ drawHourlyColumns(int key) =>
         _bottomColor    = getGradientColor(_bottomY, _bottomsMin, _bottomsMax, COLUMN_BOTTOM_MIN_COLOR, COLUMN_BOTTOM_MAX_COLOR)
 
 
-        // Plot the upper and lower columns for the top and bottom.
+        // Plot the upper and lower columns for tops and bottoms.
 
         _upperColumnBox.set_lefttop     (_x1, _topY)
         _upperColumnBox.set_rightbottom (_x2, 0)
@@ -251,7 +257,7 @@ drawHourlyColumns(int key) =>
         _categoryLabel.set_tooltip  (_isCategoryDefined ? str.format("{0} to {1} ({2})", _openTime, _closeTime, getTimezone()) : "Not Collected")
 
 
-        // Plot the top and bottom data labels.
+        // Plot the data labels for tops and bottoms.
 
         if not na(_top)
             _upperDataLabel.set_xy          (_center, _topY)
@@ -265,70 +271,124 @@ drawHourlyColumns(int key) =>
             _lowerDataLabel.set_textcolor   (_bottomColor)
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled days", str.tostring(_bottomY, format.percent), _dataSum))
 
-//#endregion
 
+// @function Check if the day/custom session matches the user-selected session type filter.
+// @returns  bool 
+isValidSessionType(start, end) =>
+    var float _open = na
+    bool _isValid   = na
 
-// @function Check if the day's top and bottom can be collected per the user-selected bar type filter.
-// @returns bool 
-isValidBarType() =>
-    var _dayOpen = open
-    bool _isValid = na
+    if start
+        _open := open
 
-    if timeframe.change("D")
-        _dayOpen := open
-        _isValid := switch barTypeInput
-            "All"   => true
-            "Up"    => close[1] > _dayOpen[1]
-            "Down"  => close[1] < _dayOpen[1]
+    if end
+        _isValid := switch sessionTypeInput
+            "All"   => not na(_open[1])
+            "Up"    => close[1] > _open[1]
+            "Down"  => close[1] < _open[1]
 
     _isValid
 
 
 // @function Check if the current bar time is in the user-selected time range filter.
-// @returns bool
-method isInRangeFilter(int this) =>
-    this >= startDateInput and this <= endDateInput
+// @returns  bool
+isInTimeRange() =>
+    time >= startDateInput and time <= endDateInput
+
+
+// @function Produce the UNIX time of the current date at a specified time in the user-selected timezone.
+// @returns  (int) UNIX time
+getTime(int h, int m) =>
+    timestamp(getTimezone(), year, month, dayofmonth, h, m, second)
+    
+
+// @function Get the current day's session dates from a given session string.
+// @returns  ([int, int]) Start and end UNIX time
+getSessionTimes(sessionString) =>
+    [getTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
+     getTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
+
+
+// @function Detect changes in the day/custom session and if the current bar is in the session.
+// @returns  [bool, bool, bool]
+sessionChange() =>
+    if customSessionInput
+        var int _startTime = na
+        var int _endTime = na
+        _isInSession = not na(time(timeframe.period, sessionInput, getTimezone()))
+        [_currentStartTime, _currentEndTime] = getSessionTimes(sessionInput)
+
+        // On overnight sessions (e.g., EURUSD), preserve original start and end times.
+        _startTime := time >= _currentStartTime ? _currentStartTime : _startTime
+        _endTime := time >= _currentEndTime ? _currentEndTime : _endTime
+
+        // Start on the first bar of the session.
+        _start = ta.change(_startTime) > 0 and _isInSession
+
+        // End after the last bar of the session.
+        _end = ta.change(_endTime) > 0 and _isInSession[1]
+
+        [_start, _end, _isInSession]
+    else
+        // Start and end on the day change.
+        _dayChange = timeframe.change("D")
+
+        [_dayChange, _dayChange, true]
+
+//#endregion
 
 
 //--------------------------------------------------------------------
 //#region                         Logic
 //--------------------------------------------------------------------
 
-if timeframe.period != "30" and timeframe.period != "60"
-    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour or 30-minute timeframes.")
+if TIMEFRAMES.indexof(timeframe.period) == -1
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframe.")
+
+//@variable Is true when the current bar is inside the time range filter.
+isInRange = isInTimeRange()
+
+// Session variables from the day/custom session.
+[sessionStart, sessionEnd, isInSession] = sessionChange()
+
+// @variable Is true when the day/custom session closes per the session type filter.
+isValidType = isValidSessionType(sessionStart, sessionEnd)
 
 
-// Reset the top and bottom on a new day to the first bar's high and low.
+// Track the top and bottom of the day/custom session.
+
+if isInRange
+    
+    // Reset the top and bottom on the first bar of a new day/custom session.
+    
+    if sessionStart
+        top.price       := na
+        top.time        := na
+        bottom.price    := na
+        bottom.time     := na
 
 
-if timeframe.change("D")
-    top.price           := high
-    top.time            := time
-    bottom.price        := low
-    bottom.time         := time
+    // Track the top and bottom.
 
-
-// Update the top and bottom on a higher high and lower low.
-
-else 
-    if high > top.price
+    if na(top.price) or high > top.price
         top.price       := high
         top.time        := time
     
-    if low < bottom.price
+    if na(bottom.price) or low < bottom.price
         bottom.price    := low
         bottom.time     := time
 
 
-// Collect data on the closing of the bar.
+// Collect the top, bottom, and time data.
 
-isValidDayType = isValidBarType()
+if isInRange and barstate.isconfirmed
+    // @variable Is true on the first bar of the time range.
+    _isFirstBar = na(top.time[1]) or na(bottom.time[1])
+    
 
-if time.isInRangeFilter() and barstate.isconfirmed
+    // Collect the top and bottom on matching type on a day/custom session change.
 
-    // On a day change, collect the preceding day's top and bottom.
-
-    if isValidDayType
+    if isValidType and not _isFirstBar
         _topHour     = getHour(top.time[1])
         _bottomHour  = getHour(bottom.time[1])
 
@@ -341,8 +401,9 @@ if time.isInRangeFilter() and barstate.isconfirmed
         log.info("\n▲ Top at {0} ({1}/{4})\n▼ Bottom at {2} ({3}/{4})", _topHour, _topCount, _bottomHour, _bottomCount, topsByHourMap.values().sum())
 
 
+    // Collect the hourly opening and closing times
     // On hourly time change, collect the open time and preceding close time.
-    // The times will be displayed in the tooltips of category labels.
+    // The times are be displayed in the tooltips of category labels.
 
     _barHour     = getHour(time)
     _prevBarHour = getHour(time[1])
