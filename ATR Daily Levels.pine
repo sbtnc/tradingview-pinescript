@@ -1,8 +1,8 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-09-06
-// Last modified: 2023-02-22
-// Version 5.0
+// Last modified: 2023-11-19
+// Version 6.0
 
 // @version=5
 indicator("Daily ATR Levels", "D ATR", true)
@@ -280,6 +280,7 @@ c_lowerLevel    = c_atrLow
 // In this case, we override values
 
 if f_canShowNextATR()
+    atr             := dayAtr
     upperLevel      := f_calculateAtrHigh(close, atr)
     lowerLevel      := f_calculateAtrLow (close, atr)
 
@@ -315,11 +316,11 @@ if canDisplay
     _start      = i_showStartOffset ? _offset : dayBarIndex
     _end        = _offset + DEFAULT_LINE_LENGTH
 
-    f_drawLine  (_start, _end, atrHigh, c_upperLevel)
-    f_drawLine  (_start, _end, atrLow,  c_lowerLevel)
+    f_drawLine  (_start, _end, upperLevel, c_upperLevel)
+    f_drawLine  (_start, _end, lowerLevel,  c_lowerLevel)
 
-    f_drawLabel (_end, atrHigh, upperLabelText, c_upperLevel,   upperLabelTooltip)
-    f_drawLabel (_end, atrLow,  lowerLabelText, c_lowerLevel,   lowerLabelTooltip)
+    f_drawLabel (_end, upperLevel, upperLabelText, c_upperLevel,   upperLabelTooltip)
+    f_drawLabel (_end, lowerLevel,  lowerLabelText, c_lowerLevel,   lowerLabelTooltip)
 
 
 // Plot the levels' labels on the price scale
