@@ -255,28 +255,78 @@ isInTimeRange() =>
 
 getDayOfWeek(string weekday) =>
     switch weekday
-        "Sunday" => dayofweek.sunday
-        "Monday" => dayofweek.monday
-        "Tuesday" => dayofweek.tuesday
+        "Sunday"    => dayofweek.sunday
+        "Monday"    => dayofweek.monday
+        "Tuesday"   => dayofweek.tuesday
         "Wednesday" => dayofweek.wednesday
-        "Thursday" => dayofweek.thursday
-        "Friday" => dayofweek.friday
-        "Saturday" => dayofweek.saturday
+        "Thursday"  => dayofweek.thursday
+        "Friday"    => dayofweek.friday
+        "Saturday"  => dayofweek.saturday
+
+
+// @function Check if current bar's day is at a given weekday
+// @return bool
+f_checkWeekday(int _weekday) =>
+    // Use of `time_tradingday` for handling markets with overnight sessions (e.g., EURUSD)
+    dayofweek(time_tradingday, "UTC+0") == _weekday
+
 
 // @function Detect changes in the day/custom session and if the current bar is in the session.
 // @returns  [bool, bool, bool]
 sessionChange() =>
     if customSessionInput
         _isInSession = true
+        var int _startTime = na
 
-        _dayOfWeek = f_hasOvernightSession(time, time_close) ? dayofweek(time_tradingday) +1 : dayofweek(time_tradingday)
+        array<int> DAYSOFWEEK = array.from(dayofweek.sunday, dayofweek.monday, dayofweek.tuesday, dayofweek.wednesday, dayofweek.thursday, dayofweek.friday, dayofweek.saturday)
+        _currentIndex = dayofweek(time_tradingday, "UTC+0")
 
-        _start = _dayOfWeek == getDayOfWeek(sessionStartInput)
-        log.info("\nstart on {0}:{1}", sessionStartInput, getDayOfWeek(sessionStartInput))
+        // Construct a full week from a specified weekday
+        _index = DAYSOFWEEK.indexof(getDayOfWeek(sessionStartInput))
+        _part1 = DAYSOFWEEK.slice(0, _index)
+        _part2 = DAYSOFWEEK.slice(_index, 7)
+        _final = _part2.concat(_part1)
+        log.info("{0}", _final)
 
 
-        _end   = _dayOfWeek == getDayOfWeek(sessionEndInput)
-        log.info("\nend on {0}:{1}", sessionEndInput, getDayOfWeek(sessionEndInput))
+
+        inSessionArray = _final.copy().slice(0, _final.indexof(getDayOfWeek(sessionEndInput)))
+        _isInSession := inSessionArray.includes(_currentIndex)
+        //log.info("inSessionArray {0}", inSessionArray)
+        //log.info("\nIn session? {0}",
+        //     _isInSession
+        //     )
+
+
+
+        _startIndex = getDayOfWeek(sessionStartInput)
+        _dayOffsetToStart = 7 - _final.indexof(_currentIndex)
+        _startThisWeek = timestamp(year, month, dayofmonth + _dayOffsetToStart, hour, minute)
+        _start = ta.change(_startThisWeek) > 0 and _isInSession
+        //label.new(_startThisWeek, 1, xloc = xloc.bar_time)
+        //log.info("\nstart weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
+        //     _startIndex, _currentIndex, _dayOffsetToStart, str.format_time(_startThisWeek), _start, str.format_time(time)
+        //     )
+
+
+        //_suiteFromCurrentWeekdayIndex = DAYSOFWEEK.slice(0, _endIndex) 
+
+
+        _endIndex = DAYSOFWEEK.indexof(getDayOfWeek(sessionEndInput))
+        _part3 = DAYSOFWEEK.slice(0, _endIndex) 
+        _part4 = DAYSOFWEEK.slice(_endIndex, 7)
+        _final2 = _part4.concat(_part3)
+        //log.info("{0}", _final2)
+
+        _dayOffsetToEnd = 7 - _final2.indexof(_currentIndex)
+        _endThisWeek = timestamp(year, month, dayofmonth + _dayOffsetToEnd, hour, minute)
+        _end = ta.change(_endThisWeek) > 0 and _isInSession[1]
+        //label.new(_endThisWeek, -1, xloc = xloc.bar_time)
+        //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
+        //     getDayOfWeek(sessionEndInput), _currentIndex, _dayOffsetToEnd, str.format_time(_endThisWeek), _end, str.format_time(time)
+        //     )
+
+
 
         [_start, _end, _isInSession]
     else
@@ -349,10 +399,10 @@ if isInRange and barstate.isconfirmed
         topsByWeekdayMap.put(_topWeekday, _topCount)
         bottomsByWeekdayMap.put(_bottomWeekday, _bottomCount)
 
-        log.info(
-             "\n▲ Top on {0} ({1}/{4})\n▼ Bottom on {2} ({3}/{4})",
-             _topWeekday, _topCount, _bottomWeekday, _bottomCount, topsByWeekdayMap.values().sum()
-             )
+//        log.info(
+//             "\n▲ Top on {0} ({1}/{4})\n▼ Bottom on {2} ({3}/{4})",
+//             _topWeekday, _topCount, _bottomWeekday, _bottomCount, topsByWeekdayMap.values().sum()
+//             )
 
 
     // Collect the opening and closing times.
@@ -381,12 +431,19 @@ drawWeekdayColumns(dayofweek.saturday)
 //#endregion
 
 
-bgcolor(sessionStart ? color.new(color.green, 50) : color(na))
-bgcolor(sessionEnd ? color.new(color.red, 50) : color(na))
+bgcolor(sessionStart ? color.new(color.green, 80) : color(na))
+bgcolor(sessionEnd   ? color.new(color.red, 80) : color(na))
+//bgcolor(isInSession  ? color.new(color.yellow, 80) : color(na))
+
+
+plot(time_tradingday, "time_tradingday", display = display.data_window)
+plot(time, "time", display = display.data_window)
+
+plot(na, "------------", display = display.data_window)
 
 plot(dayofweek(time_tradingday), "dayofweek(time_tradingday)", display = display.data_window)
+plot(dayofweek(time_tradingday, "UTC+0"), "dayofweek(time_tradingday, 'UTC+0')", display = display.data_window)
 plot(dayofweek(time), "dayofweek(time)", display = display.data_window)
-plot(getWeekday(time))
 
 plot(na, "------------", display = display.data_window)
 
@@ -397,3 +454,9 @@ plot(dayofweek.thursday, "dayofweek.thursday", display = display.data_window)
 plot(dayofweek.friday, "dayofweek.friday", display = display.data_window)
 plot(dayofweek.saturday, "dayofweek.saturday", display = display.data_window)
 plot(dayofweek.sunday, "dayofweek.sunday", display = display.data_window)
+
+plot(na, "------------", display = display.data_window)
+
+plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
+plot(f_hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
+
