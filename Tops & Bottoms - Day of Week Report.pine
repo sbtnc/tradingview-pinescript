@@ -286,7 +286,7 @@ sessionChange() =>
         _part1 = DAYSOFWEEK.slice(0, _index)
         _part2 = DAYSOFWEEK.slice(_index, 7)
         _final = _part2.concat(_part1)
-        log.info("{0}", _final)
+        //log.info("{0}", _final)
 
 
 
@@ -299,35 +299,20 @@ sessionChange() =>
 
 
 
-        _startIndex = getDayOfWeek(sessionStartInput)
-        _dayOffsetToStart = 7 - _final.indexof(_currentIndex)
-        _startThisWeek = timestamp(year, month, dayofmonth + _dayOffsetToStart, hour, minute)
-        _start = ta.change(_startThisWeek) > 0 and _isInSession
-        //label.new(_startThisWeek, 1, xloc = xloc.bar_time)
-        //log.info("\nstart weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
-        //     _startIndex, _currentIndex, _dayOffsetToStart, str.format_time(_startThisWeek), _start, str.format_time(time)
-        //     )
-
-
-        //_suiteFromCurrentWeekdayIndex = DAYSOFWEEK.slice(0, _endIndex) 
-
-
-        _endIndex = DAYSOFWEEK.indexof(getDayOfWeek(sessionEndInput))
-        _part3 = DAYSOFWEEK.slice(0, _endIndex) 
-        _part4 = DAYSOFWEEK.slice(_endIndex, 7)
-        _final2 = _part4.concat(_part3)
-        //log.info("{0}", _final2)
-
-        _dayOffsetToEnd = 7 - _final2.indexof(_currentIndex)
-        _endThisWeek = timestamp(year, month, dayofmonth + _dayOffsetToEnd, hour, minute)
-        _end = ta.change(_endThisWeek) > 0 and _isInSession[1]
-        //label.new(_endThisWeek, -1, xloc = xloc.bar_time)
-        //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
-        //     getDayOfWeek(sessionEndInput), _currentIndex, _dayOffsetToEnd, str.format_time(_endThisWeek), _end, str.format_time(time)
-        //     )
-
-
-
+        _i = DAYSOFWEEK.indexof(_currentIndex)
+        _p1 = DAYSOFWEEK.slice(_i, 7)
+        _p2 = DAYSOFWEEK.slice(0, _i)
+        _suiteFromCurrentWeekdayIndex = array.concat(_p1, _p2)
+        log.info("\n_suiteFromCurrentWeekdayIndex: {0}", _suiteFromCurrentWeekdayIndex)
+        _barsToSessionStart = _suiteFromCurrentWeekdayIndex.indexof(getDayOfWeek(sessionStartInput))
+        _barsToSessionEnd = _suiteFromCurrentWeekdayIndex.indexof(getDayOfWeek(sessionEndInput))
+        log.info("\nStart: {0} bars\nEnd: {1} bars", _barsToSessionStart, _barsToSessionEnd)
+        _startThisWeek = timestamp(year, month, dayofmonth + _barsToSessionStart, hour, minute)
+        _endThisWeek = timestamp(year, month, dayofmonth + _barsToSessionEnd, hour, minute)
+        log.info("\nStart: {0}\nEnd: {1}", str.format_time(_startThisWeek),  str.format_time(_endThisWeek))
+        _start = time >= _startThisWeek and _isInSession
+        _end = time >= _endThisWeek and _isInSession[1]
+        
         [_start, _end, _isInSession]
     else
 
