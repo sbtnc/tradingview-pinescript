@@ -32,15 +32,15 @@ array<int>      DAYSOFWEEK                  = array.from(dayofweek.sunday, dayof
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-rangeTooltip        = "By default, the indicator identifies the top and bottom over the symbol's trading week. " +
-                      "You can specify your custom range."
+intervalTooltip     = "By default, the indicator identifies the top and bottom over the symbol's trading week. " +
+                      "You can specify your custom interval."
 noticeTitle         = "Navigate to the 1-day timeframe (24-hour for including the extended hours) " +
                       "for the indicator to analyze the bars and collect tops and bottoms."
 
-customRangeInput    = input.bool    (false, "Custom Range", inline = "Range")
-intervalStartInput  = input.string  ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Range")
-intervalEndInput    = input.string  ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = rangeTooltip, inline = "Range")
-rangeTypeInput      = input.string  ("All", "Range", ["All", "Up", "Down"], group = "Filters") 
+customIntervalInput = input.bool    (false, "Custom Interval", inline = "Interval")
+intervalStartInput  = input.string  ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Interval")
+intervalEndInput    = input.string  ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = intervalTooltip, inline = "Interval")
+intervalTypeInput   = input.string  ("All", "Interval", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
 noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
@@ -217,9 +217,9 @@ drawDayOfWeekColumns(int key) =>
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled weeks", str.tostring(_bottomY, format.percent), _dataSum))
 
 
-// @function Check if the week/custom range matches the user-selected range type filter.
+// @function Check if the week/custom interval matches the user-selected interval type filter.
 // @returns  bool 
-isValidRangeType(start, end) =>
+isValidIntervalType(start, end) =>
     var float _open = na
     bool _isValid   = na
 
@@ -227,7 +227,7 @@ isValidRangeType(start, end) =>
         _open := open
 
     if end
-        _isValid := switch rangeTypeInput
+        _isValid := switch intervalTypeInput
             "All"   => not na(_open[1])
             "Up"    => close[1] > _open[1]
             "Down"  => close[1] < _open[1]
@@ -254,7 +254,7 @@ getDayOfWeek(string dayOfWeek) =>
         "Saturday"  => dayofweek.saturday
 
 
-// @function Get the end day of the week index from the user-selected end interval (shifted by one to be inclusive)
+// @function Get the end day of the week index from the user-selected interval (shifted by one to be inclusive)
 // @returns  (int) Day of the week
 getEndDayOfWeek() =>
     switch intervalEndInput
@@ -277,10 +277,10 @@ method getSuite(array<int> this, int dayOfWeek) =>
     _part1.concat(_part2)
 
 
-// @function Detect changes in the week/custom range and if the current bar is in the range.
+// @function Detect changes in the week/custom interval and if the current bar is in the interval.
 // @returns  [bool, bool, bool]
 intervalChange() =>
-    if customRangeInput
+    if customIntervalInput
         
         _dayOfWeek = dayofweek(time_tradingday, "UTC+0")
 
@@ -296,7 +296,7 @@ intervalChange() =>
 
         _barsToStart = 7 - _suiteFromStart.indexof(_dayOfWeek)
         _startTime = timestamp(year, month, dayofmonth + _barsToStart, hour, minute)
-        // on EURUSD, range from sat to sunday should not return any
+        // on EURUSD, interval from sat to sunday should not return any
         _start = ta.change(_startTime) > 0 and _isInInterval
 
 
@@ -350,18 +350,18 @@ if TIMEFRAMES.indexof(timeframe.period) == -1
 //@variable Is true when the current bar is inside the time range filter.
 isInRange = isInTimeRange()
 
-// Range variables from the week/custom range.
+// Interval variables from the week/custom interval.
 [intervalStart, intervalEnd, isInInterval] = intervalChange()
 
-// @variable Is true when the week/custom range closes per the range type filter.
-isValidType = isValidRangeType(intervalStart, intervalEnd)
+// @variable Is true when the week/custom interval closes per the interval type filter.
+isValidType = isValidIntervalType(intervalStart, intervalEnd)
 
 
-// Track the top and bottom of the week/custom range.
+// Track the top and bottom of the week/custom interval.
 
 if isInRange
     
-    // Reset the top and bottom on the first bar of a new week/custom range.
+    // Reset the top and bottom on the first bar of a new week/custom interval.
     
     if intervalStart
         top.price       := na
@@ -388,7 +388,7 @@ if isInRange and barstate.isconfirmed
     bool _isFirstBar = na(top.time[1]) or na(bottom.time[1])
     
 
-    // Collect the top and bottom on a week/custom range change if it conforms to the user-selected type.
+    // Collect the top and bottom on a week/custom interval change if it conforms to the user-selected type.
 
     if isValidType and not _isFirstBar
         int _topWeekday     = getDayOfWeek(top.time[1])
