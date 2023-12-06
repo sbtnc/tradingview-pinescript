@@ -1,0 +1,455 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
+// Created: 2023-11-29
+// Last modified: 2023-11-29
+// Version 1.0
+
+
+//@version=5
+indicator("Tops & Bottoms - Day of Week", format = format.percent, max_labels_count = 500)//max_labels_count = 72)
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+int             COLUMN_WIDTH                = 4
+int             COLUMN_GAP                  = 4
+color           COLUMN_BORDERCOLOR          = color.new(chart.fg_color, 80)
+color           COLUMN_TOP_MAX_COLOR        = color.green
+color           COLUMN_TOP_MIN_COLOR        = #0c3299
+color           COLUMN_BOTTOM_MAX_COLOR     = color.red
+color           COLUMN_BOTTOM_MIN_COLOR     = #311b92
+color           CATEGORY_LABEL_BGCOLOR      = color.new(chart.bg_color, 50)
+color           CATEGORY_LABEL_TEXTCOLOR    = chart.fg_color
+array<string>   TIMEFRAMES                  = array.from("D", "1440")
+array<int>      DAYSOFWEEK                  = array.from(dayofweek.sunday, dayofweek.monday, dayofweek.tuesday, dayofweek.wednesday, dayofweek.thursday, dayofweek.friday, dayofweek.saturday)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
+
+sessionTooltip      = "By default, the indicator identifies the top and bottom over the symbol's session. " +
+                      "You can specify your custom session (in the indicator's timezone)."
+noticeTitle         = "Navigate to the 1-day timeframe (24-hours for including the extended hours) " +
+                      "for the indicator to analyze the bars and collect tops and bottoms."
+
+customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
+sessionStartInput   = input.session ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Session", display = display.none)
+sessionEndInput     = input.session ("Monday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = sessionTooltip, inline = "Session", display = display.none)
+sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
+startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
+endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
+noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+type Marker
+    float price = na
+    int   time  = na
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+var topsByWeekdayMap        = map.new<int, int>()
+var bottomsByWeekdayMap     = map.new<int, int>()
+var openTimesByWeekdayMap   = map.new<int, int>()
+var closeTimesByWeekdayMap  = map.new<int, int>() 
+var top                     = Marker.new()
+var bottom                  = Marker.new()
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+// @function Get the day of week from a given UNIX time.
+// @returns  (int) Day of week
+getWeekday(int barTime) =>
+    dayofweek(barTime, "UTC+0")
+
+
+// @function Get the day of week short string
+// @returns  (string) Day of week
+getWeekdayShortString(int weekday) =>
+    switch weekday
+        dayofweek.sunday    => "Sun"
+        dayofweek.monday    => "Mon"
+        dayofweek.tuesday   => "Tue"
+        dayofweek.wednesday => "Wed"
+        dayofweek.thursday  => "Thu"
+        dayofweek.friday    => "Fri"
+        dayofweek.saturday  => "Sat"
+
+
+// @function Get the weekday long string
+// @return string
+f_getWeekdayLongString(int _weekday) =>
+    switch _weekday
+        dayofweek.sunday    => "Sunday"
+        dayofweek.monday    => "Monday"
+        dayofweek.tuesday   => "Tuesday"
+        dayofweek.wednesday => "Wednesday"
+        dayofweek.thursday  => "Thursday"
+        dayofweek.friday    => "Friday"
+        dayofweek.saturday  => "Saturday"
+
+
+// @function Check if the market has overnight sessions
+// @return bool
+f_hasOvernightSession(int _openTime, int _closeTime) =>
+    dayofweek(_openTime) != dayofweek(_closeTime)
+
+
+// @function Get the legend's tooltip text
+// @return string 
+getSessionTooltip(int _openTime, int _closeTime) =>
+    string _text    = na
+    _weekdayAtOpen  = f_getWeekdayLongString(dayofweek(_openTime))
+    _weekdayAtClose = f_getWeekdayLongString(dayofweek(_closeTime))
+    _timeAtOpen     = str.format_time(_openTime, "HH:mm", syminfo.timezone)
+    _timeAtClose    = str.format_time(_closeTime, "HH:mm", syminfo.timezone)
+
+    switch f_hasOvernightSession(_openTime, _closeTime)
+        true    => str.format("{0} {1} to {2} {3} (Exchange time)", _weekdayAtOpen, _timeAtOpen, _timeAtClose, _weekdayAtClose)
+        false   => str.format("{0} {1} to {2} (Exchange time)", _weekdayAtOpen, _timeAtOpen, _timeAtClose)
+
+
+// @function Get the color based on a gradient between the minimum and maximum values.
+// @returns  color 
+getGradientColor(float value, float minValue, float maxValue, color minColor, color maxColor) =>
+    // When `minValue` and `maxValue` are identical (on the first collected values), return the mid gradient color instead of no color.
+    minValue != maxValue ? color.from_gradient(value, minValue, maxValue, minColor, maxColor) : color.from_gradient(0.5, 0, 1, minColor, maxColor)
+    
+
+// @function Draw the columns for a given hour.
+// @returns  void
+drawWeekdayColumns(int key) =>
+    var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
+    var _lowerColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
+    var _upperDataLabel = label.new(na, na, color = color(na), style = label.style_label_down)
+    var _lowerDataLabel = label.new(na, na, color = color(na), style = label.style_label_up)
+    var _categoryLabel  = label.new(na, na, color = CATEGORY_LABEL_BGCOLOR, style = label.style_label_center, textcolor = CATEGORY_LABEL_TEXTCOLOR)
+    var _gridMultiplier = COLUMN_WIDTH + COLUMN_GAP 
+    
+    if barstate.islast
+        _topsArray      = topsByWeekdayMap.values()
+        _bottomsArray   = bottomsByWeekdayMap.values()
+
+        // Sum the number of data sampled.
+        _dataSum        = _topsArray.sum()
+
+
+        // Calculate the shares of occurrence of tops and bottoms.
+
+        _top            = topsByWeekdayMap.get(key)
+        _bottom         = bottomsByWeekdayMap.get(key)
+        _topY           = nz(_top       / _dataSum * 100)
+        _bottomY        = nz(_bottom    / _dataSum * 100)
+
+
+        // Get the coordinates for plotting the columns chart (on the left or right side of the last bar, given enough space).
+
+        _columnsCount   = 7
+        _hasSpace       = bar_index - _columnsCount * _gridMultiplier > 0
+        _x1             = _hasSpace ? bar_index + (key - _columnsCount - 1) * _gridMultiplier : bar_index + key * _gridMultiplier
+        _x2             = _x1 + COLUMN_WIDTH
+        _center         = _x1 + COLUMN_WIDTH / 2
+
+
+        // Get the coloring of the columns and data labels.
+
+        _topsMin        = _topsArray.min()      / _dataSum * 100
+        _topsMax        = _topsArray.max()      / _dataSum * 100
+        _bottomsMin     = _bottomsArray.min()   / _dataSum * 100
+        _bottomsMax     = _bottomsArray.max()   / _dataSum * 100
+        _topColor       = getGradientColor(_topY, _topsMin, _topsMax, COLUMN_TOP_MIN_COLOR, COLUMN_TOP_MAX_COLOR)
+        _bottomColor    = getGradientColor(_bottomY, _bottomsMin, _bottomsMax, COLUMN_BOTTOM_MIN_COLOR, COLUMN_BOTTOM_MAX_COLOR)
+
+
+        // Plot the upper and lower columns for tops and bottoms.
+
+        _upperColumnBox.set_lefttop     (_x1, _topY)
+        _upperColumnBox.set_rightbottom (_x2, 0)
+        _upperColumnBox.set_bgcolor     (_topColor)
+
+        _lowerColumnBox.set_lefttop     (_x1, 0)
+        _lowerColumnBox.set_rightbottom (_x2, -_bottomY)
+        _lowerColumnBox.set_bgcolor     (_bottomColor)
+
+
+        // Plot the X-axis category label.
+
+        _openTime                   = openTimesByWeekdayMap.get(key)
+        _closeTime                  = closeTimesByWeekdayMap.get(key)
+        _isCategoryDefined          = not (na(_openTime) or na(_closeTime))
+
+        _categoryLabel.set_xy       (_center, 0)
+        _categoryLabel.set_text     (getWeekdayShortString(key))
+        _categoryLabel.set_tooltip  (_isCategoryDefined ? getSessionTooltip(_openTime, _closeTime) : "Not Collected")
+
+
+        // Plot the data labels for tops and bottoms.
+
+        if not na(_top)
+            _upperDataLabel.set_xy          (_center, _topY)
+            _upperDataLabel.set_text        (str.tostring(math.round(_topY)))
+            _upperDataLabel.set_textcolor   (_topColor)
+            _upperDataLabel.set_tooltip     (str.format("{0} based on {1} sampled weeks", str.tostring(_topY, format.percent), _dataSum))
+
+        if not na(_bottom)
+            _lowerDataLabel.set_xy          (_center, -_bottomY)
+            _lowerDataLabel.set_text        (str.tostring(math.round(_bottomY)))
+            _lowerDataLabel.set_textcolor   (_bottomColor)
+            _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled weeks", str.tostring(_bottomY, format.percent), _dataSum))
+
+
+// @function Check if the day/custom session matches the user-selected session type filter.
+// @returns  bool 
+isValidSessionType(start, end) =>
+    var float _open = na
+    bool _isValid   = na
+
+    if start
+        _open := open
+
+    if end
+        _isValid := switch sessionTypeInput
+            "All"   => not na(_open[1])
+            "Up"    => close[1] > _open[1]
+            "Down"  => close[1] < _open[1]
+
+    _isValid
+
+
+// @function Check if the current bar time is in the user-selected time range filter.
+// @returns  bool
+isInTimeRange() =>
+    time >= startDateInput and time <= endDateInput
+
+
+// @function Produce the UNIX time of the current date at a specified time in the user-selected timezone.
+// @returns  (int) UNIX time
+//getTime(int h, int m) =>
+//    timestamp(getTimezone(), year, month, dayofmonth, h, m, second)
+    
+
+// @function Get the current day's session dates from a given session string.
+// @returns  ([int, int]) Start and end UNIX time
+//getSessionTimes(sessionString) =>
+//    [getTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
+//     getTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
+
+getDayOfWeek(string weekday) =>
+    switch weekday
+        "Sunday"    => dayofweek.sunday
+        "Monday"    => dayofweek.monday
+        "Tuesday"   => dayofweek.tuesday
+        "Wednesday" => dayofweek.wednesday
+        "Thursday"  => dayofweek.thursday
+        "Friday"    => dayofweek.friday
+        "Saturday"  => dayofweek.saturday
+
+
+// @function Check if current bar's day is at a given weekday
+// @return bool
+f_checkWeekday(int _weekday) =>
+    // Use of `time_tradingday` for handling markets with overnight sessions (e.g., EURUSD)
+    dayofweek(time_tradingday, "UTC+0") == _weekday
+
+
+
+method getSuite(array<int> this, int dayOfWeek) =>
+    _index = this.indexof(dayOfWeek)
+    _part1 = this.slice(_index, 7)
+    _part2 = this.slice(0, _index)
+    _array = _part1.concat(_part2)
+
+
+
+// @function Detect changes in the day/custom session and if the current bar is in the session.
+// @returns  [bool, bool, bool]
+sessionChange() =>
+    if customSessionInput
+        
+        _dayOfWeek = dayofweek(time_tradingday, "UTC+0")
+
+        _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(sessionStartInput))
+        _suiteFromEnd = DAYSOFWEEK.getSuite(getDayOfWeek(sessionEndInput))
+        _dayOfWeekList = sessionStartInput != sessionEndInput ? _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(sessionEndInput))) : _suiteFromStart
+        _isInSession = _dayOfWeekList.includes(_dayOfWeek)
+        
+        log.info("\n_suiteFromStart {0}\n_suiteFromEnd {1}\n_dayOfWeekList {2}", _suiteFromStart, _suiteFromEnd, _dayOfWeekList)
+        //log.info("\nIn session? {0}",
+        //     _isInSession
+        //     )
+
+        _barsToStart = 7 - _suiteFromStart.indexof(_dayOfWeek)
+        _startTime = timestamp(year, month, dayofmonth + _barsToStart, hour, minute)
+        _start = ta.change(_startTime) > 0// and _isInSession
+
+        //label.new(_startTime, 90, xloc = xloc.bar_time, style = label.style_triangledown, color = color.new(color.green, 95), size = size.tiny)
+        //log.info("\nbar weekday index {0}\ndiff to apply {1}\nnext start time {2}\nstart time? {3}\n\ncurrent time {4}",
+        //     _dayOfWeek, _barsToStart, str.format_time(_startTime), _start, str.format_time(time)
+        //     )
+
+        _barsToEnd = 7 - _suiteFromEnd.indexof(_dayOfWeek)
+        _endTime = timestamp(year, month, dayofmonth + _barsToEnd, hour, minute)
+        _end = ta.change(_endTime) > 0// and _isInSession[1]
+        
+        //label.new(_endTime, -90, xloc = xloc.bar_time, style = label.style_triangleup, color = color.new(color.red, 95), size = size.tiny)
+        //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
+        //     getDayOfWeek(sessionEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
+        //     )
+
+        if _start and not _isInSession
+            label.new(bar_index, 100, "S")
+        if _end and not _isInSession[1]
+            label.new(bar_index, -100, "E")
+
+        [_start, _end, _isInSession]
+    else
+
+        // Start and end on the week change.
+        _weekChange = timeframe.change("W")
+
+        [_weekChange, _weekChange, true]
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+if TIMEFRAMES.indexof(timeframe.period) == -1
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-day or 24-hour timeframe.")
+
+//@variable Is true when the current bar is inside the time range filter.
+isInRange = isInTimeRange()
+
+// Session variables from the week/custom session.
+[sessionStart, sessionEnd, isInSession] = sessionChange()
+
+// @variable Is true when the week/custom session closes per the session type filter.
+isValidType = isValidSessionType(sessionStart, sessionEnd)
+
+
+// Track the top and bottom of the week/custom session.
+
+if isInRange
+    
+    // Reset the top and bottom on the first bar of a new week/custom session.
+    
+    if sessionStart
+        top.price       := na
+        top.time        := na
+        bottom.price    := na
+        bottom.time     := na
+
+
+    // Track the top and bottom.
+
+    if na(top.price) or high > top.price
+        top.price       := high
+        top.time        := time_tradingday
+    
+    if na(bottom.price) or low < bottom.price
+        bottom.price    := low
+        bottom.time     := time_tradingday
+
+
+// Collect the top, bottom, and time data.
+
+if isInRange and barstate.isconfirmed
+    // @variable Is true on the first bar of the time range.
+    bool _isFirstBar = na(top.time[1]) or na(bottom.time[1])
+    
+
+    // Collect the top and bottom on a week/custom session change if it conforms to the user-selected type.
+
+    if isValidType and not _isFirstBar
+        int _topWeekday     = getWeekday(top.time[1])
+        int _bottomWeekday  = getWeekday(bottom.time[1])
+
+        int _topCount       = nz(topsByWeekdayMap.get(_topWeekday)) +1
+        int _bottomCount    = nz(bottomsByWeekdayMap.get(_bottomWeekday)) +1
+
+        topsByWeekdayMap.put(_topWeekday, _topCount)
+        bottomsByWeekdayMap.put(_bottomWeekday, _bottomCount)
+
+        log.info(
+             "\n▲ Top on {0} ({1}/{4})\n▼ Bottom on {2} ({3}/{4})",
+             f_getWeekdayLongString(_topWeekday), _topCount, f_getWeekdayLongString(_bottomWeekday), _bottomCount, topsByWeekdayMap.values().sum()
+             )
+
+
+    // Collect the opening and closing times.
+    // The times are be displayed in the tooltips of category labels.
+
+    int _weekday = getWeekday(time_tradingday)
+
+    openTimesByWeekdayMap.put(_weekday, time)
+    closeTimesByWeekdayMap.put(_weekday, time_close)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+drawWeekdayColumns(dayofweek.sunday)
+drawWeekdayColumns(dayofweek.monday)
+drawWeekdayColumns(dayofweek.tuesday)
+drawWeekdayColumns(dayofweek.wednesday)
+drawWeekdayColumns(dayofweek.thursday)
+drawWeekdayColumns(dayofweek.friday)
+drawWeekdayColumns(dayofweek.saturday)
+
+//#endregion
+
+
+//bgcolor(sessionStart ? color.new(color.green, 90) : color(na))
+//bgcolor(sessionEnd   ? color.new(color.red, 90) : color(na))
+bgcolor(isInSession  ? color.new(color.yellow, 95) : color(na))
+
+
+plot(time_tradingday, "time_tradingday", display = display.data_window)
+plot(time, "time", display = display.data_window)
+
+plot(na, "------------", display = display.data_window)
+
+plot(dayofweek(time_tradingday), "dayofweek(time_tradingday)", display = display.data_window)
+plot(dayofweek(time_tradingday, "UTC+0"), "dayofweek(time_tradingday, 'UTC+0')", display = display.data_window)
+plot(dayofweek(time), "dayofweek(time)", display = display.data_window)
+
+plot(na, "------------", display = display.data_window)
+
+plot(dayofweek.monday, "dayofweek.monday", display = display.data_window)
+plot(dayofweek.tuesday, "dayofweek.tuesday", display = display.data_window)
+plot(dayofweek.wednesday, "dayofweek.wednesday", display = display.data_window)
+plot(dayofweek.thursday, "dayofweek.thursday", display = display.data_window)
+plot(dayofweek.friday, "dayofweek.friday", display = display.data_window)
+plot(dayofweek.saturday, "dayofweek.saturday", display = display.data_window)
+plot(dayofweek.sunday, "dayofweek.sunday", display = display.data_window)
+
+plot(na, "------------", display = display.data_window)
+
+plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
+plot(f_hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
+
