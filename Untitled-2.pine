@@ -39,7 +39,7 @@ noticeTitle         = "Navigate to the 1-day timeframe (24-hours for including t
 
 customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
 sessionStartInput   = input.session ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Session", display = display.none)
-sessionEndInput     = input.session ("Monday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = sessionTooltip, inline = "Session", display = display.none)
+sessionEndInput     = input.session ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = sessionTooltip, inline = "Session", display = display.none)
 sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
