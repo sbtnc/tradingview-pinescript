@@ -6,7 +6,7 @@
 
 
 //@version=5
-indicator("Tops & Bottoms - Day of Week", format = format.percent, max_labels_count = 72)
+indicator("Tops & Bottoms - Day of Week", format = format.percent, max_labels_count = 500)//max_labels_count = 72)
 
 
 //--------------------------------------------------------------------
@@ -38,8 +38,8 @@ noticeTitle         = "Navigate to the 1-day timeframe (24-hours for including t
                       "for the indicator to analyze the bars and collect tops and bottoms."
 
 customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
-sessionStartInput   = input.session ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Session", display = display.none)
-sessionEndInput     = input.session ("Monday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = sessionTooltip, inline = "Session", display = display.none)
+sessionStartInput   = input.session ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Session")
+sessionEndInput     = input.session ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = sessionTooltip, inline = "Session")
 sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
@@ -254,7 +254,7 @@ isInTimeRange() =>
 //    [getTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
 //     getTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
 
-getDayOfWeekIndex(string weekday) =>
+getDayOfWeek(string weekday) =>
     switch weekday
         "Sunday"    => dayofweek.sunday
         "Monday"    => dayofweek.monday
@@ -265,6 +265,17 @@ getDayOfWeekIndex(string weekday) =>
         "Saturday"  => dayofweek.saturday
 
 
+getDayOfWeek2(string weekday) =>
+    switch weekday
+        "Sunday"    => dayofweek.monday
+        "Monday"    => dayofweek.tuesday
+        "Tuesday"   => dayofweek.wednesday
+        "Wednesday" => dayofweek.thursday
+        "Thursday"  => dayofweek.friday
+        "Friday"    => dayofweek.saturday
+        "Saturday"  => dayofweek.sunday
+
+
 // @function Check if current bar's day is at a given weekday
 // @return bool
 f_checkWeekday(int _weekday) =>
@@ -272,70 +283,67 @@ f_checkWeekday(int _weekday) =>
     dayofweek(time_tradingday, "UTC+0") == _weekday
 
 
+
 method getSuite(array<int> this, int dayOfWeek) =>
-    _index = this.indexof(dayOfWeek)
-    _part1 = this.slice(_index, 7)
-    _part2 = this.slice(0, _index)
-    _array = _part1.concat(_part2)
+    _src = this.copy()
+    _index = _src.indexof(dayOfWeek)
+    _part1 = _src.slice(_index, 7)
+    _part2 = _src.slice(0, _index)
+    _part1.concat(_part2)
+
 
 
 // @function Detect changes in the day/custom session and if the current bar is in the session.
 // @returns  [bool, bool, bool]
 sessionChange() =>
     if customSessionInput
-        // @variable The current day of week index
-        _weekdayIndex = dayofweek(time_tradingday, "UTC+0")
+        
+        _dayOfWeek = dayofweek(time_tradingday, "UTC+0")
 
-        // @variable The session start day of week index
-        _startWeekdayIndex = getDayOfWeekIndex(sessionStartInput)
-        //log.info("\n_startWeekdayIndex = {0}", f_getWeekdayLongString(_startWeekdayIndex))
+        _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(sessionStartInput))
+        _suiteFromEnd = DAYSOFWEEK.getSuite(getDayOfWeek2(sessionEndInput))
+        _dayOfWeekList = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(sessionEndInput)) +1)
+        _isInSession = _dayOfWeekList.includes(_dayOfWeek)
+        
+        log.info("\n_suiteFromStart {0}\n_suiteFromEnd {1}\n_dayOfWeekList {2}", _suiteFromStart, _suiteFromEnd, _dayOfWeekList)
+        //log.info("\nIn session? {0}",
+        //     _isInSession
+        //     )
 
-        // @variable The session end day of week index 
-        _endWeekdayIndex = getDayOfWeekIndex(sessionEndInput)
-        //log.info("\n_endWeekdayIndex = {0}", f_getWeekdayLongString(_endWeekdayIndex))
+        _barsToStart = 7 - _suiteFromStart.indexof(_dayOfWeek)
+        _startTime = timestamp(year, month, dayofmonth + _barsToStart, hour, minute)
+        // on EURUSD, range from sat to sunday should not return any
+        _start = ta.change(_startTime) > 0 and _isInSession
 
-        // @variable Full suite of days of week from the session start day
-        _suiteFromStart = DAYSOFWEEK.getSuite(_startWeekdayIndex)
-        //log.info("_suiteFromStart {0}", _suiteFromStart)
 
-        // @variable List of weekdays included in the custom session
-        // if start end end is the same day of week, don't alter `_suiteFromStart`
-        _weekdaysInSession = _suiteFromStart.slice(0, _suiteFromStart.indexof(_endWeekdayIndex))
-        //log.info("_weekdaysInSession {0}", _weekdaysInSession)
+        _barsToEnd = 7 - _suiteFromEnd.indexof(_dayOfWeek)
+        _endTime = timestamp(year, month, dayofmonth + _barsToEnd, hour, minute)
+        _end = ta.change(_endTime) > 0 and _isInSession[1]
+        
 
-        // @variable Is true when the current day belongs to the custom session
-        _isInSession = _weekdaysInSession.includes(_weekdayIndex)
-        //log.info("\nIn session? {0}", _isInSession)
+        //label.new(_startTime, 90, xloc = xloc.bar_time, style = label.style_triangledown, color = color.new(color.green, 95), size = size.tiny)
+        //label.new(_endTime, -90, xloc = xloc.bar_time, style = label.style_triangleup, color = color.new(color.red, 95), size = size.tiny)
+        //log.info("\nbar weekday index {0}\ndiff to apply {1}\nnext start time {2}\nstart time? {3}\n\ncurrent time {4}",
+        //     _dayOfWeek, _barsToStart, str.format_time(_startTime), _start, str.format_time(time)
+        //     )
+        //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
+        //     getDayOfWeek(sessionEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
+        //     )
 
-        // @variable Full suite of days of week from the current day
-        _suiteFromCurrent = DAYSOFWEEK.getSuite(_weekdayIndex)
-        //log.info("\n_suiteFromCurrent: {0}", _suiteFromCurrent)
+        log.info(
+             "\n*** Current ***\n • Date: {0}\n • Day of week {1}" +
+             "\n*** Start ***\n • Date: {2}\n • Bars left: {3}" + 
+             "\n*** End ***\n • Date: {4}\n • Bars left: {5}", 
+             str.format_time(time, "dd MMMM"), _dayOfWeek, 
+             str.format_time(_startTime, "dd MMMM"), _barsToStart,
+             str.format_time(_endTime, "dd MMMM"), _barsToEnd)
 
-        // Calculate the bars to the session start and end 
-        _barsToSessionStart = _suiteFromCurrent.indexof(_startWeekdayIndex)
-        _barsToSessionEnd = _suiteFromCurrent.indexof(_endWeekdayIndex)
-        //log.info("\nStart: {0} bars\nEnd: {1} bars", _barsToSessionStart, _barsToSessionEnd)
 
-        // Construct the session start end end date
-        _startThisWeek = timestamp(year, month, dayofmonth + _barsToSessionStart, hour, minute)
-        _endThisWeek = timestamp(year, month, dayofmonth + _barsToSessionEnd, hour, minute)
-        //log.info("\nStart: {0}\nEnd: {1}", str.format_time(_startThisWeek),  str.format_time(_endThisWeek))
 
-        // Check the start and end of the session
-        //_start = ta.change(_startThisWeek) > 0 and _isInSession
-        //_end = ta.change(_endThisWeek) > 0 and _isInSession[1]
-        _start = time >= _startThisWeek// and _isInSession
-        _end = time >= _endThisWeek// and _isInSession[1]
-        //log.info("\nStart? {0}\nEnd? {1}", _start, _end)
-
-        if time >= _startThisWeek and not _isInSession
+        if _start and not _isInSession
             label.new(bar_index, 100, "S")
-
-        if time >= _endThisWeek and not _isInSession[1]
+        if _end and not _isInSession[1]
             label.new(bar_index, -100, "E")
-            
-        log.info("\n*******************\n*******************")    
-
 
         [_start, _end, _isInSession]
     else
@@ -419,8 +427,9 @@ if isInRange and barstate.isconfirmed
 
     int _weekday = getWeekday(time_tradingday)
 
-    openTimesByWeekdayMap.put(_weekday, time)
-    closeTimesByWeekdayMap.put(_weekday, time_close)
+    if isInSession
+        openTimesByWeekdayMap.put(_weekday, time)
+        closeTimesByWeekdayMap.put(_weekday, time_close)
 
 //#endregion
 
@@ -440,32 +449,32 @@ drawWeekdayColumns(dayofweek.saturday)
 //#endregion
 
 
-bgcolor(sessionStart ? color.new(color.green, 80) : color(na))
-bgcolor(sessionEnd   ? color.new(color.red, 80) : color(na))
-bgcolor(isInSession  ? color.new(color.yellow, 95) : color(na))
+//bgcolor(sessionStart ? color.new(color.green, 95) : color(na))
+//bgcolor(sessionEnd   ? color.new(color.red, 95) : color(na))
+//bgcolor(isInSession  ? color.new(color.gray, 95) : color(na))
 
 
-plot(time_tradingday, "time_tradingday", display = display.data_window)
-plot(time, "time", display = display.data_window)
-
-plot(na, "------------", display = display.data_window)
-
-plot(dayofweek(time_tradingday), "dayofweek(time_tradingday)", display = display.data_window)
-plot(dayofweek(time_tradingday, "UTC+0"), "dayofweek(time_tradingday, 'UTC+0')", display = display.data_window)
-plot(dayofweek(time), "dayofweek(time)", display = display.data_window)
-
-plot(na, "------------", display = display.data_window)
-
-plot(dayofweek.monday, "dayofweek.monday", display = display.data_window)
-plot(dayofweek.tuesday, "dayofweek.tuesday", display = display.data_window)
-plot(dayofweek.wednesday, "dayofweek.wednesday", display = display.data_window)
-plot(dayofweek.thursday, "dayofweek.thursday", display = display.data_window)
-plot(dayofweek.friday, "dayofweek.friday", display = display.data_window)
-plot(dayofweek.saturday, "dayofweek.saturday", display = display.data_window)
-plot(dayofweek.sunday, "dayofweek.sunday", display = display.data_window)
-
-plot(na, "------------", display = display.data_window)
-
-plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
-plot(f_hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
-
+//plot(time_tradingday, "time_tradingday", display = display.data_window)
+//plot(time, "time", display = display.data_window)
+//
+//plot(na, "------------", display = display.data_window)
+//
+//plot(dayofweek(time_tradingday), "dayofweek(time_tradingday)", display = display.data_window)
+//plot(dayofweek(time_tradingday, "UTC+0"), "dayofweek(time_tradingday, 'UTC+0')", display = display.data_window)
+//plot(dayofweek(time), "dayofweek(time)", display = display.data_window)
+//
+//plot(na, "------------", display = display.data_window)
+//
+//plot(dayofweek.monday, "dayofweek.monday", display = display.data_window)
+//plot(dayofweek.tuesday, "dayofweek.tuesday", display = display.data_window)
+//plot(dayofweek.wednesday, "dayofweek.wednesday", display = display.data_window)
+//plot(dayofweek.thursday, "dayofweek.thursday", display = display.data_window)
+//plot(dayofweek.friday, "dayofweek.friday", display = display.data_window)
+//plot(dayofweek.saturday, "dayofweek.saturday", display = display.data_window)
+//plot(dayofweek.sunday, "dayofweek.sunday", display = display.data_window)
+//
+//plot(na, "------------", display = display.data_window)
+//
+//plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
+//plot(f_hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
+//
