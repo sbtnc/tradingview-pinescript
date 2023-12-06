@@ -1,12 +1,12 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-11-29
-// Last modified: 2023-11-29
+// Last modified: 2023-12-06
 // Version 1.0
 
 
 //@version=5
-indicator("Tops & Bottoms - Day of Week", format = format.percent, max_labels_count = 500)//max_labels_count = 72)
+indicator("Tops & Bottoms - Day of Week", format = format.percent, max_labels_count = 21)
 
 
 //--------------------------------------------------------------------
@@ -32,15 +32,15 @@ array<int>      DAYSOFWEEK                  = array.from(dayofweek.sunday, dayof
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-sessionTooltip      = "By default, the indicator identifies the top and bottom over the symbol's session. " +
-                      "You can specify your custom session (in the indicator's timezone)."
-noticeTitle         = "Navigate to the 1-day timeframe (24-hours for including the extended hours) " +
+rangeTooltip        = "By default, the indicator identifies the top and bottom over the symbol's trading week. " +
+                      "You can specify your custom range."
+noticeTitle         = "Navigate to the 1-day timeframe (24-hour for including the extended hours) " +
                       "for the indicator to analyze the bars and collect tops and bottoms."
 
-customSessionInput  = input.bool    (false, "Custom Session", inline = "Session")
-sessionStartInput   = input.session ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Session")
-sessionEndInput     = input.session ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = sessionTooltip, inline = "Session")
-sessionTypeInput    = input.string  ("All", "Session", ["All", "Up", "Down"], group = "Filters") 
+customRangeInput    = input.bool    (false, "Custom Range", inline = "Range")
+rangeStartInput     = input.string  ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Range")
+rangeEndInput       = input.string  ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = rangeTooltip, inline = "Range")
+rangeTypeInput      = input.string  ("All", "Range", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
 noticeInput         = input.bool    (true, noticeTitle, group = "How To Use?", confirm = true, display = display.none)
@@ -228,7 +228,7 @@ isValidSessionType(start, end) =>
         _open := open
 
     if end
-        _isValid := switch sessionTypeInput
+        _isValid := switch rangeTypeInput
             "All"   => not na(_open[1])
             "Up"    => close[1] > _open[1]
             "Down"  => close[1] < _open[1]
@@ -296,13 +296,13 @@ method getSuite(array<int> this, int dayOfWeek) =>
 // @function Detect changes in the day/custom session and if the current bar is in the session.
 // @returns  [bool, bool, bool]
 sessionChange() =>
-    if customSessionInput
+    if customRangeInput
         
         _dayOfWeek = dayofweek(time_tradingday, "UTC+0")
 
-        _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(sessionStartInput))
-        _suiteFromEnd = DAYSOFWEEK.getSuite(getDayOfWeek2(sessionEndInput))
-        _dayOfWeekList = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(sessionEndInput)) +1)
+        _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(rangeStartInput))
+        _suiteFromEnd = DAYSOFWEEK.getSuite(getDayOfWeek2(rangeEndInput))
+        _dayOfWeekList = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(rangeEndInput)) +1)
         _isInSession = _dayOfWeekList.includes(_dayOfWeek)
         
         log.info("\n_suiteFromStart {0}\n_suiteFromEnd {1}\n_dayOfWeekList {2}", _suiteFromStart, _suiteFromEnd, _dayOfWeekList)
@@ -327,7 +327,7 @@ sessionChange() =>
         //     _dayOfWeek, _barsToStart, str.format_time(_startTime), _start, str.format_time(time)
         //     )
         //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
-        //     getDayOfWeek(sessionEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
+        //     getDayOfWeek(rangeEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
         //     )
 
         log.info(
