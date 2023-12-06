@@ -63,12 +63,12 @@ type Marker
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-var topsByWeekdayMap        = map.new<int, int>()
-var bottomsByWeekdayMap     = map.new<int, int>()
-var openTimesByWeekdayMap   = map.new<int, int>()
-var closeTimesByWeekdayMap  = map.new<int, int>() 
-var top                     = Marker.new()
-var bottom                  = Marker.new()
+var topsByDayOfWeekMap       = map.new<int, int>()
+var bottomsByDayOfWeekMap    = map.new<int, int>()
+var openTimesByDayOfWeekMap  = map.new<int, int>()
+var closeTimesByDayOfWeekMap = map.new<int, int>() 
+var top                      = Marker.new()
+var bottom                   = Marker.new()
 
 //#endregion
 
@@ -77,16 +77,16 @@ var bottom                  = Marker.new()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Get the day of week from a given UNIX time.
+// @function Get the day of week index from a given UNIX time.
 // @returns  (int) Day of week
-getWeekday(int barTime) =>
+getDayOfWeek(int barTime) =>
     dayofweek(barTime, "UTC+0")
 
 
-// @function Get the day of week short string
+// @function Get the day of week short string from a given index
 // @returns  (string) Day of week
-getWeekdayShortString(int weekday) =>
-    switch weekday
+getDayOfWeekShortString(int dayOfWeek) =>
+    switch dayOfWeek
         dayofweek.sunday    => "Sun"
         dayofweek.monday    => "Mon"
         dayofweek.tuesday   => "Tue"
@@ -96,10 +96,10 @@ getWeekdayShortString(int weekday) =>
         dayofweek.saturday  => "Sat"
 
 
-// @function Get the weekday long string
-// @return string
-f_getWeekdayLongString(int _weekday) =>
-    switch _weekday
+// @function Get the day of week long string from a given index
+// @returns  (string) Day of week
+getDayOfWeekLongString(int dayOfWeek) =>
+    switch dayOfWeek
         dayofweek.sunday    => "Sunday"
         dayofweek.monday    => "Monday"
         dayofweek.tuesday   => "Tuesday"
@@ -109,24 +109,23 @@ f_getWeekdayLongString(int _weekday) =>
         dayofweek.saturday  => "Saturday"
 
 
-// @function Check if the market has overnight sessions
-// @return bool
-f_hasOvernightSession(int _openTime, int _closeTime) =>
-    dayofweek(_openTime) != dayofweek(_closeTime)
+// @function Check if the market has overnight sessions based on its opening and closing times
+// @returns  bool
+hasOvernightSession(int openTime, int closeTime) =>
+    dayofweek(openTime) != dayofweek(closeTime)
 
 
 // @function Get the legend's tooltip text
-// @return string 
-getSessionTooltip(int _openTime, int _closeTime) =>
-    string _text    = na
-    _weekdayAtOpen  = f_getWeekdayLongString(dayofweek(_openTime))
-    _weekdayAtClose = f_getWeekdayLongString(dayofweek(_closeTime))
-    _timeAtOpen     = str.format_time(_openTime, "HH:mm", syminfo.timezone)
-    _timeAtClose    = str.format_time(_closeTime, "HH:mm", syminfo.timezone)
+// @returns  string 
+getSessionTooltip(int openTime, int closeTime) =>
+    string _dayOfWeekAtOpen  = getDayOfWeekLongString(dayofweek(openTime))
+    string _dayOfWeekAtClose = getDayOfWeekLongString(dayofweek(closeTime))
+    string _timeAtOpen       = str.format_time(openTime, "HH:mm", syminfo.timezone)
+    string _timeAtClose      = str.format_time(closeTime, "HH:mm", syminfo.timezone)
 
-    switch f_hasOvernightSession(_openTime, _closeTime)
-        true    => str.format("{0} {1} to {2} {3} (Exchange time)", _weekdayAtOpen, _timeAtOpen, _timeAtClose, _weekdayAtClose)
-        false   => str.format("{0} {1} to {2} (Exchange time)", _weekdayAtOpen, _timeAtOpen, _timeAtClose)
+    switch hasOvernightSession(openTime, closeTime)
+        true    => str.format("{0} {1} to {2} {3} (Exchange time)", _dayOfWeekAtOpen, _timeAtOpen, _timeAtClose, _dayOfWeekAtClose)
+        false   => str.format("{0} {1} to {2} (Exchange time)", _dayOfWeekAtOpen, _timeAtOpen, _timeAtClose)
 
 
 // @function Get the color based on a gradient between the minimum and maximum values.
@@ -147,8 +146,8 @@ drawWeekdayColumns(int key) =>
     var _gridMultiplier = COLUMN_WIDTH + COLUMN_GAP 
     
     if barstate.islast
-        _topsArray      = topsByWeekdayMap.values()
-        _bottomsArray   = bottomsByWeekdayMap.values()
+        _topsArray      = topsByDayOfWeekMap.values()
+        _bottomsArray   = bottomsByDayOfWeekMap.values()
 
         // Sum the number of data sampled.
         _dataSum        = _topsArray.sum()
@@ -156,8 +155,8 @@ drawWeekdayColumns(int key) =>
 
         // Calculate the shares of occurrence of tops and bottoms.
 
-        _top            = topsByWeekdayMap.get(key)
-        _bottom         = bottomsByWeekdayMap.get(key)
+        _top            = topsByDayOfWeekMap.get(key)
+        _bottom         = bottomsByDayOfWeekMap.get(key)
         _topY           = nz(_top       / _dataSum * 100)
         _bottomY        = nz(_bottom    / _dataSum * 100)
 
@@ -194,12 +193,12 @@ drawWeekdayColumns(int key) =>
 
         // Plot the X-axis category label.
 
-        _openTime                   = openTimesByWeekdayMap.get(key)
-        _closeTime                  = closeTimesByWeekdayMap.get(key)
+        _openTime                   = openTimesByDayOfWeekMap.get(key)
+        _closeTime                  = closeTimesByDayOfWeekMap.get(key)
         _isCategoryDefined          = not (na(_openTime) or na(_closeTime))
 
         _categoryLabel.set_xy       (_center, 0)
-        _categoryLabel.set_text     (getWeekdayShortString(key))
+        _categoryLabel.set_text     (getDayOfWeekShortString(key))
         _categoryLabel.set_tooltip  (_isCategoryDefined ? getSessionTooltip(_openTime, _closeTime) : "Not Collected")
 
 
@@ -407,29 +406,29 @@ if isInRange and barstate.isconfirmed
     // Collect the top and bottom on a week/custom session change if it conforms to the user-selected type.
 
     if isValidType and not _isFirstBar
-        int _topWeekday     = getWeekday(top.time[1])
-        int _bottomWeekday  = getWeekday(bottom.time[1])
+        int _topWeekday     = getDayOfWeek(top.time[1])
+        int _bottomWeekday  = getDayOfWeek(bottom.time[1])
 
-        int _topCount       = nz(topsByWeekdayMap.get(_topWeekday)) +1
-        int _bottomCount    = nz(bottomsByWeekdayMap.get(_bottomWeekday)) +1
+        int _topCount       = nz(topsByDayOfWeekMap.get(_topWeekday)) +1
+        int _bottomCount    = nz(bottomsByDayOfWeekMap.get(_bottomWeekday)) +1
 
-        topsByWeekdayMap.put(_topWeekday, _topCount)
-        bottomsByWeekdayMap.put(_bottomWeekday, _bottomCount)
+        topsByDayOfWeekMap.put(_topWeekday, _topCount)
+        bottomsByDayOfWeekMap.put(_bottomWeekday, _bottomCount)
 
         log.info(
              "\n▲ Top on {0} ({1}/{4})\n▼ Bottom on {2} ({3}/{4})",
-             f_getWeekdayLongString(_topWeekday), _topCount, f_getWeekdayLongString(_bottomWeekday), _bottomCount, topsByWeekdayMap.values().sum()
+             getDayOfWeekLongString(_topWeekday), _topCount, getDayOfWeekLongString(_bottomWeekday), _bottomCount, topsByDayOfWeekMap.values().sum()
              )
 
 
     // Collect the opening and closing times.
     // The times are be displayed in the tooltips of category labels.
 
-    int _weekday = getWeekday(time_tradingday)
+    int _weekday = getDayOfWeek(time_tradingday)
 
     if isInSession
-        openTimesByWeekdayMap.put(_weekday, time)
-        closeTimesByWeekdayMap.put(_weekday, time_close)
+        openTimesByDayOfWeekMap.put(_weekday, time)
+        closeTimesByDayOfWeekMap.put(_weekday, time_close)
 
 //#endregion
 
@@ -476,5 +475,5 @@ drawWeekdayColumns(dayofweek.saturday)
 //plot(na, "------------", display = display.data_window)
 //
 //plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
-//plot(f_hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
+//plot(hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
 //
