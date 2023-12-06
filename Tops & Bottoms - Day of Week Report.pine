@@ -38,8 +38,8 @@ noticeTitle         = "Navigate to the 1-day timeframe (24-hour for including th
                       "for the indicator to analyze the bars and collect tops and bottoms."
 
 customRangeInput    = input.bool    (false, "Custom Range", inline = "Range")
-rangeStartInput     = input.string  ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Range")
-rangeEndInput       = input.string  ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = rangeTooltip, inline = "Range")
+intervalStartInput  = input.string  ("Monday", "", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], inline = "Range")
+intervalEndInput    = input.string  ("Sunday", " — ", ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], tooltip = rangeTooltip, inline = "Range")
 rangeTypeInput      = input.string  ("All", "Range", ["All", "Up", "Down"], group = "Filters") 
 startDateInput      = input.time    (timestamp("01 Jan 1975"), "From", group = "Filters")
 endDateInput        = input.time    (timestamp("31 Dec 2050"), "To", group = "Filters")
@@ -77,14 +77,14 @@ var bottom                   = Marker.new()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Get the day of week index from a given UNIX time.
-// @returns  (int) Day of week
+// @function Get the day of the week index from a given UNIX time.
+// @returns  (int) Day of the week
 getDayOfWeek(int barTime) =>
     dayofweek(barTime, "UTC+0")
 
 
-// @function Get the day of week short string from a given index
-// @returns  (string) Day of week
+// @function Get the day of the week short string from a given index
+// @returns  (string) Day of the week
 getDayOfWeekShortString(int dayOfWeek) =>
     switch dayOfWeek
         dayofweek.sunday    => "Sun"
@@ -96,8 +96,8 @@ getDayOfWeekShortString(int dayOfWeek) =>
         dayofweek.saturday  => "Sat"
 
 
-// @function Get the day of week long string from a given index
-// @returns  (string) Day of week
+// @function Get the day of the week long string from a given index
+// @returns  (string) Day of the week
 getDayOfWeekLongString(int dayOfWeek) =>
     switch dayOfWeek
         dayofweek.sunday    => "Sunday"
@@ -137,7 +137,7 @@ getGradientColor(float value, float minValue, float maxValue, color minColor, co
 
 // @function Draw the columns for a given hour.
 // @returns  void
-drawWeekdayColumns(int key) =>
+drawDayOfWeekColumns(int key) =>
     var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
     var _lowerColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
     var _upperDataLabel = label.new(na, na, color = color(na), style = label.style_label_down)
@@ -157,8 +157,8 @@ drawWeekdayColumns(int key) =>
 
         _top            = topsByDayOfWeekMap.get(key)
         _bottom         = bottomsByDayOfWeekMap.get(key)
-        _topY           = nz(_top       / _dataSum * 100)
-        _bottomY        = nz(_bottom    / _dataSum * 100)
+        _topY           = nz(_top    / _dataSum * 100)
+        _bottomY        = nz(_bottom / _dataSum * 100)
 
 
         // Get the coordinates for plotting the columns chart (on the left or right side of the last bar, given enough space).
@@ -217,9 +217,9 @@ drawWeekdayColumns(int key) =>
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled weeks", str.tostring(_bottomY, format.percent), _dataSum))
 
 
-// @function Check if the day/custom session matches the user-selected session type filter.
+// @function Check if the week/custom range matches the user-selected range type filter.
 // @returns  bool 
-isValidSessionType(start, end) =>
+isValidRangeType(start, end) =>
     var float _open = na
     bool _isValid   = na
 
@@ -241,20 +241,10 @@ isInTimeRange() =>
     time >= startDateInput and time <= endDateInput
 
 
-// @function Produce the UNIX time of the current date at a specified time in the user-selected timezone.
-// @returns  (int) UNIX time
-//getTime(int h, int m) =>
-//    timestamp(getTimezone(), year, month, dayofmonth, h, m, second)
-    
-
-// @function Get the current day's session dates from a given session string.
-// @returns  ([int, int]) Start and end UNIX time
-//getSessionTimes(sessionString) =>
-//    [getTime(int(str.tonumber(str.substring(sessionString, 0, 2))), int(str.tonumber(str.substring(sessionString, 2, 4)))),
-//     getTime(int(str.tonumber(str.substring(sessionString, 5, 7))), int(str.tonumber(str.substring(sessionString, 7))))]
-
-getDayOfWeek(string weekday) =>
-    switch weekday
+// @function Get the day of the week index from a given string
+// @returns  (int) Day of the week
+getDayOfWeek(string dayOfWeek) =>
+    switch dayOfWeek
         "Sunday"    => dayofweek.sunday
         "Monday"    => dayofweek.monday
         "Tuesday"   => dayofweek.tuesday
@@ -264,8 +254,10 @@ getDayOfWeek(string weekday) =>
         "Saturday"  => dayofweek.saturday
 
 
-getDayOfWeek2(string weekday) =>
-    switch weekday
+// @function Get the end day of the week index from the user-selected end interval (shifted by one to be inclusive)
+// @returns  (int) Day of the week
+getEndDayOfWeek() =>
+    switch intervalEndInput
         "Sunday"    => dayofweek.monday
         "Monday"    => dayofweek.tuesday
         "Tuesday"   => dayofweek.wednesday
@@ -275,14 +267,8 @@ getDayOfWeek2(string weekday) =>
         "Saturday"  => dayofweek.sunday
 
 
-// @function Check if current bar's day is at a given weekday
-// @return bool
-f_checkWeekday(int _weekday) =>
-    // Use of `time_tradingday` for handling markets with overnight sessions (e.g., EURUSD)
-    dayofweek(time_tradingday, "UTC+0") == _weekday
-
-
-
+// @function Construct a suite of days of the week for a given index
+// @returns  array<int>
 method getSuite(array<int> this, int dayOfWeek) =>
     _src = this.copy()
     _index = _src.indexof(dayOfWeek)
@@ -291,33 +277,32 @@ method getSuite(array<int> this, int dayOfWeek) =>
     _part1.concat(_part2)
 
 
-
-// @function Detect changes in the day/custom session and if the current bar is in the session.
+// @function Detect changes in the week/custom range and if the current bar is in the range.
 // @returns  [bool, bool, bool]
-sessionChange() =>
+intervalChange() =>
     if customRangeInput
         
         _dayOfWeek = dayofweek(time_tradingday, "UTC+0")
 
-        _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(rangeStartInput))
-        _suiteFromEnd = DAYSOFWEEK.getSuite(getDayOfWeek2(rangeEndInput))
-        _dayOfWeekList = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(rangeEndInput)) +1)
-        _isInSession = _dayOfWeekList.includes(_dayOfWeek)
+        _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(intervalStartInput))
+        _suiteFromEnd = DAYSOFWEEK.getSuite(getEndDayOfWeek())
+        _dayOfWeekList = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(intervalEndInput)) +1)
+        _isInInterval = _dayOfWeekList.includes(_dayOfWeek)
         
         log.info("\n_suiteFromStart {0}\n_suiteFromEnd {1}\n_dayOfWeekList {2}", _suiteFromStart, _suiteFromEnd, _dayOfWeekList)
         //log.info("\nIn session? {0}",
-        //     _isInSession
+        //     _isInInterval
         //     )
 
         _barsToStart = 7 - _suiteFromStart.indexof(_dayOfWeek)
         _startTime = timestamp(year, month, dayofmonth + _barsToStart, hour, minute)
         // on EURUSD, range from sat to sunday should not return any
-        _start = ta.change(_startTime) > 0 and _isInSession
+        _start = ta.change(_startTime) > 0 and _isInInterval
 
 
         _barsToEnd = 7 - _suiteFromEnd.indexof(_dayOfWeek)
         _endTime = timestamp(year, month, dayofmonth + _barsToEnd, hour, minute)
-        _end = ta.change(_endTime) > 0 and _isInSession[1]
+        _end = ta.change(_endTime) > 0 and _isInInterval[1]
         
 
         //label.new(_startTime, 90, xloc = xloc.bar_time, style = label.style_triangledown, color = color.new(color.green, 95), size = size.tiny)
@@ -326,7 +311,7 @@ sessionChange() =>
         //     _dayOfWeek, _barsToStart, str.format_time(_startTime), _start, str.format_time(time)
         //     )
         //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
-        //     getDayOfWeek(rangeEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
+        //     getDayOfWeek(intervalEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
         //     )
 
         log.info(
@@ -339,12 +324,12 @@ sessionChange() =>
 
 
 
-        if _start and not _isInSession
+        if _start and not _isInInterval
             label.new(bar_index, 100, "S")
-        if _end and not _isInSession[1]
+        if _end and not _isInInterval[1]
             label.new(bar_index, -100, "E")
 
-        [_start, _end, _isInSession]
+        [_start, _end, _isInInterval]
     else
 
         // Start and end on the week change.
@@ -365,20 +350,20 @@ if TIMEFRAMES.indexof(timeframe.period) == -1
 //@variable Is true when the current bar is inside the time range filter.
 isInRange = isInTimeRange()
 
-// Session variables from the week/custom session.
-[sessionStart, sessionEnd, isInSession] = sessionChange()
+// Range variables from the week/custom range.
+[intervalStart, intervalEnd, isInInterval] = intervalChange()
 
-// @variable Is true when the week/custom session closes per the session type filter.
-isValidType = isValidSessionType(sessionStart, sessionEnd)
+// @variable Is true when the week/custom range closes per the range type filter.
+isValidType = isValidRangeType(intervalStart, intervalEnd)
 
 
-// Track the top and bottom of the week/custom session.
+// Track the top and bottom of the week/custom range.
 
 if isInRange
     
-    // Reset the top and bottom on the first bar of a new week/custom session.
+    // Reset the top and bottom on the first bar of a new week/custom range.
     
-    if sessionStart
+    if intervalStart
         top.price       := na
         top.time        := na
         bottom.price    := na
@@ -403,7 +388,7 @@ if isInRange and barstate.isconfirmed
     bool _isFirstBar = na(top.time[1]) or na(bottom.time[1])
     
 
-    // Collect the top and bottom on a week/custom session change if it conforms to the user-selected type.
+    // Collect the top and bottom on a week/custom range change if it conforms to the user-selected type.
 
     if isValidType and not _isFirstBar
         int _topWeekday     = getDayOfWeek(top.time[1])
@@ -426,7 +411,7 @@ if isInRange and barstate.isconfirmed
 
     int _weekday = getDayOfWeek(time_tradingday)
 
-    if isInSession
+    if isInInterval
         openTimesByDayOfWeekMap.put(_weekday, time)
         closeTimesByDayOfWeekMap.put(_weekday, time_close)
 
@@ -437,20 +422,24 @@ if isInRange and barstate.isconfirmed
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawWeekdayColumns(dayofweek.sunday)
-drawWeekdayColumns(dayofweek.monday)
-drawWeekdayColumns(dayofweek.tuesday)
-drawWeekdayColumns(dayofweek.wednesday)
-drawWeekdayColumns(dayofweek.thursday)
-drawWeekdayColumns(dayofweek.friday)
-drawWeekdayColumns(dayofweek.saturday)
+drawDayOfWeekColumns(dayofweek.sunday)
+drawDayOfWeekColumns(dayofweek.monday)
+drawDayOfWeekColumns(dayofweek.tuesday)
+drawDayOfWeekColumns(dayofweek.wednesday)
+drawDayOfWeekColumns(dayofweek.thursday)
+drawDayOfWeekColumns(dayofweek.friday)
+drawDayOfWeekColumns(dayofweek.saturday)
 
 //#endregion
 
 
-//bgcolor(sessionStart ? color.new(color.green, 95) : color(na))
-//bgcolor(sessionEnd   ? color.new(color.red, 95) : color(na))
-//bgcolor(isInSession  ? color.new(color.gray, 95) : color(na))
+//--------------------------------------------------------------------
+//#region                         Debug
+//--------------------------------------------------------------------
+
+//bgcolor(intervalStart ? color.new(color.green, 95) : color(na))
+//bgcolor(intervalEnd   ? color.new(color.red, 95) : color(na))
+//bgcolor(isInInterval  ? color.new(color.gray, 95) : color(na))
 
 
 //plot(time_tradingday, "time_tradingday", display = display.data_window)
@@ -477,3 +466,4 @@ drawWeekdayColumns(dayofweek.saturday)
 //plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
 //plot(hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
 //
+//#endregion
