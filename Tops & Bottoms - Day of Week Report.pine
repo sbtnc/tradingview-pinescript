@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-11-29
-// Last modified: 2023-12-06
+// Last modified: 2023-12-09
 // Version 1.0
 
 
@@ -34,7 +34,7 @@ array<int>      DAYSOFWEEK                  = array.from(dayofweek.sunday, dayof
 
 intervalTooltip     = "By default, the indicator identifies the top and bottom over the symbol's trading week. " +
                       "You can specify your custom interval."
-noticeTitle         = "Navigate to the 1-day timeframe (24-hour for including the extended hours) " +
+noticeTitle         = "Navigate to the 1-day timeframe (or 24-hour for including the extended/electronic trading hours) " +
                       "for the indicator to analyze the bars and collect tops and bottoms."
 
 customIntervalInput = input.bool    (false, "Custom Interval", inline = "Interval")
@@ -219,9 +219,13 @@ drawDayOfWeekColumns(int key) =>
 
 // @function Check if the week/custom interval matches the user-selected interval type filter.
 // @returns  bool 
-isValidIntervalType(start, end) =>
+isValidIntervalType(start, end, isInRange) =>
     var float _open = na
     bool _isValid   = na
+
+    // The first bar of the user-selected time range can occur after the interval start.
+    if ta.change(isInRange) and isInRange
+        _open := open
 
     if start
         _open := open
@@ -229,8 +233,10 @@ isValidIntervalType(start, end) =>
     if end
         _isValid := switch intervalTypeInput
             "All"   => not na(_open[1])
-            "Up"    => close[1] > _open[1]
-            "Down"  => close[1] < _open[1]
+            "Up"    => 
+                close[1] > _open[1]
+            "Down"  => 
+                close[1] < _open[1]
 
     _isValid
 
@@ -281,53 +287,34 @@ method getSuite(array<int> this, int dayOfWeek) =>
 // @returns  [bool, bool, bool]
 intervalChange() =>
     if customIntervalInput
-        
-        _dayOfWeek = dayofweek(time_tradingday, "UTC+0")
+        _dayOfWeek      = dayofweek(time_tradingday, "UTC+0")
+
+
+        // Construct the lists of following days of the week.
 
         _suiteFromStart = DAYSOFWEEK.getSuite(getDayOfWeek(intervalStartInput))
-        _suiteFromEnd = DAYSOFWEEK.getSuite(getEndDayOfWeek())
-        _dayOfWeekList = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(intervalEndInput)) +1)
-        _isInInterval = _dayOfWeekList.includes(_dayOfWeek)
+        _suiteFromEnd   = DAYSOFWEEK.getSuite(getEndDayOfWeek())
         
-        log.info("\n_suiteFromStart {0}\n_suiteFromEnd {1}\n_dayOfWeekList {2}", _suiteFromStart, _suiteFromEnd, _dayOfWeekList)
-        //log.info("\nIn session? {0}",
-        //     _isInInterval
-        //     )
+
+        // Determine if the current day of the week is in the interval.
+
+        _dayOfWeekList  = _suiteFromStart.copy().slice(0, _suiteFromStart.indexof(getDayOfWeek(intervalEndInput)) +1)
+        _isInInterval   = _dayOfWeekList.includes(_dayOfWeek)
+        
+
+        // Calculate the next start and end dates of the interval.
 
         _barsToStart = 7 - _suiteFromStart.indexof(_dayOfWeek)
-        _startTime = timestamp(year, month, dayofmonth + _barsToStart, hour, minute)
-        // on EURUSD, interval from sat to sunday should not return any
-        _start = ta.change(_startTime) > 0 and _isInInterval
-
-
         _barsToEnd = 7 - _suiteFromEnd.indexof(_dayOfWeek)
+        _startTime = timestamp(year, month, dayofmonth + _barsToStart, hour, minute)
         _endTime = timestamp(year, month, dayofmonth + _barsToEnd, hour, minute)
+
+
+        // Determine if the day is the first day of the interval / after the interval.
+        // Which are not necessarily on the interval's start and end day of week (on EURUSD, Monday is the first trading day in the interval [Saturday - Wednesday]).
+
+        _start = ta.change(_startTime) > 0 and _isInInterval
         _end = ta.change(_endTime) > 0 and _isInInterval[1]
-        
-
-        //label.new(_startTime, 90, xloc = xloc.bar_time, style = label.style_triangledown, color = color.new(color.green, 95), size = size.tiny)
-        //label.new(_endTime, -90, xloc = xloc.bar_time, style = label.style_triangleup, color = color.new(color.red, 95), size = size.tiny)
-        //log.info("\nbar weekday index {0}\ndiff to apply {1}\nnext start time {2}\nstart time? {3}\n\ncurrent time {4}",
-        //     _dayOfWeek, _barsToStart, str.format_time(_startTime), _start, str.format_time(time)
-        //     )
-        //log.info("\nend weekday index {0}\nbar weekday index {1}\ndiff to apply {2}\nnext start time {3}\nstart time? {4}\n\ncurrent time {5}",
-        //     getDayOfWeek(intervalEndInput), _dayOfWeek, _barsToEnd, str.format_time(_endTime), _end, str.format_time(time)
-        //     )
-
-        log.info(
-             "\n*** Current ***\n • Date: {0}\n • Day of week {1}" +
-             "\n*** Start ***\n • Date: {2}\n • Bars left: {3}" + 
-             "\n*** End ***\n • Date: {4}\n • Bars left: {5}", 
-             str.format_time(time, "dd MMMM"), _dayOfWeek, 
-             str.format_time(_startTime, "dd MMMM"), _barsToStart,
-             str.format_time(_endTime, "dd MMMM"), _barsToEnd)
-
-
-
-        if _start and not _isInInterval
-            label.new(bar_index, 100, "S")
-        if _end and not _isInInterval[1]
-            label.new(bar_index, -100, "E")
 
         [_start, _end, _isInInterval]
     else
@@ -354,7 +341,7 @@ isInRange = isInTimeRange()
 [intervalStart, intervalEnd, isInInterval] = intervalChange()
 
 // @variable Is true when the week/custom interval closes per the interval type filter.
-isValidType = isValidIntervalType(intervalStart, intervalEnd)
+isValidType = isValidIntervalType(intervalStart, intervalEnd, isInRange)
 
 
 // Track the top and bottom of the week/custom interval.
@@ -430,40 +417,4 @@ drawDayOfWeekColumns(dayofweek.thursday)
 drawDayOfWeekColumns(dayofweek.friday)
 drawDayOfWeekColumns(dayofweek.saturday)
 
-//#endregion
-
-
-//--------------------------------------------------------------------
-//#region                         Debug
-//--------------------------------------------------------------------
-
-//bgcolor(intervalStart ? color.new(color.green, 95) : color(na))
-//bgcolor(intervalEnd   ? color.new(color.red, 95) : color(na))
-//bgcolor(isInInterval  ? color.new(color.gray, 95) : color(na))
-
-
-//plot(time_tradingday, "time_tradingday", display = display.data_window)
-//plot(time, "time", display = display.data_window)
-//
-//plot(na, "------------", display = display.data_window)
-//
-//plot(dayofweek(time_tradingday), "dayofweek(time_tradingday)", display = display.data_window)
-//plot(dayofweek(time_tradingday, "UTC+0"), "dayofweek(time_tradingday, 'UTC+0')", display = display.data_window)
-//plot(dayofweek(time), "dayofweek(time)", display = display.data_window)
-//
-//plot(na, "------------", display = display.data_window)
-//
-//plot(dayofweek.monday, "dayofweek.monday", display = display.data_window)
-//plot(dayofweek.tuesday, "dayofweek.tuesday", display = display.data_window)
-//plot(dayofweek.wednesday, "dayofweek.wednesday", display = display.data_window)
-//plot(dayofweek.thursday, "dayofweek.thursday", display = display.data_window)
-//plot(dayofweek.friday, "dayofweek.friday", display = display.data_window)
-//plot(dayofweek.saturday, "dayofweek.saturday", display = display.data_window)
-//plot(dayofweek.sunday, "dayofweek.sunday", display = display.data_window)
-//
-//plot(na, "------------", display = display.data_window)
-//
-//plot(time != time_tradingday ? 1 : 0, "Overnight ?", display = display.data_window)
-//plot(hasOvernightSession(time, time_close) ? 1 : 0, "Overnight 2 ?", display = display.data_window)
-//
 //#endregion
