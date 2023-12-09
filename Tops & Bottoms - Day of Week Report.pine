@@ -83,7 +83,7 @@ getDayOfWeek(int barTime) =>
     dayofweek(barTime, "UTC+0")
 
 
-// @function Get the day of the week short string from a given index
+// @function Get the day of the week short string from a given index.
 // @returns  (string) Day of the week
 getDayOfWeekShortString(int dayOfWeek) =>
     switch dayOfWeek
@@ -96,7 +96,7 @@ getDayOfWeekShortString(int dayOfWeek) =>
         dayofweek.saturday  => "Sat"
 
 
-// @function Get the day of the week long string from a given index
+// @function Get the day of the week long string from a given index.
 // @returns  (string) Day of the week
 getDayOfWeekLongString(int dayOfWeek) =>
     switch dayOfWeek
@@ -109,13 +109,13 @@ getDayOfWeekLongString(int dayOfWeek) =>
         dayofweek.saturday  => "Saturday"
 
 
-// @function Check if the market has overnight sessions based on its opening and closing times
+// @function Check if the market has an overnight session based on its opening and closing times.
 // @returns  bool
 hasOvernightSession(int openTime, int closeTime) =>
     dayofweek(openTime) != dayofweek(closeTime)
 
 
-// @function Get the legend's tooltip text
+// @function Get the legend's tooltip text.
 // @returns  string 
 getSessionTooltip(int openTime, int closeTime) =>
     string _dayOfWeekAtOpen  = getDayOfWeekLongString(dayofweek(openTime))
@@ -135,7 +135,7 @@ getGradientColor(float value, float minValue, float maxValue, color minColor, co
     minValue != maxValue ? color.from_gradient(value, minValue, maxValue, minColor, maxColor) : color.from_gradient(0.5, 0, 1, minColor, maxColor)
     
 
-// @function Draw the columns for a given hour.
+// @function Draw the columns for a given day of the week.
 // @returns  void
 drawDayOfWeekColumns(int key) =>
     var _upperColumnBox = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
@@ -217,7 +217,7 @@ drawDayOfWeekColumns(int key) =>
             _lowerDataLabel.set_tooltip     (str.format("{0} based on {1} sampled weeks", str.tostring(_bottomY, format.percent), _dataSum))
 
 
-// @function Check if the week/custom interval matches the user-selected interval type filter.
+// @function Check if the week/custom interval matches the user-selected interval type.
 // @returns  bool 
 isValidIntervalType(start, end, isInRange) =>
     var float _open = na
@@ -241,13 +241,13 @@ isValidIntervalType(start, end, isInRange) =>
     _isValid
 
 
-// @function Check if the current bar time is in the user-selected time range filter.
+// @function Check if the current bar time is in the user-selected time range.
 // @returns  bool
 isInTimeRange() =>
     time >= startDateInput and time <= endDateInput
 
 
-// @function Get the day of the week index from a given string
+// @function Get the day of the week index from a given string.
 // @returns  (int) Day of the week
 getDayOfWeek(string dayOfWeek) =>
     switch dayOfWeek
@@ -260,7 +260,7 @@ getDayOfWeek(string dayOfWeek) =>
         "Saturday"  => dayofweek.saturday
 
 
-// @function Get the end day of the week index from the user-selected interval (shifted by one to be inclusive)
+// @function Get the end day of the week index from the user-selected interval (shifted by one to be inclusive).
 // @returns  (int) Day of the week
 getEndDayOfWeek() =>
     switch intervalEndInput
@@ -273,7 +273,7 @@ getEndDayOfWeek() =>
         "Saturday"  => dayofweek.sunday
 
 
-// @function Construct a suite of days of the week for a given index
+// @function Construct a suite of days of the week for a given index.
 // @returns  array<int>
 method getSuite(array<int> this, int dayOfWeek) =>
     _src = this.copy()
@@ -283,8 +283,8 @@ method getSuite(array<int> this, int dayOfWeek) =>
     _part1.concat(_part2)
 
 
-// @function Detect changes in the week/custom interval and if the current bar is in the interval.
-// @returns  [bool, bool, bool]
+// @function Detect the changes in the week/custom interval.
+// @returns  ([bool, bool, bool]) Start, end, time is in interval
 intervalChange() =>
     if customIntervalInput
         _dayOfWeek      = dayofweek(time_tradingday, "UTC+0")
@@ -302,7 +302,7 @@ intervalChange() =>
         _isInInterval   = _dayOfWeekList.includes(_dayOfWeek)
         
 
-        // Calculate the next start and end dates of the interval.
+        // Calculate the next start and end times of the interval.
 
         _barsToStart = 7 - _suiteFromStart.indexof(_dayOfWeek)
         _barsToEnd = 7 - _suiteFromEnd.indexof(_dayOfWeek)
@@ -311,7 +311,7 @@ intervalChange() =>
 
 
         // Determine if the day is the first day of the interval / after the interval.
-        // Which are not necessarily on the interval's start and end day of week (on EURUSD, Monday is the first trading day in the interval [Saturday - Wednesday]).
+        // Which are not necessarily on the interval's start and end day of week (e.g., on EURUSD, Monday is the first trading day in the interval [Saturday - Wednesday]).
 
         _start = ta.change(_startTime) > 0 and _isInInterval
         _end = ta.change(_endTime) > 0 and _isInInterval[1]
