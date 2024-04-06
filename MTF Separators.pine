@@ -223,65 +223,51 @@ hourChange(array<int> intraTimeArray, int multiplier) =>
         // Change to an hour in hour list
         if hour(_prevTime) != hour(_time) and _hourArray.includes(hour(_time))
             _changed := true
+            log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed
 
 
-// Pb with 45 minutes 
-// The list should give [45, 30] or [0, 45]
-// What if the minute does not exist.
+// - 45 minutes interval does not start at 00:00
+//   > start counting from 00:00 
+//   > remove 45 minute from supported list
+// - 45 minutes interval and 30 minutes timeframe -> odd need to implement ltf
 minuteChange(int multiplier) =>
-//    var _count = 0
-//    var _minuteArray = array.new_int()
-//
-//    // Populate with minutes
-//    if barstate.isfirst
-//        for i = 0 to 59 / multiplier
-//            log.warning("{0}", i)
-//            _minuteArray.push(i * multiplier)
-//        log.info("\n Minute list {0}", _minuteArray)
-//    
-//    minute[1] != minute and _minuteArray.includes(minute)
-
     var int _last = na
-    log.info("{0}", str.tostring(time))
-    _last := (time % (multiplier * 60 * 1000) == 0) ? time : (time - _last >= multiplier * 60 * 1000) ? time : _last[1]
+    int increment = multiplier * 60 * 1000
+
+    // At the bar change
+    if time % increment == 0
+        _last := time
+        log.info("At {0}", str.format_time(_last))
+
+    // Some bars were missing
+    else if time - _last >= increment
+        _last := time - time % increment
+        log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+    
+    else 
+        log.error("{0}m", (time - _last) / 1000 / 60)
+
     ta.change(_last)
 
-htf = request.security(syminfo.tickerid, separatorTimeframeInput1, time)
 
-// What if the second does not exist.
 secondChange(int multiplier) =>
-//    var _count = 0
-//    var _secondArray = array.new_int()
-//
-//    // Populate with minutes
-//    if barstate.isfirst
-//        for i = 0 to 59 / multiplier
-//            log.warning("{0}", i)
-//            _secondArray.push(i * multiplier)
-//        log.info("\n Second list {0}", _secondArray)
-//    
-//    second[1] != second and _secondArray.includes(second)
-//    // Same
-//    time % (multiplier * 1000) == 0
-//
-//    var int _last = na
-//    bool _change = false
-//    if time % (multiplier * 1000) == 0
-//        _change := true 
-//        _last := time
-//    else if time - _last > multiplier * 1000
-//        _change := true
-//        _last := time
-//    _change
-//
     var int _last = na
-    _last := (time % (multiplier * 1000) == 0) ? time : (time - _last >= multiplier * 1000) ? time : _last[1]
+    int increment = multiplier * 1000
+
+    // At the bar change
+    if time % increment == 0
+        _last := time
+        log.info("At {0}", str.format_time(_last))
+
+    // Some bars were missing
+    else if time - _last >= increment
+        _last := time - time % increment
+        log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+
     ta.change(_last)
-//
-    //ta.change(htf)
 
 
 timeChange(ltfTimeArray, string timeframe) =>
@@ -316,30 +302,31 @@ drawSeparator(ltfTimeArray, bool isEnabled, string tf, color color, int width, s
     var lineArray = array.new_line()
     _canDisplayOnChartTimeframe = timeframe.in_seconds(tf) > timeframe.in_seconds()
 
-    if isEnabled and _canDisplayOnChartTimeframe and timeChange(ltfTimeArray, tf)
-        // y1 and y2 should not be equal prices otherwise draw vertical lines
-        lineArray.push(
-             line.new(time, open, time, open + syminfo.mintick, xloc.bar_time, extend.both, color, getLineStyle(style), width)
-             )
+    if isEnabled and _canDisplayOnChartTimeframe
+        if timeChange(ltfTimeArray, tf)
+            // y1 and y2 should not be equal prices otherwise draw vertical lines
+            lineArray.push(
+                 line.new(time, open, time, open + syminfo.mintick, xloc.bar_time, extend.both, color, getLineStyle(style), width)
+                 )
 
 
-        if lineArray.size() > lookback
-            line.delete(lineArray.shift())
+            if lineArray.size() > lookback
+                line.delete(lineArray.shift())
 
-//        // Projection
-//        if showNextSeparatorInput
-//            var line projectionLine = line.new(na, na, na, na, xloc.bar_time, extend.both, color, getLineStyle(style), width)
-//
-//            nextTime = time + timeframe.in_seconds(tf) * 1000
-//            log.info("\n {0}", timeframe.in_seconds(tf))
-//            log.info(
-//                 "\n time {0}" +
-//                 "\n next time {1}",
-//                 str.format_time(time),
-//                 str.format_time(nextTime)
-//                 )
-//            projectionLine.set_xy1(nextTime, open)
-//            projectionLine.set_xy2(nextTime, syminfo.mintick)
+//          // Projection
+//          if showNextSeparatorInput
+//              var line projectionLine = line.new(na, na, na, na, xloc.bar_time, extend.both, color, getLineStyle(style), width)
+//  
+//              nextTime = time + timeframe.in_seconds(tf) * 1000
+//              log.info("\n {0}", timeframe.in_seconds(tf))
+//              log.info(
+//                   "\n time {0}" +
+//                   "\n next time {1}",
+//                   str.format_time(time),
+//                   str.format_time(nextTime)
+//                   )
+//              projectionLine.set_xy1(nextTime, open)
+//              projectionLine.set_xy2(nextTime, syminfo.mintick)
 
 //#endregion
 
@@ -360,7 +347,19 @@ drawSeparator(ltfTimeArray, bool isEnabled, string tf, color color, int width, s
 
 ltf = timeframe.period
 
-if separatorTimeframeInput1 == "1W"
+if separatorTimeframeInput1 == "60"
+    ltf := switch
+        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+
+else if separatorTimeframeInput1 == "120"
+    ltf := switch
+        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+
+else if separatorTimeframeInput1 == "240"
+    ltf := switch
+        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+
+else if separatorTimeframeInput1 == "1W"
     ltf := switch 
         timeframe.in_seconds() >= timeframe.in_seconds("1D") => "720"
         timeframe.in_seconds() >= timeframe.in_seconds("60") => "60"
@@ -385,7 +384,7 @@ else if separatorTimeframeInput1 == "12M"
 ltfTimeArray = request.security_lower_tf(syminfo.tickerid, ltf, time)
 
 if barstate.islastconfirmedhistory
-    log.info("{0}", ltfTimeArray.size())
+    log.info("data size in bar {0}", ltfTimeArray.size())
 
 //#endregion
 
@@ -417,13 +416,13 @@ drawSeparator(ltfTimeArray, enableSeparatorInput4, separatorTimeframeInput4, sep
 if barstate.islast
     var table t = table.new(position.bottom_right, 3, 2)
 
-    t.cell(0, 0, "Chart")
-    t.cell(1, 0, "Separator")
-    t.cell(2, 0, "Intrabar")
+    t.cell(0, 0, "Chart", text_color = chart.fg_color)
+    t.cell(1, 0, "Separator", text_color = chart.fg_color)
+    t.cell(2, 0, "Intrabar", text_color = chart.fg_color)
 
-    t.cell(0, 1, timeframe.period)
-    t.cell(1, 1, separatorTimeframeInput1)
-    t.cell(2, 1, ltf)
+    t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
+    t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
+    t.cell(2, 1, ltf, text_color = chart.fg_color)
 
 //#endregion
 
