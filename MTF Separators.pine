@@ -223,7 +223,7 @@ hourChange(array<int> intraTimeArray, int multiplier) =>
         // Change to an hour in hour list
         if hour(_prevTime) != hour(_time) and _hourArray.includes(hour(_time))
             _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
+            //log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed
@@ -245,7 +245,7 @@ minuteChange(int multiplier) =>
     // Some bars were missing
     else if time - _last >= increment
         _last := time - time % increment
-        log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+        //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
     
     else 
         log.error("{0}m", (time - _last) / 1000 / 60)
@@ -265,7 +265,7 @@ secondChange(int multiplier) =>
     // Some bars were missing
     else if time - _last >= increment
         _last := time - time % increment
-        log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+        //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
 
     ta.change(_last)
 
@@ -347,38 +347,70 @@ drawSeparator(ltfTimeArray, bool isEnabled, string tf, color color, int width, s
 
 ltf = timeframe.period
 
-if separatorTimeframeInput1 == "60"
-    ltf := switch
-        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+pgcd(int a, int b) =>
+    int _a = a
+    int _tempA = na
+    int _b = b
+    int _tempB = na
 
-else if separatorTimeframeInput1 == "120"
-    ltf := switch
-        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+    while (_a % _b) != 0
+        log.info("a: {0}", _a)
+        log.info("b: {0}", _b)
+        log.info("a % b = {0}", _a % _b)
 
-else if separatorTimeframeInput1 == "240"
-    ltf := switch
-        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+        if (_a % _b ) != 0
+            _tempA := _a
+            _a := _b
+            _b := _tempA % _b
 
-else if separatorTimeframeInput1 == "1W"
-    ltf := switch 
-        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "720"
-        timeframe.in_seconds() >= timeframe.in_seconds("60") => "60"
+    log.info("-> b: {0}", _b)
+    _b
 
-else if separatorTimeframeInput1 == "1M"
-    ltf := switch 
-        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
+//res = pgcd(timeframe.in_seconds(separatorTimeframeInput1) / 1000, timeframe.in_seconds() / 1000)
 
-else if separatorTimeframeInput1 == "3M"
-    ltf := switch 
-        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
 
-else if separatorTimeframeInput1 == "6M"
-    ltf := switch 
-        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
+if barstate.islast
+    res = pgcd(60, 45) // 7200 3600
+    log.info("PGCD {0}", res)
+    
+    if timeframe.in_seconds(separatorTimeframeInput1) % timeframe.in_seconds() != 0
+        log.error("timeframe is odd, need fix")
 
-else if separatorTimeframeInput1 == "12M"
-    ltf := switch
-        timeframe.in_seconds() >= timeframe.in_seconds("1W") => "1D"
+
+if timeframe.in_seconds(separatorTimeframeInput1) % timeframe.in_seconds() != 0
+
+    if separatorTimeframeInput1 == "60"
+        ltf := switch
+            timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+        
+//else if separatorTimeframeInput1 == "120"
+//    ltf := switch
+//        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+//
+//else if separatorTimeframeInput1 == "240"
+//    ltf := switch
+//        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
+//
+//else if separatorTimeframeInput1 == "1W"
+//    ltf := switch 
+//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "720"
+//        timeframe.in_seconds() >= timeframe.in_seconds("60") => "60"
+//
+//else if separatorTimeframeInput1 == "1M"
+//    ltf := switch 
+//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
+//
+//else if separatorTimeframeInput1 == "3M"
+//    ltf := switch 
+//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
+//
+//else if separatorTimeframeInput1 == "6M"
+//    ltf := switch 
+//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
+//
+//else if separatorTimeframeInput1 == "12M"
+//    ltf := switch
+//        timeframe.in_seconds() >= timeframe.in_seconds("1W") => "1D"
 
 
 ltfTimeArray = request.security_lower_tf(syminfo.tickerid, ltf, time)
