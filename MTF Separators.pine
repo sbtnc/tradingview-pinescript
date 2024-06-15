@@ -85,6 +85,98 @@ g3 = "Preferences"
 
 showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
 baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3)
+timezoneInput   = input.string("Exchange", "Timezone",
+     [
+     "UTC",
+     "Exchange",
+     "Africa/Cairo",
+     "Africa/Johannesburg",
+     "Africa/Lagos",
+     "Africa/Nairobi",
+     "Africa/Tunis",
+     "America/Argentina/Buenos_Aires",
+     "America/Bogota",
+     "America/Caracas",
+     "America/Chicago",
+     "America/Denver",
+     "America/El_Salvador",
+     "America/Juneau",
+     "America/Lima",
+     "America/Los_Angeles",
+     "America/New_York",
+     "America/Mexico_City",
+     "America/Phoenix",
+     "America/Santiago",
+     "America/Sao_Paulo",
+     "America/Toronto",
+     "America/Vancouver",
+     "Asia/Almaty",
+     "Asia/Ashgabat",
+     "Asia/Bahrain",
+     "Asia/Bangkok",
+     "Asia/Dubai",
+     "Asia/Chongqing",
+     "Asia/Colombo",
+     "Asia/Ho_Chi_Minh",
+     "Asia/Hong_Kong",
+     "Asia/Istanbul",
+     "Asia/Jakarta",
+     "Asia/Jerusalem",
+     "Asia/Karachi",
+     "Asia/Kathmandu",
+     "Asia/Kolkata",
+     "Asia/Kuwait",
+     "Asia/Manila",
+     "Asia/Muscat",
+     "Asia/Nicosia",
+     "Asia/Qatar",
+     "Asia/Riyadh",
+     "Asia/Seoul",
+     "Asia/Shanghai",
+     "Asia/Singapore",
+     "Asia/Taipei",
+     "Asia/Tehran",
+     "Asia/Tokyo",
+     "Asia/Yangon",
+     "Atlantic/Reykjavik",
+     "Australia/Adelaide",
+     "Australia/Brisbane",
+     "Australia/Perth",
+     "Australia/Sydney",
+     "Europe/Amsterdam",
+     "Europe/Athens",
+     "Europe/Belgrade",
+     "Europe/Berlin",
+     "Europe/Bratislava",
+     "Europe/Brussels",
+     "Europe/Bucharest",
+     "Europe/Budapest",
+     "Europe/Copenhagen",
+     "Europe/Dublin",
+     "Europe/Helsinki",
+     "Europe/Madrid",
+     "Europe/Malta",
+     "Europe/Moscow",
+     "Europe/Lisbon",
+     "Europe/London",
+     "Europe/Luxembourg",
+     "Europe/Oslo",
+     "Europe/Paris",
+     "Europe/Riga",
+     "Europe/Rome",
+     "Europe/Stockholm",
+     "Europe/Tallinn",
+     "Europe/Vilnius",
+     "Europe/Warsaw",
+     "Europe/Zurich",
+     "Pacific/Auckland",
+     "Pacific/Chatham",
+     "Pacific/Fakaofo",
+     "Pacific/Honolulu",
+     "Pacific/Norfolk"
+     ],
+     display = display.none
+ )
 
 //#endregion
 
@@ -100,6 +192,14 @@ baseOnSessionInput          = input.bool    (true,      "Base on Session", group
 //--------------------------------------------------------------------
 //#region                   Functions & methods
 //--------------------------------------------------------------------
+
+// @function Produce the `timezone` parameter from the given user input.
+// @returns  (string) Timezone
+getTimezone(simple string input) =>
+    string _tz = switch input
+        "UTC"       => "UTC+0"
+        "Exchange"  => syminfo.timezone  
+        => input
 
 // @function    Get the value at the last index of the given `array series` on the previous bar
 // @returns     The preceding last value
@@ -122,11 +222,11 @@ getLineStyle(string input) =>
         "Dashed"    => line.style_dashed
 
 
-yearChange(array<int> intraTimeArray) =>
+yearChange(array<int> intraTimeArray, string tz) =>
     bool _changed = false
     int _prevTime = getLast(intraTimeArray)
     for _time in intraTimeArray
-        if year(_prevTime) != year(_time)
+        if year(_prevTime, tz) != year(_time, tz)
             _changed := true
             //log.info("\n Change at {0}", str.format_time(_time))
             break
@@ -134,11 +234,23 @@ yearChange(array<int> intraTimeArray) =>
     _changed
 
 
-monthChange(array<int> intraTimeArray) =>
+monthChange(array<int> intraTimeArray, string tz) =>
     bool _changed = false
     int _prevTime = getLast(intraTimeArray)
     for _time in intraTimeArray
-        if month(_prevTime) != month(_time)
+        if month(_prevTime, tz) != month(_time, tz)
+            _changed := true
+            log.info("\n Change at {0}", str.format_time(_time))
+            break
+        _prevTime := _time
+    _changed
+
+
+weekChange(array<int> intraTimeArray, string tz) =>
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        if weekofyear(_prevTime, tz) != weekofyear(_time, tz)
             _changed := true
             //log.info("\n Change at {0}", str.format_time(_time))
             break
@@ -146,23 +258,11 @@ monthChange(array<int> intraTimeArray) =>
     _changed
 
 
-weekChange(array<int> intraTimeArray) =>
+dayChange(array<int> intraTimeArray, string tz) =>
     bool _changed = false
     int _prevTime = getLast(intraTimeArray)
     for _time in intraTimeArray
-        if weekofyear(_prevTime) != weekofyear(_time)
-            _changed := true
-            //log.info("\n Change at {0}", str.format_time(_time))
-            break
-        _prevTime := _time
-    _changed
-
-
-dayChange(array<int> intraTimeArray) =>
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        if dayofmonth(_prevTime) != dayofmonth(_time)
+        if dayofmonth(_prevTime, tz) != dayofmonth(_time, tz)
             _changed := true
             //log.info("\n Change at {0}", str.format_time(_time))
             break
@@ -170,11 +270,11 @@ dayChange(array<int> intraTimeArray) =>
     _changed 
  
 
-hourChange(array<int> intraTimeArray) =>
+hourChange(array<int> intraTimeArray, string tz) =>
     bool _changed = false
     int _prevTime = getLast(intraTimeArray)
     for _time in intraTimeArray
-        if hour(_prevTime) != hour(_time)
+        if hour(_prevTime, tz) != hour(_time, tz)
             _changed := true
             //log.info("\n Change at {0}", str.format_time(_time))
             break
@@ -188,7 +288,7 @@ minuteChange() =>
 
 // Multiplier of period functions
 
-monthChange(array<int> intraTimeArray, int multiplier) =>
+monthChange(array<int> intraTimeArray, int multiplier, string tz) =>
     var _count = 0
     var _monthArray = array.new_int()
 
@@ -203,14 +303,14 @@ monthChange(array<int> intraTimeArray, int multiplier) =>
     for _time in intraTimeArray
         // Change to an hour in hour list
         //if month[1] != month and _monthArray.includes(month)
-        if month(_prevTime) != month(_time) and _monthArray.includes(month(_time))
+        if month(_prevTime, tz) != month(_time, tz) and _monthArray.includes(month(_time, tz))
             _changed := true
             break
         _prevTime := _time
     _changed
 
 
-hourChange(array<int> intraTimeArray, int multiplier) =>
+hourChange(array<int> intraTimeArray, int multiplier, string tz) =>
     var _count = 0
     var _hourArray = array.new_int()
 
@@ -224,7 +324,7 @@ hourChange(array<int> intraTimeArray, int multiplier) =>
     int _prevTime = getLast(intraTimeArray)
     for _time in intraTimeArray
         // Change to an hour in hour list
-        if hour(_prevTime) != hour(_time) and _hourArray.includes(hour(_time))
+        if hour(_prevTime, tz) != hour(_time, tz) and _hourArray.includes(hour(_time, tz))
             _changed := true
             //log.info("\n Change at {0}", str.format_time(_time))
             break
@@ -236,9 +336,10 @@ hourChange(array<int> intraTimeArray, int multiplier) =>
 //   > start counting from 00:00 
 //   > remove 45 minute from supported list
 // - 45 minutes interval and 30 minutes timeframe -> odd need to implement ltf
-minuteChange(int multiplier) =>
+minuteChange(int multiplier, string tz) =>
     var int _last = na
     int increment = multiplier * 60 * 1000
+    log.info("{0}", tz)
 
     // At the bar change
     if time % increment == 0
@@ -274,32 +375,34 @@ secondChange(int multiplier) =>
 
 
 timeChange(ltfTimeArray, string timeframe) =>
+    var _tz = getTimezone(timezoneInput)
+    
     switch timeframe
         "5S"  => secondChange(5)
         "10S" => secondChange(10)
         "15S" => secondChange(15)
         "30S" => secondChange(30)
         "1"   => minuteChange()
-        "2"   => minuteChange(2)
-        "3"   => minuteChange(3)
-        "5"   => minuteChange(5)
-        "10"  => minuteChange(10)
-        "15"  => minuteChange(15)
-        "30"  => minuteChange(30)
-        "45"  => minuteChange(45)
-        "60"  => hourChange(ltfTimeArray)
-        "120" => hourChange(ltfTimeArray, 2)
-        "180" => hourChange(ltfTimeArray, 3)
-        "240" => hourChange(ltfTimeArray, 4)
-        "360" => hourChange(ltfTimeArray, 6)
-        "480" => hourChange(ltfTimeArray, 8)
-        "720" => hourChange(ltfTimeArray, 12)
-        "1D"  => dayChange(ltfTimeArray)
-        "1W"  => weekChange(ltfTimeArray)
-        "1M"  => monthChange(ltfTimeArray)
-        "3M"  => monthChange(ltfTimeArray, 3)
-        "6M"  => monthChange(ltfTimeArray, 6)
-        "12M" => yearChange(ltfTimeArray)
+        "2"   => minuteChange(2, _tz)
+        "3"   => minuteChange(3, _tz)
+        "5"   => minuteChange(5, _tz)
+        "10"  => minuteChange(10, _tz)
+        "15"  => minuteChange(15, _tz)
+        "30"  => minuteChange(30, _tz)
+        "45"  => minuteChange(45, _tz)
+        "60"  => hourChange(ltfTimeArray, _tz)
+        "120" => hourChange(ltfTimeArray, 2, _tz)
+        "180" => hourChange(ltfTimeArray, 3, _tz)
+        "240" => hourChange(ltfTimeArray, 4, _tz)
+        "360" => hourChange(ltfTimeArray, 6, _tz)
+        "480" => hourChange(ltfTimeArray, 8, _tz)
+        "720" => hourChange(ltfTimeArray, 12, _tz)
+        "1D"  => dayChange(ltfTimeArray, _tz)
+        "1W"  => weekChange(ltfTimeArray, _tz)
+        "1M"  => monthChange(ltfTimeArray, _tz)
+        "3M"  => monthChange(ltfTimeArray, 3, _tz)
+        "6M"  => monthChange(ltfTimeArray, 6, _tz)
+        "12M" => yearChange(ltfTimeArray, _tz)
 
 timeChange2(ltfArray) =>
     ltfArray.some()
@@ -392,6 +495,12 @@ getLtf(simple int a, simple int b) =>
 //--------------------------------------------------------------------
 //#region                 Variables declarations
 //--------------------------------------------------------------------
+
+tz = getTimezone(timezoneInput)
+
+// TODO verifier avec exchange tz 
+sameTimezone = tz == syminfo.timezone
+
 //#endregion
 
 
@@ -399,10 +508,16 @@ getLtf(simple int a, simple int b) =>
 //#region                         Logic
 //--------------------------------------------------------------------
 
-ltf1 = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
-ltf2 = getLtf(timeframeInSec(separatorTimeframeInput2), timeframe.in_seconds())
-ltf3 = getLtf(timeframeInSec(separatorTimeframeInput3), timeframe.in_seconds())
-ltf4 = getLtf(timeframeInSec(separatorTimeframeInput4), timeframe.in_seconds())
+// If we use timezone, we must use at max 60min (ou peut etre 30min / 15min?) data
+tf1 = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
+tf2 = getLtf(timeframeInSec(separatorTimeframeInput2), timeframe.in_seconds())
+tf3 = getLtf(timeframeInSec(separatorTimeframeInput3), timeframe.in_seconds())
+tf4 = getLtf(timeframeInSec(separatorTimeframeInput4), timeframe.in_seconds())
+
+ltf1 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf1) > timeframe.in_seconds("15")) ? "15" : tf1
+ltf2 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf2) > timeframe.in_seconds("15")) ? "15" : tf2
+ltf3 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf3) > timeframe.in_seconds("15")) ? "15" : tf3
+ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf4) > timeframe.in_seconds("15")) ? "15" : tf4
 
 [ltfTimeArray1, ltfChangeArray1] = request.security_lower_tf(syminfo.tickerid, ltf1, [time, timeframe.change(separatorTimeframeInput1)])
 [ltfTimeArray2, ltfChangeArray2] = request.security_lower_tf(syminfo.tickerid, ltf2, [time, timeframe.change(separatorTimeframeInput2)])
@@ -433,6 +548,10 @@ drawSeparator(ltfTimeArray4, ltfChangeArray4, enableSeparatorInput4, separatorTi
 //--------------------------------------------------------------------
 //#region                         Debug
 //--------------------------------------------------------------------
+
+if barstate.islast
+    label.new(bar_index, high, str.format("{0} {1} == {2}", sameTimezone, tz, syminfo.timezone))
+
 
 // Table
 
