@@ -222,15 +222,25 @@ getLineStyle(string input) =>
         "Dashed"    => line.style_dashed
 
 
-yearChange(array<int> intraTimeArray, string tz) =>
+//yearChange(array<int> intraTimeArray, string tz) =>
+//    bool _changed = false
+//    int _prevTime = getLast(intraTimeArray)
+//    for _time in intraTimeArray
+//        if not na(_prevTime) and year(_prevTime, tz) != year(_time, tz)
+//            _changed := true
+//            //log.info("\n Change at {0}", str.format_time(_time))
+//            break
+//        _prevTime := _time
+//    _changed
+
+yearChange(array<int> timeArray, string tz) =>
     bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        if year(_prevTime, tz) != year(_time, tz)
-            _changed := true
-            //log.info("\n Change at {0}", str.format_time(_time))
+    var int _lastTime = na
+    for _time in timeArray
+        _changed := not na(_lastTime) and year(_lastTime, tz) != year(_time, tz)
+        _lastTime := _time
+        if _changed
             break
-        _prevTime := _time
     _changed
 
 
