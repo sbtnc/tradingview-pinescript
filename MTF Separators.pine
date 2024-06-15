@@ -431,15 +431,31 @@ drawSeparator(ltfTimeArray, enableSeparatorInput4, separatorTimeframeInput4, sep
 // Table
 
 if barstate.islast
-    var table t = table.new(position.bottom_right, 3, 2)
+    var table t = table.new(position.bottom_right, 3, 5)
 
     t.cell(0, 0, "Chart", text_color = chart.fg_color)
     t.cell(1, 0, "Separator", text_color = chart.fg_color)
     t.cell(2, 0, "Intrabar", text_color = chart.fg_color)
 
-    t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
-    t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-    t.cell(2, 1, ltf, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+    if enableSeparatorInput1
+        t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
+        t.cell(2, 1, ltf, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+    if enableSeparatorInput2
+        t.cell(0, 2, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
+        t.cell(2, 2, ltf, text_color = timeframeInSec(separatorTimeframeInput2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+    if enableSeparatorInput3
+        t.cell(0, 3, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
+        t.cell(2, 3, ltf, text_color = timeframeInSec(separatorTimeframeInput3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+    if enableSeparatorInput4
+        t.cell(0, 4, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
+        t.cell(2, 4, ltf, text_color = timeframeInSec(separatorTimeframeInput4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
