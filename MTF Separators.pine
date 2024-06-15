@@ -84,6 +84,7 @@ separatorStyleInput4        = input.string  ("Solid",   "",             group = 
 g3 = "Preferences"
 
 showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
+baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3)
 
 //#endregion
 
@@ -184,6 +185,8 @@ hourChange(array<int> intraTimeArray) =>
 minuteChange() =>
     minute[1] != minute
 
+
+// Multiplier of period functions
 
 monthChange(array<int> intraTimeArray, int multiplier) =>
     var _count = 0
@@ -298,12 +301,20 @@ timeChange(ltfTimeArray, string timeframe) =>
         "6M"  => monthChange(ltfTimeArray, 6)
         "12M" => yearChange(ltfTimeArray)
 
-drawSeparator(ltfTimeArray, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
+timeChange2(ltfArray) =>
+    ltfArray.some()
+
+
+
+//drawSeparator(ltfTimeArray, htfTime, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
+drawSeparator(ltfTimeArray, ltfChangeArray, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
     var lineArray = array.new_line()
     _canDisplayOnChartTimeframe = timeframe.in_seconds(tf) > timeframe.in_seconds()
 
     if isEnabled and _canDisplayOnChartTimeframe
-        if timeChange(ltfTimeArray, tf)
+        bool change = baseOnSessionInput ? timeChange2(ltfChangeArray) : timeChange(ltfTimeArray, tf)
+
+        if change
             // y1 and y2 should not be equal prices otherwise draw vertical lines
             lineArray.push(
                  line.new(time, open, time, open + syminfo.mintick, xloc.bar_time, extend.both, color, getLineStyle(style), width)
@@ -328,18 +339,6 @@ drawSeparator(ltfTimeArray, bool isEnabled, string tf, color color, int width, s
 //              projectionLine.set_xy1(nextTime, open)
 //              projectionLine.set_xy2(nextTime, syminfo.mintick)
 
-//#endregion
-
-
-//--------------------------------------------------------------------
-//#region                 Variables declarations
-//--------------------------------------------------------------------
-//#endregion
-
-
-//--------------------------------------------------------------------
-//#region                         Logic
-//--------------------------------------------------------------------
 
 timeframeInSec(timeframe) =>
     tfInsec = switch timeframe
@@ -387,19 +386,28 @@ getLtf(simple int a, simple int b) =>
     else 
         timeframe.period
 
+//#endregion
 
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
 
 ltf1 = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
-ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, time)
-
 ltf2 = getLtf(timeframeInSec(separatorTimeframeInput2), timeframe.in_seconds())
-ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, time)
-
 ltf3 = getLtf(timeframeInSec(separatorTimeframeInput3), timeframe.in_seconds())
-ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, ltf3, time)
-
 ltf4 = getLtf(timeframeInSec(separatorTimeframeInput4), timeframe.in_seconds())
-ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, time)
+
+[ltfTimeArray1, ltfChangeArray1] = request.security_lower_tf(syminfo.tickerid, ltf1, [time, timeframe.change(separatorTimeframeInput1)])
+[ltfTimeArray2, ltfChangeArray2] = request.security_lower_tf(syminfo.tickerid, ltf2, [time, timeframe.change(separatorTimeframeInput2)])
+[ltfTimeArray3, ltfChangeArray3] = request.security_lower_tf(syminfo.tickerid, ltf3, [time, timeframe.change(separatorTimeframeInput3)])
+[ltfTimeArray4, ltfChangeArray4] = request.security_lower_tf(syminfo.tickerid, ltf4, [time, timeframe.change(separatorTimeframeInput4)])
 
 //#endregion
 
@@ -408,10 +416,10 @@ ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, time)
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(ltfTimeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(ltfTimeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(ltfTimeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(ltfTimeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+drawSeparator(ltfTimeArray1, ltfChangeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(ltfTimeArray2, ltfChangeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(ltfTimeArray3, ltfChangeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(ltfTimeArray4, ltfChangeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
 //#endregion
 
