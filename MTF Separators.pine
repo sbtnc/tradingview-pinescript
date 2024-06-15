@@ -127,7 +127,7 @@ yearChange(array<int> intraTimeArray) =>
     for _time in intraTimeArray
         if year(_prevTime) != year(_time)
             _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
+            //log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed
@@ -139,7 +139,7 @@ monthChange(array<int> intraTimeArray) =>
     for _time in intraTimeArray
         if month(_prevTime) != month(_time)
             _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
+            //log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed
@@ -151,7 +151,7 @@ weekChange(array<int> intraTimeArray) =>
     for _time in intraTimeArray
         if weekofyear(_prevTime) != weekofyear(_time)
             _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
+            //log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed
@@ -163,7 +163,7 @@ dayChange(array<int> intraTimeArray) =>
     for _time in intraTimeArray
         if dayofmonth(_prevTime) != dayofmonth(_time)
             _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
+            //log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed 
@@ -175,7 +175,7 @@ hourChange(array<int> intraTimeArray) =>
     for _time in intraTimeArray
         if hour(_prevTime) != hour(_time)
             _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
+            //log.info("\n Change at {0}", str.format_time(_time))
             break
         _prevTime := _time
     _changed
@@ -193,7 +193,7 @@ monthChange(array<int> intraTimeArray, int multiplier) =>
     if barstate.isfirst
         for i = 0 to 12 / multiplier -1
             _monthArray.push(i * multiplier +1)
-        log.info("\n Months list {0}", _monthArray)
+        //log.info("\n Months list {0}", _monthArray)
 
     bool _changed = false
     int _prevTime = getLast(intraTimeArray)
@@ -215,7 +215,7 @@ hourChange(array<int> intraTimeArray, int multiplier) =>
     if barstate.isfirst
         for i = 0 to 24 / multiplier -1
             _hourArray.push(i * multiplier)
-        log.info("\n Hours list {0}", _hourArray)
+        //log.info("\n Hours list {0}", _hourArray)
 
     bool _changed = false
     int _prevTime = getLast(intraTimeArray)
@@ -240,7 +240,7 @@ minuteChange(int multiplier) =>
     // At the bar change
     if time % increment == 0
         _last := time
-        log.info("At {0}", str.format_time(_last))
+        //log.info("At {0}", str.format_time(_last))
 
     // Some bars were missing
     else if time - _last >= increment
@@ -248,7 +248,7 @@ minuteChange(int multiplier) =>
         //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
     
     else 
-        log.error("{0}m", (time - _last) / 1000 / 60)
+        log.warning("{0}m", (time - _last) / 1000 / 60)
 
     ta.change(_last)
 
@@ -260,7 +260,7 @@ secondChange(int multiplier) =>
     // At the bar change
     if time % increment == 0
         _last := time
-        log.info("At {0}", str.format_time(_last))
+        //log.info("At {0}", str.format_time(_last))
 
     // Some bars were missing
     else if time - _last >= increment
@@ -341,82 +341,67 @@ drawSeparator(ltfTimeArray, bool isEnabled, string tf, color color, int width, s
 //#region                         Logic
 //--------------------------------------------------------------------
 
+timeframeInSec(timeframe) =>
+    tfInsec = switch timeframe
+        "5S"  => 5
+        "10S" => 10
+        "15S" => 15
+        "30S" => 30
+        "1"   => 1   *60
+        "2"   => 2   *60
+        "3"   => 3   *60
+        "5"   => 5   *60
+        "10"  => 10  *60
+        "15"  => 15  *60
+        "30"  => 30  *60
+        "45"  => 45  *60
+        "60"  => 60  *60  
+        "120" => 120 *60 
+        "180" => 180 *60 
+        "240" => 240 *60 
+        "360" => 360 *60 
+        "480" => 480 *60 
+        "720" => 720 *60 
+        "1D"  => 24 * 60 * 60
+        "1W"  => 7 * 24 * 60 *60
+        "1M"  => timeframe.ismonthly ? 2628003 : 30 * 24 * 60 * 60
+        "3M"  => timeframe.ismonthly ? 3 *2628003 : 3 * 30 * 24 * 60 * 60
+        "6M"  => timeframe.ismonthly ? 6 *2628003 : 6 * 30 * 24 * 60 * 60
+        "12M" => timeframe.ismonthly ? 12 * 2628003 : 12 * 30 * 24 * 60 * 60
+
+
 // Can find a generic rules based on module % ? then find lowest shared increment
 // -- chart timeframe 45-minute, 1-week
 // -- indicator timeframe
 
-ltf = timeframe.period
+getLtf(simple int a, simple int b) =>
+    simple string tf = if a % b != 0
+        int _a = a
+        int _tempA = na
+        int _b = b
+        int _tempB = na
 
-pgcd(int a, int b) =>
-    int _a = a
-    int _tempA = na
-    int _b = b
-    int _tempB = na
+        while (_a % _b) != 0
+            if (_a % _b ) != 0
+                _tempA := _a
+                _a := _b
+                _b := _tempA % _b
 
-    while (_a % _b) != 0
-        log.info("a: {0}", _a)
-        log.info("b: {0}", _b)
-        log.info("a % b = {0}", _a % _b)
+        timeframe.from_seconds(_b)
+    else 
+        timeframe.period
 
-        if (_a % _b ) != 0
-            _tempA := _a
-            _a := _b
-            _b := _tempA % _b
 
-    log.info("-> b: {0}", _b)
-    _b
-
-//res = pgcd(timeframe.in_seconds(separatorTimeframeInput1) / 1000, timeframe.in_seconds() / 1000)
-
+// Todo: the logic don't work on monthly timeframe (average of seconds)
+// Map uneven timeframes
+ltf = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
 
 if barstate.islast
-    res = pgcd(60, 45) // 7200 3600
-    log.info("PGCD {0}", res)
-    
-    if timeframe.in_seconds(separatorTimeframeInput1) % timeframe.in_seconds() != 0
-        log.error("timeframe is odd, need fix")
+    log.info("{0}", getLtf(timeframeInSec("3M"), 2628003))
 
-
-if timeframe.in_seconds(separatorTimeframeInput1) % timeframe.in_seconds() != 0
-
-    if separatorTimeframeInput1 == "60"
-        ltf := switch
-            timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
-        
-//else if separatorTimeframeInput1 == "120"
-//    ltf := switch
-//        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
-//
-//else if separatorTimeframeInput1 == "240"
-//    ltf := switch
-//        timeframe.in_seconds() == timeframe.in_seconds("45") => "15"
-//
-//else if separatorTimeframeInput1 == "1W"
-//    ltf := switch 
-//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "720"
-//        timeframe.in_seconds() >= timeframe.in_seconds("60") => "60"
-//
-//else if separatorTimeframeInput1 == "1M"
-//    ltf := switch 
-//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
-//
-//else if separatorTimeframeInput1 == "3M"
-//    ltf := switch 
-//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
-//
-//else if separatorTimeframeInput1 == "6M"
-//    ltf := switch 
-//        timeframe.in_seconds() >= timeframe.in_seconds("1D") => "360"
-//
-//else if separatorTimeframeInput1 == "12M"
-//    ltf := switch
-//        timeframe.in_seconds() >= timeframe.in_seconds("1W") => "1D"
 
 
 ltfTimeArray = request.security_lower_tf(syminfo.tickerid, ltf, time)
-
-if barstate.islastconfirmedhistory
-    log.info("data size in bar {0}", ltfTimeArray.size())
 
 //#endregion
 
@@ -454,7 +439,7 @@ if barstate.islast
 
     t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
     t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-    t.cell(2, 1, ltf, text_color = chart.fg_color)
+    t.cell(2, 1, ltf, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
