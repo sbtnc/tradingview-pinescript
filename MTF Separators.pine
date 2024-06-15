@@ -370,10 +370,6 @@ timeframeInSec(timeframe) =>
         "12M" => timeframe.ismonthly ? 12 * 2628003 : 12 * 30 * 24 * 60 * 60
 
 
-// Can find a generic rules based on module % ? then find lowest shared increment
-// -- chart timeframe 45-minute, 1-week
-// -- indicator timeframe
-
 getLtf(simple int a, simple int b) =>
     simple string tf = if a % b != 0
         int _a = a
@@ -392,16 +388,18 @@ getLtf(simple int a, simple int b) =>
         timeframe.period
 
 
-// Todo: the logic don't work on monthly timeframe (average of seconds)
-// Map uneven timeframes
-ltf = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
 
-if barstate.islast
-    log.info("{0}", getLtf(timeframeInSec("3M"), 2628003))
+ltf1 = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
+ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, time)
 
+ltf2 = getLtf(timeframeInSec(separatorTimeframeInput2), timeframe.in_seconds())
+ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, time)
 
+ltf3 = getLtf(timeframeInSec(separatorTimeframeInput3), timeframe.in_seconds())
+ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, ltf3, time)
 
-ltfTimeArray = request.security_lower_tf(syminfo.tickerid, ltf, time)
+ltf4 = getLtf(timeframeInSec(separatorTimeframeInput4), timeframe.in_seconds())
+ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, time)
 
 //#endregion
 
@@ -410,10 +408,10 @@ ltfTimeArray = request.security_lower_tf(syminfo.tickerid, ltf, time)
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(ltfTimeArray, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(ltfTimeArray, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(ltfTimeArray, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(ltfTimeArray, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+drawSeparator(ltfTimeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(ltfTimeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(ltfTimeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(ltfTimeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
 //#endregion
 
@@ -440,22 +438,22 @@ if barstate.islast
     if enableSeparatorInput1
         t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-        t.cell(2, 1, ltf, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 1, ltf1, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput2
         t.cell(0, 2, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
-        t.cell(2, 2, ltf, text_color = timeframeInSec(separatorTimeframeInput2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 2, ltf2, text_color = timeframeInSec(separatorTimeframeInput2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput3
         t.cell(0, 3, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
-        t.cell(2, 3, ltf, text_color = timeframeInSec(separatorTimeframeInput3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 3, ltf3, text_color = timeframeInSec(separatorTimeframeInput3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput4
         t.cell(0, 4, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
-        t.cell(2, 4, ltf, text_color = timeframeInSec(separatorTimeframeInput4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 4, ltf4, text_color = timeframeInSec(separatorTimeframeInput4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
