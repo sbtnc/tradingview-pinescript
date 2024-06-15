@@ -222,74 +222,24 @@ getLineStyle(string input) =>
         "Dashed"    => line.style_dashed
 
 
-//yearChange(array<int> intraTimeArray, string tz) =>
-//    bool _changed = false
-//    int _prevTime = getLast(intraTimeArray)
-//    for _time in intraTimeArray
-//        if not na(_prevTime) and year(_prevTime, tz) != year(_time, tz)
-//            _changed := true
-//            //log.info("\n Change at {0}", str.format_time(_time))
-//            break
-//        _prevTime := _time
-//    _changed
-
-yearChange(array<int> timeArray, string tz) =>
-    bool _changed = false
-    var int _lastTime = na
-    for _time in timeArray
-        _changed := not na(_lastTime) and year(_lastTime, tz) != year(_time, tz)
-        _lastTime := _time
-        if _changed
-            break
-    _changed
+yearChange(string tz) =>
+    not na(time[1]) and year(time[1], tz) != year(time, tz)
 
 
-monthChange(array<int> intraTimeArray, string tz) =>
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        if month(_prevTime, tz) != month(_time, tz)
-            _changed := true
-            log.info("\n Change at {0}", str.format_time(_time))
-            break
-        _prevTime := _time
-    _changed
+monthChange(string tz) =>
+    not na(time[1]) and month(time[1], tz) != month(time, tz)
 
 
-weekChange(array<int> intraTimeArray, string tz) =>
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        if weekofyear(_prevTime, tz) != weekofyear(_time, tz)
-            _changed := true
-            //log.info("\n Change at {0}", str.format_time(_time))
-            break
-        _prevTime := _time
-    _changed
+weekChange(string tz) =>
+    not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)
 
 
-dayChange(array<int> intraTimeArray, string tz) =>
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        if dayofmonth(_prevTime, tz) != dayofmonth(_time, tz)
-            _changed := true
-            //log.info("\n Change at {0}", str.format_time(_time))
-            break
-        _prevTime := _time
-    _changed 
+dayChange(string tz) =>
+    not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz)
  
 
-hourChange(array<int> intraTimeArray, string tz) =>
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        if hour(_prevTime, tz) != hour(_time, tz)
-            _changed := true
-            //log.info("\n Change at {0}", str.format_time(_time))
-            break
-        _prevTime := _time
-    _changed
+hourChange(string tz) =>
+    not na(time[1]) and hour(time[1], tz) != hour(time, tz)
 
 
 minuteChange() =>
@@ -298,8 +248,7 @@ minuteChange() =>
 
 // Multiplier of period functions
 
-monthChange(array<int> intraTimeArray, int multiplier, string tz) =>
-    var _count = 0
+monthChange(int multiplier, string tz) =>
     var _monthArray = array.new_int()
 
     // Populate with hours
@@ -308,20 +257,10 @@ monthChange(array<int> intraTimeArray, int multiplier, string tz) =>
             _monthArray.push(i * multiplier +1)
         //log.info("\n Months list {0}", _monthArray)
 
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        // Change to an hour in hour list
-        //if month[1] != month and _monthArray.includes(month)
-        if month(_prevTime, tz) != month(_time, tz) and _monthArray.includes(month(_time, tz))
-            _changed := true
-            break
-        _prevTime := _time
-    _changed
+    not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz))
 
 
-hourChange(array<int> intraTimeArray, int multiplier, string tz) =>
-    var _count = 0
+hourChange(int multiplier, string tz) =>
     var _hourArray = array.new_int()
 
     // Populate with hours
@@ -330,16 +269,7 @@ hourChange(array<int> intraTimeArray, int multiplier, string tz) =>
             _hourArray.push(i * multiplier)
         //log.info("\n Hours list {0}", _hourArray)
 
-    bool _changed = false
-    int _prevTime = getLast(intraTimeArray)
-    for _time in intraTimeArray
-        // Change to an hour in hour list
-        if hour(_prevTime, tz) != hour(_time, tz) and _hourArray.includes(hour(_time, tz))
-            _changed := true
-            //log.info("\n Change at {0}", str.format_time(_time))
-            break
-        _prevTime := _time
-    _changed
+    not na(time[1]) and hour(time[1], tz) != hour(time, tz) and _hourArray.includes(hour(time, tz))
 
 
 // - 45 minutes interval does not start at 00:00
@@ -384,7 +314,7 @@ secondChange(int multiplier) =>
     ta.change(_last)
 
 
-timeChange(ltfTimeArray, string timeframe) =>
+timeChange(string timeframe) =>
     var _tz = getTimezone(timezoneInput)
     
     switch timeframe
@@ -400,34 +330,29 @@ timeChange(ltfTimeArray, string timeframe) =>
         "15"  => minuteChange(15, _tz)
         "30"  => minuteChange(30, _tz)
         "45"  => minuteChange(45, _tz)
-        "60"  => hourChange(ltfTimeArray, _tz)
-        "120" => hourChange(ltfTimeArray, 2, _tz)
-        "180" => hourChange(ltfTimeArray, 3, _tz)
-        "240" => hourChange(ltfTimeArray, 4, _tz)
-        "360" => hourChange(ltfTimeArray, 6, _tz)
-        "480" => hourChange(ltfTimeArray, 8, _tz)
-        "720" => hourChange(ltfTimeArray, 12, _tz)
-        "1D"  => dayChange(ltfTimeArray, _tz)
-        "1W"  => weekChange(ltfTimeArray, _tz)
-        "1M"  => monthChange(ltfTimeArray, _tz)
-        "3M"  => monthChange(ltfTimeArray, 3, _tz)
-        "6M"  => monthChange(ltfTimeArray, 6, _tz)
-        "12M" => yearChange(ltfTimeArray, _tz)
-
-timeChange2(ltfArray) =>
-    ltfArray.some()
+        "60"  => hourChange (_tz)
+        "120" => hourChange (2, _tz)
+        "180" => hourChange (3, _tz)
+        "240" => hourChange (4, _tz)
+        "360" => hourChange (6, _tz)
+        "480" => hourChange (8, _tz)
+        "720" => hourChange (12, _tz)
+        "1D"  => dayChange  (_tz)
+        "1W"  => weekChange (_tz)
+        "1M"  => monthChange(_tz)
+        "3M"  => monthChange(3, _tz)
+        "6M"  => monthChange(6, _tz)
+        "12M" => yearChange (_tz)
 
 
 
 //drawSeparator(ltfTimeArray, htfTime, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
-drawSeparator(ltfTimeArray, ltfChangeArray, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
+drawSeparator(array<bool> ltfChange, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
     var lineArray = array.new_line()
     _canDisplayOnChartTimeframe = timeframe.in_seconds(tf) > timeframe.in_seconds()
 
     if isEnabled and _canDisplayOnChartTimeframe
-        bool change = baseOnSessionInput ? timeChange2(ltfChangeArray) : timeChange(ltfTimeArray, tf)
-
-        if change
+        if ltfChange.some()
             // y1 and y2 should not be equal prices otherwise draw vertical lines
             lineArray.push(
                  line.new(time, open, time, open + syminfo.mintick, xloc.bar_time, extend.both, color, getLineStyle(style), width)
@@ -529,10 +454,15 @@ ltf2 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds
 ltf3 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf3) > timeframe.in_seconds("15")) ? "15" : tf3
 ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf4) > timeframe.in_seconds("15")) ? "15" : tf4
 
-[ltfTimeArray1, ltfChangeArray1] = request.security_lower_tf(syminfo.tickerid, ltf1, [time, timeframe.change(separatorTimeframeInput1)])
-[ltfTimeArray2, ltfChangeArray2] = request.security_lower_tf(syminfo.tickerid, ltf2, [time, timeframe.change(separatorTimeframeInput2)])
-[ltfTimeArray3, ltfChangeArray3] = request.security_lower_tf(syminfo.tickerid, ltf3, [time, timeframe.change(separatorTimeframeInput3)])
-[ltfTimeArray4, ltfChangeArray4] = request.security_lower_tf(syminfo.tickerid, ltf4, [time, timeframe.change(separatorTimeframeInput4)])
+cond1 = enableSeparatorInput1 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput1) : timeframe.change(separatorTimeframeInput1)) : na
+cond2 = enableSeparatorInput2 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput2) : timeframe.change(separatorTimeframeInput2)) : na
+cond3 = enableSeparatorInput3 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput3) : timeframe.change(separatorTimeframeInput3)) : na
+cond4 = enableSeparatorInput4 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput4) : timeframe.change(separatorTimeframeInput4)) : na
+
+ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, cond1)
+ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, cond2)
+ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, ltf3, cond3)
+ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, cond4)
 
 //#endregion
 
@@ -541,10 +471,10 @@ ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(ltfTimeArray1, ltfChangeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(ltfTimeArray2, ltfChangeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(ltfTimeArray3, ltfChangeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(ltfTimeArray4, ltfChangeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+drawSeparator(ltfTimeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(ltfTimeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(ltfTimeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(ltfTimeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
 //#endregion
 
