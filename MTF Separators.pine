@@ -515,22 +515,22 @@ if barstate.islast
     if enableSeparatorInput1
         t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-        t.cell(2, 1, ltf1, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 1, ltf1, text_color = timeframeInSec(timeframe1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput2
         t.cell(0, 2, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
-        t.cell(2, 2, ltf2, text_color = timeframeInSec(separatorTimeframeInput2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 2, ltf2, text_color = timeframeInSec(timeframe2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput3
         t.cell(0, 3, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
-        t.cell(2, 3, ltf3, text_color = timeframeInSec(separatorTimeframeInput3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 3, ltf3, text_color = timeframeInSec(timeframe3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput4
         t.cell(0, 4, timeframe.period, text_color = chart.fg_color)
         t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
-        t.cell(2, 4, ltf4, text_color = timeframeInSec(separatorTimeframeInput4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 4, ltf4, text_color = timeframeInSec(timeframe4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
