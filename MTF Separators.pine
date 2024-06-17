@@ -81,9 +81,16 @@ separatorWidthInput4        = input.int     (3,         "",             group = 
 separatorStyleInput4        = input.string  ("Solid",   "",             group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
 
 string g3 = "Preferences"
+string tooltipType = "By default, the indicator uses the trading session as a point of reference." +
+                     "In some case, when the start of the trading session is different than the start of the day, " +
+                     "you might use this setting to prefer 00:00 instead.\n\n" +
+                     "For example, on S&P500 whose trading session is 09:30 - 16:10 New York Time, " +
+                     "drawing 2 hours separators produces with session intervals such as bars seen on the 2h chart " +
+                     "[09:30, 11:30, 13:30, 15:30] or with time intervals [10:00, 12:00, 14:00, 16:00]."
+string tooltipTimezone = "When using the start of the day, you might choose to select a different timezone than the exchange one."
 
 showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
-baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3)
+baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3, tooltip = tooltipType)
 timezoneInput   = input.string("Exchange", "Timezone",
      [
      "UTC",
@@ -174,6 +181,7 @@ timezoneInput   = input.string("Exchange", "Timezone",
      "Pacific/Honolulu",
      "Pacific/Norfolk"
      ],
+     tooltip = tooltipTimezone,
      display = display.none
  )
 
@@ -505,6 +513,43 @@ drawSeparator(ltfTimeArray4, enableSeparatorInput4, timeframe4, separatorColorIn
 
 // Table
 
+// @function Return the display string of the user timeframe input
+// @returns  string
+method displayString(string this) =>
+    string _tf = this == "" ? timeframe.period : this
+    switch _tf
+        "S"     => "1 second"
+        "1S"    => "1 second"
+        "5S"    => "5 seconds"
+        "10S"   => "10 seconds"
+        "15S"   => "15 seconds"
+        "30S"   => "30 seconds"
+        "1"     => "1 minute"
+        "2"     => "2 minutes"
+        "3"     => "3 minutes"
+        "5"     => "5 minutes"
+        "10"    => "10 minutes"
+        "15"    => "15 minutes"
+        "30"    => "30 minutes"
+        "45"    => "45 minutes"
+        "60"    => "1 hour"
+        "120"   => "2 hours"
+        "180"   => "3 hours"
+        "240"   => "4 hours"
+        "360"   => "6 hours"
+        "480"   => "8 hours"
+        "720"   => "12 hours"
+        "1440"  => "24 hours"
+        "D"     => "1 day"
+        "1D"    => "1 day"
+        "W"     => "1 week"
+        "1W"    => "1 week"
+        "M"     => "1 month"
+        "1M"    => "1 month"
+        "3M"    => "3 months"
+        "6M"    => "6 months"
+        "12M"   => "12 months"
+
 if barstate.islast
     var table t = table.new(position.bottom_right, 3, 5)
 
@@ -513,24 +558,24 @@ if barstate.islast
     t.cell(2, 0, "Intrabar", text_color = chart.fg_color)
 
     if enableSeparatorInput1
-        t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
+        t.cell(0, 1, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-        t.cell(2, 1, ltf1, text_color = timeframeInSec(timeframe1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 1, ltf1.displayString(), text_color = timeframeInSec(timeframe1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput2
-        t.cell(0, 2, timeframe.period, text_color = chart.fg_color)
+        t.cell(0, 2, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
-        t.cell(2, 2, ltf2, text_color = timeframeInSec(timeframe2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 2, ltf2.displayString(), text_color = timeframeInSec(timeframe2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput3
-        t.cell(0, 3, timeframe.period, text_color = chart.fg_color)
+        t.cell(0, 3, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
-        t.cell(2, 3, ltf3, text_color = timeframeInSec(timeframe3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 3, ltf3.displayString(), text_color = timeframeInSec(timeframe3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput4
-        t.cell(0, 4, timeframe.period, text_color = chart.fg_color)
+        t.cell(0, 4, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
-        t.cell(2, 4, ltf4, text_color = timeframeInSec(timeframe4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 4, ltf4.displayString(), text_color = timeframeInSec(timeframe4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
