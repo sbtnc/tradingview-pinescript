@@ -1,6 +1,6 @@
 // © sbtnc
 // Created: 2024-03-10
-// Last modified: 2024-06-15
+// Last modified: 2024-06-17
 // Version 1.0
 
 // @version=5
@@ -220,25 +220,25 @@ yearChange(string tz) =>
 // @function Check if the current bar month changed
 // @returns  bool
 monthChange(string tz) =>
-    not na(time[1]) and month(time[1], tz) != month(time, tz)
+    not na(time[1]) and month(time[1], tz) != month(time, tz) // can't catch if missing a whole year (use timestamp diff ?)
 
 
 // @function Check if the current bar week changed
 // @returns  bool
 weekChange(string tz) =>
-    not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)
+    not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)  // can't catch if missing a whole year (use timestamp diff ?)
 
 
 // @function Check if the current bar day changed
 // @returns  bool
 dayChange(string tz) =>
-    not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz)
+    not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz) // can't catch if missing a whole month/year (use timestamp diff ?)
  
 
 // @function Check if the current bar hour changed
 // @returns  bool
 hourChange(string tz) =>
-    not na(time[1]) and hour(time[1], tz) != hour(time, tz)
+    not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if missing a whole day/month/year (use timestamp diff ?)
 
 
 // @function Check if the current bar minute changed
@@ -275,29 +275,45 @@ hourChange(int multiplier, string tz) =>
     not na(time[1]) and hour(time[1], tz) != hour(time, tz) and _hourArray.includes(hour(time, tz))
 
 
+// the functions execute when passing a time interval (abstract from the session)
+// and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
+// we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC)
+// We can't use UNIX which is based on UTC
+
+minuteChange(int multiplier, string tz) =>
+    var _minuteArray = array.new_int()
+    //log.info('aya')
+
+    if barstate.isfirst
+        for i = 0 to 60 -1 by multiplier
+            _minuteArray.push(i)
+
+    // if we fall on a bar minute wich is not in array but passed missing minute, it does not catch
+    not na(time[1]) and minute(time[1], tz) != minute(time, tz) and _minuteArray.includes(minute(time, tz))
+
 // - 45 minutes interval does not start at 00:00
 //   > start counting from 00:00 
 //   > remove 45 minute from supported list
 // - 45 minutes interval and 30 minutes timeframe -> odd need to implement ltf
-minuteChange(int multiplier, string tz) =>
-    var int _last = na
-    int increment = multiplier * 60 * 1000
-    log.info("{0}", tz)
-
-    // At the bar change
-    if time % increment == 0
-        _last := time
-        //log.info("At {0}", str.format_time(_last))
-
-    // Some bars were missing
-    else if time - _last >= increment
-        _last := time - time % increment
-        //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
-    
-    else 
-        log.warning("{0}m", (time - _last) / 1000 / 60)
-
-    ta.change(_last)
+//minuteChange(int multiplier, string tz) =>
+//    var int _last = na
+//    int increment = multiplier * 60*1000
+//    log.info("{0}", tz)
+//
+//    // At the bar change
+//    if time("", "", tz) % increment == 0
+//        _last := time
+//        log.error("\nAt {0}\n{1} - {2}", str.format_time(_last), time("", "", tz), time)
+//
+//    // Some bars were missing
+//    else if time - _last >= increment
+//        _last := time - time % increment
+//        log.warning("\nPast {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+//    
+//    else 
+//        log.warning("{0}m", (time - _last) / 1000 / 60)
+//
+//    ta.change(_last)
 
 
 secondChange(int multiplier) =>
