@@ -25,48 +25,47 @@ color   COLOR_4 = color.blue
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-opt1  = "5S"
-opt2  = "10S"
-opt3  = "15S"
-opt4  = "30S"
-opt5  = "1"
-opt6  = "2"
-opt7  = "3"
-opt8  = "5"
-opt9  = "10"
-opt10 = "15"
-opt11 = "30"
-opt12 = "45"
-opt13 = "60"
-opt14 = "120"
-opt15 = "180"
-opt16 = "240"
-opt17 = "360"
-opt18 = "480"
-opt19 = "720"
-opt20 = "1D"
-opt21 = "1W"
-opt22 = "1M"
-opt23 = "3M"
-opt24 = "6M"
-opt25 = "12M"
+string opt1  = "5 seconds"
+string opt2  = "10 seconds"
+string opt3  = "15 seconds"
+string opt4  = "30 seconds"
+string opt5  = "1 minute"
+string opt6  = "2 minutes"
+string opt7  = "3 minutes"
+string opt8  = "5 minutes"
+string opt9  = "10 minutes"
+string opt10 = "15 minutes"
+string opt11 = "30 minutes"
+string opt12 = "1 hour"
+string opt13 = "2 hours"
+string opt14 = "3 hours"
+string opt15 = "4 hours"
+string opt16 = "6 hours"
+string opt17 = "8 hours"
+string opt18 = "12 hours"
+string opt19 = "1 day"
+string opt20 = "1 week"
+string opt21 = "1 month"
+string opt22 = "3 months"
+string opt23 = "6 months"
+string opt24 = "12 months"
 
-g1 = "Separators"
+string g1 = "Separators"
 
-enableSeparatorInput1       = input.bool    (true,      "",             group = g1, inline = "#1")
-separatorTimeframeInput1    = input.string  ("1D",      "",             group = g1, inline = "#1", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
-separatorLookbackInput1     = input.int     (500,       "",             group = g1, inline = "#1", minval = 1, maxval = 500, display = display.none)
-enableSeparatorInput2       = input.bool    (true,      "",             group = g1, inline = "#2")
-separatorTimeframeInput2    = input.string  ("1W",      "",             group = g1, inline = "#2", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
-separatorLookbackInput2     = input.int     (500,       "",             group = g1, inline = "#2", minval = 1, maxval = 500, display = display.none)
-enableSeparatorInput3       = input.bool    (true,      "",             group = g1, inline = "#3")
-separatorTimeframeInput3    = input.string  ("1M",      "",             group = g1, inline = "#3", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
-separatorLookbackInput3     = input.int     (500,       "",             group = g1, inline = "#3", minval = 1, maxval = 500, display = display.none)
-enableSeparatorInput4       = input.bool    (false,     "",             group = g1, inline = "#4")
-separatorTimeframeInput4    = input.string  ("12M",     "",             group = g1, inline = "#4", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
-separatorLookbackInput4     = input.int     (500,       "",             group = g1, inline = "#4", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput1       = input.bool    (true,          "",             group = g1, inline = "#1")
+separatorTimeframeInput1    = input.string  ("1 day",       "",             group = g1, inline = "#1", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
+separatorLookbackInput1     = input.int     (500,           "",             group = g1, inline = "#1", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput2       = input.bool    (true,          "",             group = g1, inline = "#2")
+separatorTimeframeInput2    = input.string  ("1 week",      "",             group = g1, inline = "#2", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
+separatorLookbackInput2     = input.int     (500,           "",             group = g1, inline = "#2", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput3       = input.bool    (true,          "",             group = g1, inline = "#3")
+separatorTimeframeInput3    = input.string  ("1 month",     "",             group = g1, inline = "#3", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
+separatorLookbackInput3     = input.int     (500,           "",             group = g1, inline = "#3", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput4       = input.bool    (false,         "",             group = g1, inline = "#4")
+separatorTimeframeInput4    = input.string  ("12 months",   "",             group = g1, inline = "#4", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
+separatorLookbackInput4     = input.int     (500,           "",             group = g1, inline = "#4", minval = 1, maxval = 500, display = display.none)
 
-g2 = "Style"
+string g2 = "Style"
 
 separatorColorInput1        = input.color   (COLOR_1,   "",             group = g2, inline = "#1")
 separatorWidthInput1        = input.int     (1,         "",             group = g2, inline = "#1", minval = 1, display = display.none)
@@ -81,7 +80,7 @@ separatorColorInput4        = input.color   (COLOR_4,   "",             group = 
 separatorWidthInput4        = input.int     (3,         "",             group = g2, inline = "#4", minval = 1, display = display.none)
 separatorStyleInput4        = input.string  ("Solid",   "",             group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
 
-g3 = "Preferences"
+string g3 = "Preferences"
 
 showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
 baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3)
@@ -193,6 +192,36 @@ timezoneInput   = input.string("Exchange", "Timezone",
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
+// @function Produce the `timeframe` parameter from the user timeframe input
+// @returns  string
+method tf(simple string input) =>
+    simple string _tf = switch input 
+        "5 seconds"  => "5S"
+        "10 seconds" => "10S"
+        "15 seconds" => "15S"
+        "30 seconds" => "30S"
+        "1 minute"   => "1"
+        "2 minutes"  => "2"
+        "3 minutes"  => "3"
+        "5 minutes"  => "5"
+        "10 minutes" => "10"
+        "15 minutes" => "15"
+        "30 minutes" => "30"
+        "1 hour"     => "60"
+        "2 hours"    => "120"
+        "3 hours"    => "180"
+        "4 hours"    => "240"
+        "6 hours"    => "360"
+        "8 hours"    => "480"
+        "12 hours"   => "720"
+        "1 day"      => "1D"
+        "1 week"     => "1W"
+        "1 month"    => "1M" 
+        "3 months"   => "3M"
+        "6 months"   => "6M"
+        "12 months"  => "12M"
+
+
 // @function Produce the `timezone` parameter from the given user input.
 // @returns  (string) Timezone
 getTimezone(simple string input) =>
@@ -291,30 +320,6 @@ minuteChange(int multiplier, string tz) =>
     // if we fall on a bar minute wich is not in array but passed missing minute, it does not catch
     not na(time[1]) and minute(time[1], tz) != minute(time, tz) and _minuteArray.includes(minute(time, tz))
 
-// - 45 minutes interval does not start at 00:00
-//   > start counting from 00:00 
-//   > remove 45 minute from supported list
-// - 45 minutes interval and 30 minutes timeframe -> odd need to implement ltf
-//minuteChange(int multiplier, string tz) =>
-//    var int _last = na
-//    int increment = multiplier * 60*1000
-//    log.info("{0}", tz)
-//
-//    // At the bar change
-//    if time("", "", tz) % increment == 0
-//        _last := time
-//        log.error("\nAt {0}\n{1} - {2}", str.format_time(_last), time("", "", tz), time)
-//
-//    // Some bars were missing
-//    else if time - _last >= increment
-//        _last := time - time % increment
-//        log.warning("\nPast {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
-//    
-//    else 
-//        log.warning("{0}m", (time - _last) / 1000 / 60)
-//
-//    ta.change(_last)
-
 
 secondChange(int multiplier) =>
     var int _last = na
@@ -348,7 +353,6 @@ timeChange(string timeframe) =>
         "10"  => minuteChange   (10, _tz)
         "15"  => minuteChange   (15, _tz)
         "30"  => minuteChange   (30, _tz)
-        "45"  => minuteChange   (45, _tz)
         "60"  => hourChange     (_tz)
         "120" => hourChange     (2, _tz)
         "180" => hourChange     (3, _tz)
@@ -437,6 +441,11 @@ tz = getTimezone(timezoneInput)
 
 sameTimezone = tz == syminfo.timezone
 
+simple string timeframe1 = separatorTimeframeInput1.tf()
+simple string timeframe2 = separatorTimeframeInput2.tf()
+simple string timeframe3 = separatorTimeframeInput3.tf()
+simple string timeframe4 = separatorTimeframeInput4.tf()
+
 //#endregion
 
 
@@ -444,10 +453,10 @@ sameTimezone = tz == syminfo.timezone
 //#region                         Logic
 //--------------------------------------------------------------------
 
-tf1 = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
-tf2 = getLtf(timeframeInSec(separatorTimeframeInput2), timeframe.in_seconds())
-tf3 = getLtf(timeframeInSec(separatorTimeframeInput3), timeframe.in_seconds())
-tf4 = getLtf(timeframeInSec(separatorTimeframeInput4), timeframe.in_seconds())
+tf1 = getLtf(timeframeInSec(timeframe1), timeframe.in_seconds())
+tf2 = getLtf(timeframeInSec(timeframe2), timeframe.in_seconds())
+tf3 = getLtf(timeframeInSec(timeframe3), timeframe.in_seconds())
+tf4 = getLtf(timeframeInSec(timeframe4), timeframe.in_seconds())
 
 // If we use a timezone, we must use at max 15/30/60min data
 ltf1 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf1) > timeframe.in_seconds("15")) ? "15" : tf1
@@ -455,10 +464,10 @@ ltf2 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds
 ltf3 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf3) > timeframe.in_seconds("15")) ? "15" : tf3
 ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf4) > timeframe.in_seconds("15")) ? "15" : tf4
 
-cond1 = enableSeparatorInput1 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput1) : timeframe.change(separatorTimeframeInput1)) : na
-cond2 = enableSeparatorInput2 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput2) : timeframe.change(separatorTimeframeInput2)) : na
-cond3 = enableSeparatorInput3 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput3) : timeframe.change(separatorTimeframeInput3)) : na
-cond4 = enableSeparatorInput4 ? (not baseOnSessionInput ? timeChange(separatorTimeframeInput4) : timeframe.change(separatorTimeframeInput4)) : na
+cond1 = enableSeparatorInput1 ? (not baseOnSessionInput ? timeChange(timeframe1) : timeframe.change(timeframe1)) : na
+cond2 = enableSeparatorInput2 ? (not baseOnSessionInput ? timeChange(timeframe2) : timeframe.change(timeframe2)) : na
+cond3 = enableSeparatorInput3 ? (not baseOnSessionInput ? timeChange(timeframe3) : timeframe.change(timeframe3)) : na
+cond4 = enableSeparatorInput4 ? (not baseOnSessionInput ? timeChange(timeframe4) : timeframe.change(timeframe4)) : na
 
 ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, cond1)
 ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, cond2)
@@ -472,10 +481,10 @@ ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, cond4)
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(ltfTimeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(ltfTimeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(ltfTimeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(ltfTimeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+drawSeparator(ltfTimeArray1, enableSeparatorInput1, timeframe1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(ltfTimeArray2, enableSeparatorInput2, timeframe2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(ltfTimeArray3, enableSeparatorInput3, timeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(ltfTimeArray4, enableSeparatorInput4, timeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
 //#endregion
 
