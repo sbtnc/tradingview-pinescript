@@ -81,16 +81,23 @@ separatorWidthInput4        = input.int     (3,         "",             group = 
 separatorStyleInput4        = input.string  ("Solid",   "",             group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
 
 string g3 = "Preferences"
-string tooltipType = "By default, the indicator uses the trading session as a point of reference." +
+string tooltipType = "By default, the indicator uses the start of the trading session as a point of reference." +
+                     "See \"Security Info\" for more info.\n\n" + 
                      "In some case, when the start of the trading session is different than the start of the day, " +
-                     "you might use this setting to prefer 00:00 instead.\n\n" +
-                     "For example, on S&P500 whose trading session is 09:30 - 16:10 New York Time, " +
-                     "drawing 2 hours separators produces with session intervals such as bars seen on the 2h chart " +
-                     "[09:30, 11:30, 13:30, 15:30] or with time intervals [10:00, 12:00, 14:00, 16:00]."
-string tooltipTimezone = "When using the start of the day, you might choose to select a different timezone than the exchange one."
+                     "you can use the \"Session Time\" option to prefer 00:00 instead.\n\n" +
+                     "For example, the trading session on S&P500 is 09:30 - 16:10 New York Time. " +
+                     "Drawing 2 hours separators produces for session the intervals [09:30, 11:30, 13:30, 15:30] " +
+                     "such as the bars seen on the 2h chart, or for day time the intervals [10:00, 12:00, 14:00, 16:00]."
+                     
+string tooltipTimezone = "By default, the indicator uses the exchange timezone." +
+                         "See \"Security Info\" for more info.\n\n" + 
+                         "When using \"Day Time\" option for reference, you can choose a different timezone to determine the start of the day."
+string typeOpt1 = "Session Time"//"Session"//"Session Start"//"Session Time"//"Trading Session"
+string typeOpt2 = "Day Time"//"00:00 Time"//"Start of the Day"//"00:00"//"Midnight Time"
 
 showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
-baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3, tooltip = tooltipType)
+referenceInput              = input.string  (typeOpt1, "Reference",    group = g3, options = [typeOpt2, typeOpt1], tooltip = tooltipType)
+//baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3, tooltip = tooltipType)
 timezoneInput   = input.string("Exchange", "Timezone",
      [
      "UTC",
@@ -181,6 +188,7 @@ timezoneInput   = input.string("Exchange", "Timezone",
      "Pacific/Honolulu",
      "Pacific/Norfolk"
      ],
+     group = g3,
      tooltip = tooltipTimezone,
      display = display.none
  )
@@ -453,6 +461,8 @@ simple string timeframe1 = separatorTimeframeInput1.tf()
 simple string timeframe2 = separatorTimeframeInput2.tf()
 simple string timeframe3 = separatorTimeframeInput3.tf()
 simple string timeframe4 = separatorTimeframeInput4.tf()
+
+bool baseOnSessionInput = referenceInput == typeOpt1
 
 //#endregion
 
