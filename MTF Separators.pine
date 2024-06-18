@@ -81,7 +81,7 @@ separatorWidthInput4        = input.int     (3,         "",             group = 
 separatorStyleInput4        = input.string  ("Solid",   "",             group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
 
 string g3 = "Preferences"
-string tooltipType = "By default, the indicator uses the start of the trading session as a point of reference." +
+string tooltipType = "By default, the indicator uses the start of the trading session as a point of reference. " +
                      "See \"Security Info\" for more info.\n\n" + 
                      "In some case, when the start of the trading session is different than the start of the day, " +
                      "you can use the \"Session Time\" option to prefer 00:00 instead.\n\n" +
