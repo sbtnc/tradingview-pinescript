@@ -286,6 +286,29 @@ hourChange(string tz) =>
     not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if missing a whole day/month/year (use timestamp diff ?)
 
 
+// @function Check if the current bar multiplied hours changed
+// @returns  bool
+hourChange(int multiplier, string tz) =>
+    var _hourArray = array.new_int()
+    var int _last = na
+    var intervalMs = multiplier * timeframe.in_seconds("60") * 1000
+    int _hour = hour(time, tz)
+
+    if barstate.isfirst
+        for i = 0 to 24 / multiplier -1
+            _hourArray.push(i * multiplier)
+        log.info("{0}", _hourArray)
+
+    cond1 = _hour[1] != _hour
+    cond2 = _hourArray.includes(_hour)
+    cond3 = time - _last >= intervalMs
+
+    if (cond1 and cond2) or cond3
+        _last := time 
+
+    ta.change(_last) > 0
+
+
 // @function Check if the current bar minute changed
 // @returns  bool
 minuteChange() =>
@@ -306,20 +329,6 @@ monthChange(int multiplier, string tz) =>
     not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz))
 
 
-// @function Check if the current bar multiplied hours changed
-// @returns  bool
-hourChange(int multiplier, string tz) =>
-    var _hourArray = array.new_int()
-
-    // Populate with hours
-    if barstate.isfirst
-        for i = 0 to 24 / multiplier -1
-            _hourArray.push(i * multiplier)
-        //log.info("\n Hours list {0}", _hourArray)
-
-    not na(time[1]) and hour(time[1], tz) != hour(time, tz) and _hourArray.includes(hour(time, tz))
-
-
 // the functions execute when passing a time interval (abstract from the session)
 // and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
 // we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC)
@@ -327,7 +336,6 @@ hourChange(int multiplier, string tz) =>
 
 minuteChange(int multiplier, string tz) =>
     var _minuteArray = array.new_int()
-    //log.info('aya')
 
     if barstate.isfirst
         for i = 0 to 60 -1 by multiplier
@@ -594,19 +602,19 @@ if barstate.islast
 //#region                      Performances
 //--------------------------------------------------------------------
 
-import PineCoders/LibraryStopwatch/1
-
-[timePerBarInMs, totalTimeInMs, barsTimed, barsNotTimed] = LibraryStopwatch.stopwatchStats()
-
-
-// Table
-
-if barstate.islast
-    var table t = table.new(position.top_right, 1, 1)
-    var txt = str.tostring(timePerBarInMs, "ms/bar: #.######\n") +
-              str.tostring(totalTimeInMs, "Total time (ms): #,###.######\n") + 
-              str.tostring(barsTimed + barsNotTimed, "Bars analyzed: #")
-    table.cell(t, 0, 0, txt, bgcolor = color.yellow, text_halign = text.align_right)
+//import PineCoders/LibraryStopwatch/1
+//
+//[timePerBarInMs, totalTimeInMs, barsTimed, barsNotTimed] = LibraryStopwatch.stopwatchStats()
+//
+//
+//// Table
+//
+//if barstate.islast
+//    var table t = table.new(position.top_right, 1, 1)
+//    var txt = str.tostring(timePerBarInMs, "ms/bar: #.######\n") +
+//              str.tostring(totalTimeInMs, "Total time (ms): #,###.######\n") + 
+//              str.tostring(barsTimed + barsNotTimed, "Bars analyzed: #")
+//    table.cell(t, 0, 0, txt, bgcolor = color.yellow, text_halign = text.align_right)
 
 //#endregion
 
