@@ -256,6 +256,17 @@ getLineStyle(string input) =>
         "Dashed"    => line.style_dashed
 
 
+getIntervals(int multiplier, int total, log = false) =>
+    _intervalArray = array.new_int()
+
+    for i = 0 to total / multiplier -1
+        _intervalArray.push(i * multiplier)
+    if log
+        log.info("{0}", _intervalArray)
+
+    _intervalArray
+
+
 // @function Check if the current bar year changed
 // @returns  bool
 yearChange(string tz) =>
@@ -289,21 +300,12 @@ hourChange(string tz) =>
 // @function Check if the current bar multiplied hours changed
 // @returns  bool
 hourChange(int multiplier, string tz) =>
-    var _hourArray = array.new_int()
+    var array<int> _hourArray = getIntervals(multiplier, 24)
     var int _last = na
-    var intervalMs = multiplier * timeframe.in_seconds("60") * 1000
+    var int _intervalMs = multiplier * timeframe.in_seconds("60") * 1000
     int _hour = hour(time, tz)
 
-    if barstate.isfirst
-        for i = 0 to 24 / multiplier -1
-            _hourArray.push(i * multiplier)
-        log.info("{0}", _hourArray)
-
-    cond1 = _hour[1] != _hour
-    cond2 = _hourArray.includes(_hour)
-    cond3 = time - _last >= intervalMs
-
-    if (cond1 and cond2) or cond3
+    if (_hour[1] != _hour and _hourArray.includes(_hour)) or time - _last >= _intervalMs
         _last := time 
 
     ta.change(_last) > 0
@@ -315,27 +317,15 @@ minuteChange() =>
     minute[1] != minute
 
 
-// the functions execute when passing a time interval (abstract from the session)
-// and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
-// we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC)
-// We can't use UNIX which is based on UTC
-
+// @function Check if the current bar multiplied minutes changed
+// @returns  bool
 minuteChange(int multiplier, string tz) =>
-    var _minuteArray = array.new_int()
+    var array<int> _minuteArray = getIntervals(multiplier, 60)
     var int _last = na
-    var intervalMs = multiplier * timeframe.in_seconds("1") * 1000
+    var int _intervalMs = multiplier * timeframe.in_seconds("1") * 1000
     int _minute = minute(time, tz)
 
-    if barstate.isfirst
-        for i = 0 to 60 -1 by multiplier
-            _minuteArray.push(i)
-
-    cond1 = _minute[1] != _minute
-    cond2 = _minuteArray.includes(_minute)
-    // if we fall on a bar minute wich is not in array but passed missing minute, catch
-    cond3 = time - _last >= intervalMs
-
-    if (cond1 and cond2) or cond3
+    if (_minute[1] != _minute and _minuteArray.includes(_minute)) or time - _last >= _intervalMs
         _last := time 
 
     ta.change(_last) > 0
@@ -371,7 +361,10 @@ secondChange(int multiplier) =>
 
     ta.change(_last)
 
-
+// the functions execute when passing a time interval (abstract from the session)
+// and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
+// we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC) (or different session open=
+// We can't use UNIX which is based on UTC
 timeChange(string timeframe) =>
     var _tz = getTimezone(timezoneInput)
     
