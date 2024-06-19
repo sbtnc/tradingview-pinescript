@@ -315,6 +315,32 @@ minuteChange() =>
     minute[1] != minute
 
 
+// the functions execute when passing a time interval (abstract from the session)
+// and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
+// we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC)
+// We can't use UNIX which is based on UTC
+
+minuteChange(int multiplier, string tz) =>
+    var _minuteArray = array.new_int()
+    var int _last = na
+    var intervalMs = multiplier * timeframe.in_seconds("1") * 1000
+    int _minute = minute(time, tz)
+
+    if barstate.isfirst
+        for i = 0 to 60 -1 by multiplier
+            _minuteArray.push(i)
+
+    cond1 = _minute[1] != _minute
+    cond2 = _minuteArray.includes(_minute)
+    // if we fall on a bar minute wich is not in array but passed missing minute, catch
+    cond3 = time - _last >= intervalMs
+
+    if (cond1 and cond2) or cond3
+        _last := time 
+
+    ta.change(_last) > 0
+
+
 // @function Check if the current bar multiplied months changed
 // @returns  bool
 monthChange(int multiplier, string tz) =>
@@ -327,22 +353,6 @@ monthChange(int multiplier, string tz) =>
         //log.info("\n Months list {0}", _monthArray)
 
     not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz))
-
-
-// the functions execute when passing a time interval (abstract from the session)
-// and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
-// we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC)
-// We can't use UNIX which is based on UTC
-
-minuteChange(int multiplier, string tz) =>
-    var _minuteArray = array.new_int()
-
-    if barstate.isfirst
-        for i = 0 to 60 -1 by multiplier
-            _minuteArray.push(i)
-
-    // if we fall on a bar minute wich is not in array but passed missing minute, it does not catch
-    not na(time[1]) and minute(time[1], tz) != minute(time, tz) and _minuteArray.includes(minute(time, tz))
 
 
 secondChange(int multiplier) =>
