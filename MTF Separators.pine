@@ -95,7 +95,6 @@ string tooltipTimezone = "By default, the indicator uses the exchange timezone."
 string typeOpt1 = "Session Time"//"Session"//"Session Start"//"Session Time"//"Trading Session"
 string typeOpt2 = "Day Time"//"00:00 Time"//"Start of the Day"//"00:00"//"Midnight Time"
 
-showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
 referenceInput              = input.string  (typeOpt1, "Reference",    group = g3, options = [typeOpt2, typeOpt1], tooltip = tooltipType)
 //baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3, tooltip = tooltipType)
 timezoneInput   = input.string("Exchange", "Timezone",
