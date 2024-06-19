@@ -276,39 +276,33 @@ yearChange(string tz) =>
 // @function Check if the current bar month changed
 // @returns  bool
 monthChange(string tz) =>
-    not na(time[1]) and month(time[1], tz) != month(time, tz) // can't catch if missing a whole year (use timestamp diff ?)
+    not na(time[1]) and month(time[1], tz) != month(time, tz) // can't catch if same month but missing a whole year (use timestamp diff ?)
 
 
 // @function Check if the current bar multiplied months changed
 // @returns  bool
 monthChange(int multiplier, string tz) =>
-    var _monthArray = array.new_int()
+    var array<int> _monthArray = getIntervals(multiplier, 12)
 
-    // Populate with months
-    if barstate.isfirst
-        for i = 0 to 12 / multiplier -1
-            _monthArray.push(i * multiplier +1)
-        //log.info("\n Months list {0}", _monthArray)
-
-    not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz))
+    not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz)) // can't catch if missing multplied months or more
 
 
 // @function Check if the current bar week changed
 // @returns  bool
 weekChange(string tz) =>
-    not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)  // can't catch if missing a whole year (use timestamp diff ?)
+    not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)  // can't catch if same week but missing a whole year (use timestamp diff ?)
 
 
 // @function Check if the current bar day changed
 // @returns  bool
 dayChange(string tz) =>
-    not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz) // can't catch if missing a whole month/year (use timestamp diff ?)
+    not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz) // can't catch if same day but missing a whole month/year (use timestamp diff ?)
  
 
 // @function Check if the current bar hour changed
 // @returns  bool
 hourChange(string tz) =>
-    not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if missing a whole day/month/year (use timestamp diff ?)
+    not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if same hour but missing a whole day/month/year (use timestamp diff ?)
 
 
 // @function Check if the current bar multiplied hours changed
