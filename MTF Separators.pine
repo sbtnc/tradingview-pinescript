@@ -279,6 +279,20 @@ monthChange(string tz) =>
     not na(time[1]) and month(time[1], tz) != month(time, tz) // can't catch if missing a whole year (use timestamp diff ?)
 
 
+// @function Check if the current bar multiplied months changed
+// @returns  bool
+monthChange(int multiplier, string tz) =>
+    var _monthArray = array.new_int()
+
+    // Populate with months
+    if barstate.isfirst
+        for i = 0 to 12 / multiplier -1
+            _monthArray.push(i * multiplier +1)
+        //log.info("\n Months list {0}", _monthArray)
+
+    not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz))
+
+
 // @function Check if the current bar week changed
 // @returns  bool
 weekChange(string tz) =>
@@ -329,20 +343,6 @@ minuteChange(int multiplier, string tz) =>
         _last := time 
 
     ta.change(_last) > 0
-
-
-// @function Check if the current bar multiplied months changed
-// @returns  bool
-monthChange(int multiplier, string tz) =>
-    var _monthArray = array.new_int()
-
-    // Populate with months
-    if barstate.isfirst
-        for i = 0 to 12 / multiplier -1
-            _monthArray.push(i * multiplier +1)
-        //log.info("\n Months list {0}", _monthArray)
-
-    not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz))
 
 
 secondChange(int multiplier) =>
