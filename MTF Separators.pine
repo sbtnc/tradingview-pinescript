@@ -409,20 +409,19 @@ method inSeconds(simple string timeframe) =>
         => timeframe.in_seconds(timeframe) 
 
 
-getLtf(simple int a, simple int b) =>
-    simple string tf = if a % b != 0
+// @function Find the greatest common divisor timeframe string of two specified timeframes in seconds.
+// @returns string
+gcd(simple int a, simple int b) =>
+    if a % b != 0
         int _a = a
-        int _tempA = na
         int _b = b
-        int _tempB = na
-
-        while (_a % _b) != 0
-            if (_a % _b ) != 0
-                _tempA := _a
-                _a := _b
-                _b := _tempA % _b
-
-        timeframe.from_seconds(_b)
+    
+        while _b > 0
+            int _temp = _b
+            _b := _a % _b
+            _a := _temp
+    
+        timeframe.from_seconds(_a)
     else 
         timeframe.period
 
@@ -442,6 +441,11 @@ var simple string timeframe2 = separatorTimeframeInput2.tf()
 var simple string timeframe3 = separatorTimeframeInput3.tf()
 var simple string timeframe4 = separatorTimeframeInput4.tf()
 
+var tf1 = gcd(timeframe1.inSeconds(), timeframe.in_seconds())
+var tf2 = gcd(timeframe2.inSeconds(), timeframe.in_seconds())
+var tf3 = gcd(timeframe3.inSeconds(), timeframe.in_seconds())
+var tf4 = gcd(timeframe4.inSeconds(), timeframe.in_seconds())
+
 bool baseOnSessionInput = referenceInput == refOpt1
 
 //#endregion
@@ -450,11 +454,6 @@ bool baseOnSessionInput = referenceInput == refOpt1
 //--------------------------------------------------------------------
 //#region                         Logic
 //--------------------------------------------------------------------
-
-tf1 = getLtf(timeframe1.inSeconds(), timeframe.in_seconds())
-tf2 = getLtf(timeframe2.inSeconds(), timeframe.in_seconds())
-tf3 = getLtf(timeframe3.inSeconds(), timeframe.in_seconds())
-tf4 = getLtf(timeframe4.inSeconds(), timeframe.in_seconds())
 
 // If we use a timezone, we must use at max 15/30/60min data
 ltf1 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf1) > timeframe.in_seconds("15")) ? "15" : tf1
