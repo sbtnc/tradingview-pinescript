@@ -432,7 +432,7 @@ gcd(simple int a, simple int b) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-tz = getTimezone(timezoneInput)
+var tz = getTimezone(timezoneInput)
 
 sameTimezone = tz == syminfo.timezone
 
@@ -461,15 +461,16 @@ ltf2 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds
 ltf3 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf3) > timeframe.in_seconds("15")) ? "15" : tf3
 ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf4) > timeframe.in_seconds("15")) ? "15" : tf4
 
-cond1 = enableSeparatorInput1 ? (not baseOnSessionInput ? timeChange(timeframe1) : timeframe.change(timeframe1)) : na
-cond2 = enableSeparatorInput2 ? (not baseOnSessionInput ? timeChange(timeframe2) : timeframe.change(timeframe2)) : na
-cond3 = enableSeparatorInput3 ? (not baseOnSessionInput ? timeChange(timeframe3) : timeframe.change(timeframe3)) : na
-cond4 = enableSeparatorInput4 ? (not baseOnSessionInput ? timeChange(timeframe4) : timeframe.change(timeframe4)) : na
+change(bool enabled, bool sessionBased, string timeframe) =>
+    enabled ? (not sessionBased ? timeChange(timeframe) : timeframe.change(timeframe)) : na
 
-ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, cond1)
-ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, cond2)
-ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, ltf3, cond3)
-ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, cond4)
+
+// Get the data from the timeframe or lower timeframe if uneven
+
+ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, change(enableSeparatorInput1, baseOnSessionInput, timeframe1))
+ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, change(enableSeparatorInput2, baseOnSessionInput, timeframe2))
+ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, ltf3, change(enableSeparatorInput3, baseOnSessionInput, timeframe3))
+ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, change(enableSeparatorInput4, baseOnSessionInput, timeframe4))
 
 //#endregion
 
