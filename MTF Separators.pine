@@ -396,41 +396,17 @@ drawSeparator(array<bool> ltfChange, bool isEnabled, string timeframe, color col
                 line.delete(_separatorArray.shift())
 
 
+// @function Convert the timeframe string into seconds.
+//           When the timeframe is "1M" or more, based the calculation on 30 days instead of 30.4167 days for applying the gcd.
+// @returns  int
 method inSeconds(simple string timeframe) =>
+    int _monthInSec = timeframe.ismonthly ? 2628003 : 2592000
     switch timeframe
-        "1M"  => timeframe.ismonthly ? 1  * 2628003 : 30 * 24 * 60 * 60
-        "3M"  => timeframe.ismonthly ? 3  * 2628003 : 3 * 30 * 24 * 60 * 60
-        "6M"  => timeframe.ismonthly ? 6  * 2628003 : 6 * 30 * 24 * 60 * 60
-        "12M" => timeframe.ismonthly ? 12 * 2628003 : 12 * 30 * 24 * 60 * 60
-        => timeframe.in_seconds(timeframe)
-
-
-//    switch timeframe
-//        "5S"  => 5
-//        "10S" => 10
-//        "15S" => 15
-//        "30S" => 30
-//        "1"   => 1   *60
-//        "2"   => 2   *60
-//        "3"   => 3   *60
-//        "5"   => 5   *60
-//        "10"  => 10  *60
-//        "15"  => 15  *60
-//        "30"  => 30  *60
-//        "45"  => 45  *60
-//        "60"  => 60  *60  
-//        "120" => 120 *60 
-//        "180" => 180 *60 
-//        "240" => 240 *60 
-//        "360" => 360 *60 
-//        "480" => 480 *60 
-//        "720" => 720 *60 
-//        "1D"  => 24 * 60 * 60
-//        "1W"  => 7 * 24 * 60 *60
-//        "1M"  => timeframe.ismonthly ? 2628003 : 30 * 24 * 60 * 60
-//        "3M"  => timeframe.ismonthly ? 3 *2628003 : 3 * 30 * 24 * 60 * 60
-//        "6M"  => timeframe.ismonthly ? 6 *2628003 : 6 * 30 * 24 * 60 * 60
-//        "12M" => timeframe.ismonthly ? 12 * 2628003 : 12 * 30 * 24 * 60 * 60
+        "1M"  => _monthInSec
+        "3M"  => _monthInSec * 3
+        "6M"  => _monthInSec * 6
+        "12M" => _monthInSec * 12
+        => timeframe.in_seconds(timeframe) 
 
 
 getLtf(simple int a, simple int b) =>
