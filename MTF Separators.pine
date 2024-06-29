@@ -11,10 +11,10 @@ indicator("Multi-Timeframe Separators", "MTF Separators", overlay = true, max_li
 //#region                      Constants
 //--------------------------------------------------------------------
 
-color   COLOR_1 = color.green
-color   COLOR_2 = color.orange
-color   COLOR_3 = color.red
-color   COLOR_4 = color.blue
+color COLOR_1 = color.green
+color COLOR_2 = color.orange
+color COLOR_3 = color.red
+color COLOR_4 = color.blue
 
 //#endregion
 
