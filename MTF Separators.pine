@@ -193,7 +193,7 @@ timezoneInput               = input.string  ("Exchange",    "Timezone",     grou
 
 // @function Produce the `timeframe` parameter from the user timeframe input.
 // @returns  string
-method tf(simple string input) =>
+method param(simple string input) =>
     switch input 
         "5 seconds"  => "5S"
         "10 seconds" => "10S"
@@ -434,7 +434,7 @@ change(bool enabled, bool sessionBased, string timeframe) =>
 
 // @function Find the timeframe to detects changes for the given timeframe input 
 // @returns  string
-find(simple string inputTf) =>
+method resolve(simple string inputTf) =>
     string _gcd = gcd(inputTf.inSeconds(), timeframe.in_seconds())
     bool _customTime = referenceInput != refOpt1
     bool _customTimezone = getTimezone(timezoneInput) != syminfo.timezone
@@ -455,21 +455,23 @@ find(simple string inputTf) =>
 // @variable Separator based on timeframe session rather than time.
 bool baseOnSessionInput = referenceInput == refOpt1
 
-// Get the `timeframe` parameters from the separator timeframe inputs.
 
-var simple string timeframe1 = separatorTimeframeInput1.tf()
-var simple string timeframe2 = separatorTimeframeInput2.tf()
-var simple string timeframe3 = separatorTimeframeInput3.tf()
-var simple string timeframe4 = separatorTimeframeInput4.tf()
+// Get the `timeframe` parameters from the separator timeframe user inputs.
+
+var string separatorTimeframe1 = separatorTimeframeInput1.param()
+var string separatorTimeframe2 = separatorTimeframeInput2.param()
+var string separatorTimeframe3 = separatorTimeframeInput3.param()
+var string separatorTimeframe4 = separatorTimeframeInput4.param()
+
 
 // Find the appropriate timeframe to display the separator 
 // Use a lower timeframe when the chart and selected separator uneven
 // Use at most the hourly timeframe when using a custom timezone
 
-var tf1 = find(timeframe1)
-var tf2 = find(timeframe2)
-var tf3 = find(timeframe3)
-var tf4 = find(timeframe4)
+var string resolvingTimeframe1 = separatorTimeframe1.resolve()
+var string resolvingTimeframe2 = separatorTimeframe2.resolve()
+var string resolvingTimeframe3 = separatorTimeframe3.resolve()
+var string resolvingTimeframe4 = separatorTimeframe4.resolve()
 
 //#endregion
 
@@ -480,10 +482,10 @@ var tf4 = find(timeframe4)
 
 // Get the data from the timeframe or lower timeframe if uneven
 
-changeArray1 = request.security_lower_tf(syminfo.tickerid, tf1, change(enableSeparatorInput1, baseOnSessionInput, timeframe1))
-changeArray2 = request.security_lower_tf(syminfo.tickerid, tf2, change(enableSeparatorInput2, baseOnSessionInput, timeframe2))
-changeArray3 = request.security_lower_tf(syminfo.tickerid, tf3, change(enableSeparatorInput3, baseOnSessionInput, timeframe3))
-changeArray4 = request.security_lower_tf(syminfo.tickerid, tf4, change(enableSeparatorInput4, baseOnSessionInput, timeframe4))
+changeArray1 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe1, change(enableSeparatorInput1, baseOnSessionInput, separatorTimeframe1))
+changeArray2 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe2, change(enableSeparatorInput2, baseOnSessionInput, separatorTimeframe2))
+changeArray3 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe3, change(enableSeparatorInput3, baseOnSessionInput, separatorTimeframe3))
+changeArray4 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe4, change(enableSeparatorInput4, baseOnSessionInput, separatorTimeframe4))
 
 //#endregion
 
@@ -492,10 +494,10 @@ changeArray4 = request.security_lower_tf(syminfo.tickerid, tf4, change(enableSep
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(changeArray1, enableSeparatorInput1, timeframe1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(changeArray2, enableSeparatorInput2, timeframe2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(changeArray3, enableSeparatorInput3, timeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(changeArray4, enableSeparatorInput4, timeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+drawSeparator(changeArray1, enableSeparatorInput1, separatorTimeframe1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(changeArray2, enableSeparatorInput2, separatorTimeframe2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(changeArray3, enableSeparatorInput3, separatorTimeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(changeArray4, enableSeparatorInput4, separatorTimeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
 //#endregion
 
@@ -558,22 +560,22 @@ if barstate.islast
     if enableSeparatorInput1
         t.cell(0, 1, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-        t.cell(2, 1, tf1.displayString(), text_color = timeframe1.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 1, resolvingTimeframe1.displayString(), text_color = separatorTimeframe1.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput2
         t.cell(0, 2, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
-        t.cell(2, 2, tf2.displayString(), text_color = timeframe2.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 2, resolvingTimeframe2.displayString(), text_color = separatorTimeframe2.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput3
         t.cell(0, 3, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
-        t.cell(2, 3, tf3.displayString(), text_color = timeframe3.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 3, resolvingTimeframe3.displayString(), text_color = separatorTimeframe3.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput4
         t.cell(0, 4, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
-        t.cell(2, 4, tf4.displayString(), text_color = timeframe4.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 4, resolvingTimeframe4.displayString(), text_color = separatorTimeframe4.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
