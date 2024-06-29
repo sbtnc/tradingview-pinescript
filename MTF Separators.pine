@@ -425,6 +425,26 @@ gcd(simple int a, simple int b) =>
     else 
         timeframe.period
 
+
+// @function Detects changes in the specified timeframe or custom 00:00 - 23:59 session 
+// @returns  bool
+change(bool enabled, bool sessionBased, string timeframe) =>
+    enabled ? (not sessionBased ? timeChange(timeframe) : timeframe.change(timeframe)) : na
+
+
+// @function Find the timeframe to detects changes for the given timeframe input 
+// @returns  string
+find(simple string inputTf) =>
+    string _gcd = gcd(inputTf.inSeconds(), timeframe.in_seconds())
+    bool _customTime = referenceInput != refOpt1
+    bool _customTimezone = getTimezone(timezoneInput) != syminfo.timezone
+
+    // If we use a timezone, we must use at max 15/30/60min data
+    if _customTime and _customTimezone and timeframe.in_seconds(_gcd) > timeframe.in_seconds("15")
+        "15"
+    else 
+        _gcd
+
 //#endregion
 
 
@@ -432,21 +452,24 @@ gcd(simple int a, simple int b) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-var tz = getTimezone(timezoneInput)
+// @variable Separator based on timeframe session rather than time.
+bool baseOnSessionInput = referenceInput == refOpt1
 
-sameTimezone = tz == syminfo.timezone
+// Get the `timeframe` parameters from the separator timeframe inputs.
 
 var simple string timeframe1 = separatorTimeframeInput1.tf()
 var simple string timeframe2 = separatorTimeframeInput2.tf()
 var simple string timeframe3 = separatorTimeframeInput3.tf()
 var simple string timeframe4 = separatorTimeframeInput4.tf()
 
-var tf1 = gcd(timeframe1.inSeconds(), timeframe.in_seconds())
-var tf2 = gcd(timeframe2.inSeconds(), timeframe.in_seconds())
-var tf3 = gcd(timeframe3.inSeconds(), timeframe.in_seconds())
-var tf4 = gcd(timeframe4.inSeconds(), timeframe.in_seconds())
+// Find the appropriate timeframe to display the separator 
+// Use a lower timeframe when the chart and selected separator uneven
+// Use at most the hourly timeframe when using a custom timezone
 
-bool baseOnSessionInput = referenceInput == refOpt1
+var tf1 = find(timeframe1)
+var tf2 = find(timeframe2)
+var tf3 = find(timeframe3)
+var tf4 = find(timeframe4)
 
 //#endregion
 
@@ -455,22 +478,12 @@ bool baseOnSessionInput = referenceInput == refOpt1
 //#region                         Logic
 //--------------------------------------------------------------------
 
-// If we use a timezone, we must use at max 15/30/60min data
-ltf1 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf1) > timeframe.in_seconds("15")) ? "15" : tf1
-ltf2 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf2) > timeframe.in_seconds("15")) ? "15" : tf2
-ltf3 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf3) > timeframe.in_seconds("15")) ? "15" : tf3
-ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf4) > timeframe.in_seconds("15")) ? "15" : tf4
-
-change(bool enabled, bool sessionBased, string timeframe) =>
-    enabled ? (not sessionBased ? timeChange(timeframe) : timeframe.change(timeframe)) : na
-
-
 // Get the data from the timeframe or lower timeframe if uneven
 
-ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, ltf1, change(enableSeparatorInput1, baseOnSessionInput, timeframe1))
-ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, ltf2, change(enableSeparatorInput2, baseOnSessionInput, timeframe2))
-ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, ltf3, change(enableSeparatorInput3, baseOnSessionInput, timeframe3))
-ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, ltf4, change(enableSeparatorInput4, baseOnSessionInput, timeframe4))
+ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, tf1, change(enableSeparatorInput1, baseOnSessionInput, timeframe1))
+ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, tf2, change(enableSeparatorInput2, baseOnSessionInput, timeframe2))
+ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, tf3, change(enableSeparatorInput3, baseOnSessionInput, timeframe3))
+ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, tf4, change(enableSeparatorInput4, baseOnSessionInput, timeframe4))
 
 //#endregion
 
@@ -484,12 +497,6 @@ drawSeparator(ltfTimeArray2, enableSeparatorInput2, timeframe2, separatorColorIn
 drawSeparator(ltfTimeArray3, enableSeparatorInput3, timeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
 drawSeparator(ltfTimeArray4, enableSeparatorInput4, timeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
-//#endregion
-
-
-//--------------------------------------------------------------------
-//#region                         Alerts
-//--------------------------------------------------------------------
 //#endregion
 
 
@@ -539,6 +546,7 @@ method displayString(string this) =>
         "3M"    => "3 months"
         "6M"    => "6 months"
         "12M"   => "12 months"
+        => this
 
 if barstate.islast
     var table t = table.new(position.bottom_right, 3, 5)
@@ -550,22 +558,22 @@ if barstate.islast
     if enableSeparatorInput1
         t.cell(0, 1, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
-        t.cell(2, 1, ltf1.displayString(), text_color = timeframe1.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 1, tf1.displayString(), text_color = timeframe1.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput2
         t.cell(0, 2, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
-        t.cell(2, 2, ltf2.displayString(), text_color = timeframe2.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 2, tf2.displayString(), text_color = timeframe2.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput3
         t.cell(0, 3, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
-        t.cell(2, 3, ltf3.displayString(), text_color = timeframe3.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 3, tf3.displayString(), text_color = timeframe3.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
     if enableSeparatorInput4
         t.cell(0, 4, timeframe.period.displayString(), text_color = chart.fg_color)
         t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
-        t.cell(2, 4, ltf4.displayString(), text_color = timeframe4.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+        t.cell(2, 4, tf4.displayString(), text_color = timeframe4.inSeconds() % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
 
 //#endregion
 
