@@ -480,10 +480,10 @@ var tf4 = find(timeframe4)
 
 // Get the data from the timeframe or lower timeframe if uneven
 
-ltfTimeArray1 = request.security_lower_tf(syminfo.tickerid, tf1, change(enableSeparatorInput1, baseOnSessionInput, timeframe1))
-ltfTimeArray2 = request.security_lower_tf(syminfo.tickerid, tf2, change(enableSeparatorInput2, baseOnSessionInput, timeframe2))
-ltfTimeArray3 = request.security_lower_tf(syminfo.tickerid, tf3, change(enableSeparatorInput3, baseOnSessionInput, timeframe3))
-ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, tf4, change(enableSeparatorInput4, baseOnSessionInput, timeframe4))
+changeArray1 = request.security_lower_tf(syminfo.tickerid, tf1, change(enableSeparatorInput1, baseOnSessionInput, timeframe1))
+changeArray2 = request.security_lower_tf(syminfo.tickerid, tf2, change(enableSeparatorInput2, baseOnSessionInput, timeframe2))
+changeArray3 = request.security_lower_tf(syminfo.tickerid, tf3, change(enableSeparatorInput3, baseOnSessionInput, timeframe3))
+changeArray4 = request.security_lower_tf(syminfo.tickerid, tf4, change(enableSeparatorInput4, baseOnSessionInput, timeframe4))
 
 //#endregion
 
@@ -492,10 +492,10 @@ ltfTimeArray4 = request.security_lower_tf(syminfo.tickerid, tf4, change(enableSe
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(ltfTimeArray1, enableSeparatorInput1, timeframe1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(ltfTimeArray2, enableSeparatorInput2, timeframe2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(ltfTimeArray3, enableSeparatorInput3, timeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(ltfTimeArray4, enableSeparatorInput4, timeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+drawSeparator(changeArray1, enableSeparatorInput1, timeframe1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(changeArray2, enableSeparatorInput2, timeframe2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(changeArray3, enableSeparatorInput3, timeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(changeArray4, enableSeparatorInput4, timeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
 
 //#endregion
 
