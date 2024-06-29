@@ -191,7 +191,7 @@ timezoneInput               = input.string  ("Exchange",    "Timezone",     grou
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Produce the `timeframe` parameter from the user timeframe input.
+// @function Produce the `timeframe` parameter from the given user string input.
 // @returns  string
 method param(simple string input) =>
     switch input 
@@ -221,7 +221,7 @@ method param(simple string input) =>
         "12 months"  => "12M"
 
 
-// @function Produce the `timezone` parameter from the given user input.
+// @function Produce the `timezone` parameter from the given user string input.
 // @returns  string
 getTimezone(simple string input) =>
     switch input
@@ -230,7 +230,7 @@ getTimezone(simple string input) =>
         => input
 
 
-// @function Get the line `style` parameter from the given user input.
+// @function Produce the line `style` parameter from the given user string input.
 // @returns  string
 getLineStyle(string input) =>
     switch input
@@ -239,11 +239,11 @@ getLineStyle(string input) =>
         "Dashed"    => line.style_dashed
 
 
-// @function Get the separator times counted from midnight.
+// @function Generate the list of time units separating each timeframes.
 // @returns  array<int> 
-getTimes(int multiplier, int total) =>
+getTimes(int multiplier, int end) =>
     array<int> _timeArray = array.new_int()
-    for i = 0 to total -1 by multiplier
+    for i = 0 to end -1 by multiplier
         _timeArray.push(i)
     _timeArray
 
@@ -265,19 +265,19 @@ monthChange(int multiplier, string tz) =>
     not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz)) // can't catch if missing multplied months or more
 
 
-// @function Check if the current bar week changed
+// @function Check if the current bar week changed.
 // @returns  bool
 weekChange(string tz) =>
     not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)  // can't catch if same week but missing a whole year (use timestamp diff ?)
 
 
-// @function Check if the current bar day changed
+// @function Check if the current bar day changed.
 // @returns  bool
 dayChange(string tz) =>
     not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz) // can't catch if same day but missing a whole month/year (use timestamp diff ?)
  
 
-// @function Check if the current bar hour changed
+// @function Check if the current bar hour changed.
 // @returns  bool
 hourChange(string tz) =>
     not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if same hour but missing a whole day/month/year (use timestamp diff ?)
@@ -295,7 +295,7 @@ hourChange(int multiplier, string tz) =>
     ta.change(_last) > 0
 
 
-// @function Check if the current bar minute changed
+// @function Check if the current bar minute changed.
 // @returns  bool
 minuteChange() =>
     minute[1] != minute
@@ -313,7 +313,7 @@ minuteChange(int multiplier, string tz) =>
     ta.change(_last) > 0
 
 
-// @function Check if the current bar seconds changed
+// @function Check if the current bar seconds changed.
 // @returns  bool
 secondChange(int multiplier) =>
     var int _last = na
@@ -322,20 +322,17 @@ secondChange(int multiplier) =>
     // At the bar change
     if time % increment == 0
         _last := time
-        //log.info("At {0}", str.format_time(_last))
 
     // Some bars were missing
     else if time - _last >= increment
         _last := time - time % increment
-        //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
 
     ta.change(_last)
 
 
-// the functions execute when passing a time interval (abstract from the session)
-// and we can pass a custom timezone. it affects at the level of 60min, and more rarely 30m and 15m
-// we should recontruct from 00:00 expressed in the timezone (00:00 at +12:45UTC = 11:15 UTC) (or different session open=
-// We can't use UNIX which is based on UTC
+// @function Detects changes in the specified `timeframe`.
+//           In contrario to `timeframe.change()`, it uses 00:00 - 00:00 rather than the exchange session.
+// @returns  bool
 timeChange(string timeframe) =>
     var _tz = getTimezone(timezoneInput)
     
@@ -397,7 +394,7 @@ drawSeparator(array<bool> ltfChange, bool isEnabled, string timeframe, color col
 
 
 // @function Convert the timeframe string into seconds.
-//           When the timeframe is "1M" or more, based the calculation on 30 days instead of 30.4167 days for applying the gcd.
+//           In contrario to `timeframe.in_seconds()`, it bases the calculation on 30 days rather than 30.4167 days for finding the gcd of a monthly separator.
 // @returns  int
 method inSeconds(simple string timeframe) =>
     int _monthInSec = timeframe.ismonthly ? 2628003 : 2592000
@@ -410,7 +407,7 @@ method inSeconds(simple string timeframe) =>
 
 
 // @function Find the greatest common divisor timeframe string of two specified timeframes in seconds.
-// @returns string
+// @returns  string
 gcd(simple int a, simple int b) =>
     if a % b != 0
         int _a = a
@@ -426,13 +423,13 @@ gcd(simple int a, simple int b) =>
         timeframe.period
 
 
-// @function Detects changes in the specified timeframe or custom 00:00 - 23:59 session 
+// @function Detects changes in the specified timeframe or custom 00:00 - 23:59 session.
 // @returns  bool
 change(bool enabled, bool sessionBased, string timeframe) =>
     enabled ? (not sessionBased ? timeChange(timeframe) : timeframe.change(timeframe)) : na
 
 
-// @function Find the timeframe to detects changes for the given timeframe input 
+// @function Find the timeframe to detects changes for the given timeframe input.
 // @returns  string
 method resolve(simple string inputTf) =>
     string _gcd = gcd(inputTf.inSeconds(), timeframe.in_seconds())
