@@ -368,6 +368,8 @@ timeChange(string timeframe) =>
 drawSeparator(bool change, color color, int width, string style, int lookback) =>
     // @variable The collection of visible separators.
     var array<line> _separatorArray = array.new_line()
+    // @variable The static separator line style.
+    var string _style = getLineStyle(style)
 
     if change
         _separatorArray.push(
@@ -380,7 +382,7 @@ drawSeparator(bool change, color color, int width, string style, int lookback) =
                  xloc   = xloc.bar_time, 
                  extend = extend.both, 
                  color  = color,
-                 style  = getLineStyle(style),
+                 style  = _style,
                  width  = width
                  )
              )
@@ -442,8 +444,8 @@ method resolve(simple string inputTf) =>
 
 // @function Check if the specified separator `timeframe` can be displayed on the chart context.
 // @returns  bool
-method isVisibile(string timeframe) =>
-    timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+method isVisible(string timeframe) =>
+    var bool _isVisible = timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
 //#endregion
 
@@ -480,12 +482,31 @@ var string resolvingTimeframe4 = separatorTimeframe4.resolve()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-// Get the data from the timeframe or lower timeframe if uneven
+// Request the higher timeframe changes from the same or lower timeframe contexts than the chart.
 
-changeArray1 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe1, change(enableSeparatorInput1, baseOnSessionInput, separatorTimeframe1))
-changeArray2 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe2, change(enableSeparatorInput2, baseOnSessionInput, separatorTimeframe2))
-changeArray3 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe3, change(enableSeparatorInput3, baseOnSessionInput, separatorTimeframe3))
-changeArray4 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe4, change(enableSeparatorInput4, baseOnSessionInput, separatorTimeframe4))
+array<bool> changeArray1 = request.security_lower_tf(
+     syminfo.tickerid,
+     resolvingTimeframe1,
+     change(enableSeparatorInput1, baseOnSessionInput, separatorTimeframe1)
+     )
+
+array<bool> changeArray2 = request.security_lower_tf(
+     syminfo.tickerid,
+     resolvingTimeframe2,
+     change(enableSeparatorInput2, baseOnSessionInput, separatorTimeframe2)
+     )
+
+array<bool> changeArray3 = request.security_lower_tf(
+     syminfo.tickerid,
+     resolvingTimeframe3,
+     change(enableSeparatorInput3, baseOnSessionInput, separatorTimeframe3)
+     )
+     
+array<bool> changeArray4 = request.security_lower_tf(
+     syminfo.tickerid,
+     resolvingTimeframe4,
+     change(enableSeparatorInput4, baseOnSessionInput, separatorTimeframe4)
+     )
 
 //#endregion
 
@@ -494,7 +515,9 @@ changeArray4 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe4, 
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-if enableSeparatorInput1 and separatorTimeframe1.isVisibile()
+// Plot the higher timeframe separators enabled in the inputs settings.
+
+if enableSeparatorInput1 and separatorTimeframe1.isVisible()
     drawSeparator(
          changeArray1.some(),
          separatorColorInput1,
@@ -503,7 +526,7 @@ if enableSeparatorInput1 and separatorTimeframe1.isVisibile()
          separatorLookbackInput1
          )
 
-if enableSeparatorInput2 and separatorTimeframe2.isVisibile()
+if enableSeparatorInput2 and separatorTimeframe2.isVisible()
     drawSeparator(
          changeArray2.some(),
          separatorColorInput2,
@@ -512,7 +535,7 @@ if enableSeparatorInput2 and separatorTimeframe2.isVisibile()
          separatorLookbackInput2
          )
 
-if enableSeparatorInput3 and separatorTimeframe3.isVisibile()
+if enableSeparatorInput3 and separatorTimeframe3.isVisible()
     drawSeparator(
          changeArray3.some(),
          separatorColorInput3,
@@ -521,7 +544,7 @@ if enableSeparatorInput3 and separatorTimeframe3.isVisibile()
          separatorLookbackInput3
          )
 
-if enableSeparatorInput4 and separatorTimeframe4.isVisibile()
+if enableSeparatorInput4 and separatorTimeframe4.isVisible()
     drawSeparator(
          changeArray4.some(),
          separatorColorInput4,
