@@ -363,34 +363,31 @@ timeChange(string timeframe) =>
         "12M" => yearChange     (_tz)
 
 
-// @function Draw a separator line when the timeframe changed. 
+// @function Draw and update time separators on the chart. 
 // @returns  void
-drawSeparator(array<bool> ltfChange, bool isEnabled, string timeframe, color color, int width, string style, int lookback) =>
+drawSeparator(bool change, color color, int width, string style, int lookback) =>
     // @variable The collection of visible separators.
     var array<line> _separatorArray = array.new_line()
-    // @variable Is true if plotting a higher timeframe separator.
-    bool _canDisplayOnChart = isEnabled and timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
-    if isEnabled and _canDisplayOnChart
-        if ltfChange.some()
-            _separatorArray.push(
-                 line.new(
-                     x1 = time,
-                     y1 = open,
-                     x2 = time,
-                     // y1 and y2 must be distinct or otherwise result in a vertical line.
-                     y2 = open + syminfo.mintick,
-                     xloc = xloc.bar_time, 
-                     extend = extend.both, 
-                     color = color,
-                     style = getLineStyle(style),
-                     width = width
-                     )
+    if change
+        _separatorArray.push(
+             line.new(
+                 x1     = time,
+                 x2     = time,
+                 y1     = open,
+                 // y1 and y2 must be distinct or otherwise result in a vertical line.
+                 y2     = open + syminfo.mintick,
+                 xloc   = xloc.bar_time, 
+                 extend = extend.both, 
+                 color  = color,
+                 style  = getLineStyle(style),
+                 width  = width
                  )
+             )
 
-            // Trim the exceeding number of lines.
-            if _separatorArray.size() > lookback
-                line.delete(_separatorArray.shift())
+        // Trim the exceeding number of visible separators.
+        if _separatorArray.size() > lookback
+            line.delete(_separatorArray.shift())
 
 
 // @function Convert the timeframe string into seconds.
@@ -442,6 +439,12 @@ method resolve(simple string inputTf) =>
     else 
         _gcd
 
+
+// @function Check if the specified separator `timeframe` can be displayed on the chart context.
+// @returns  bool
+method isVisibile(string timeframe) =>
+    timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+
 //#endregion
 
 
@@ -491,10 +494,41 @@ changeArray4 = request.security_lower_tf(syminfo.tickerid, resolvingTimeframe4, 
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-drawSeparator(changeArray1, enableSeparatorInput1, separatorTimeframe1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
-drawSeparator(changeArray2, enableSeparatorInput2, separatorTimeframe2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
-drawSeparator(changeArray3, enableSeparatorInput3, separatorTimeframe3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
-drawSeparator(changeArray4, enableSeparatorInput4, separatorTimeframe4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+if enableSeparatorInput1 and separatorTimeframe1.isVisibile()
+    drawSeparator(
+         changeArray1.some(),
+         separatorColorInput1,
+         separatorWidthInput1,
+         separatorStyleInput1,
+         separatorLookbackInput1
+         )
+
+if enableSeparatorInput2 and separatorTimeframe2.isVisibile()
+    drawSeparator(
+         changeArray2.some(),
+         separatorColorInput2,
+         separatorWidthInput2,
+         separatorStyleInput2,
+         separatorLookbackInput2
+         )
+
+if enableSeparatorInput3 and separatorTimeframe3.isVisibile()
+    drawSeparator(
+         changeArray3.some(),
+         separatorColorInput3,
+         separatorWidthInput3,
+         separatorStyleInput3,
+         separatorLookbackInput3
+         )
+
+if enableSeparatorInput4 and separatorTimeframe4.isVisibile()
+    drawSeparator(
+         changeArray4.some(),
+         separatorColorInput4,
+         separatorWidthInput4,
+         separatorStyleInput4,
+         separatorLookbackInput4
+         )
 
 //#endregion
 
