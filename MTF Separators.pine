@@ -428,18 +428,17 @@ change(bool enabled, bool sessionBased, string timeframe) =>
     enabled ? (not sessionBased ? timeChange(timeframe) : timeframe.change(timeframe)) : na
 
 
-// @function Find the timeframe to detects changes for the given timeframe input.
+// @function Find the timeframe capable of detecting the changes on the given timeframe input.
 // @returns  string
-method resolve(simple string inputTf) =>
-    string _gcd = gcd(inputTf.inSeconds(), timeframe.in_seconds())
-    bool _customTime = referenceInput != refOpt1
-    bool _customTimezone = getTimezone(timezoneInput) != syminfo.timezone
+method resolve(simple string separatorTimeframe) =>
+    // @variable The greatest common divisor timeframe between the separator and chart timeframes.
+    string _gcd = gcd(separatorTimeframe.inSeconds(), timeframe.in_seconds())
+    // @variable Is true if using the start of the day at a custom timezone as reference.
+    bool _hasCustomTimezoneActive = referenceInput == refOpt2 and getTimezone(timezoneInput) != syminfo.timezone
 
-    // If we use a timezone, we must use at max 15/30/60min data
-    if _customTime and _customTimezone and timeframe.in_seconds(_gcd) > timeframe.in_seconds("15")
-        "15"
-    else 
-        _gcd
+    switch
+        _hasCustomTimezoneActive and timeframe.in_seconds(_gcd) > timeframe.in_seconds("15") => "15"
+        => _gcd
 
 
 // @function Check if the specified separator `timeframe` can be displayed on the chart context.
@@ -454,11 +453,11 @@ method isVisible(string timeframe) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-// @variable Separator based on timeframe session rather than time.
-bool baseOnSessionInput = referenceInput == refOpt1
+// @variable Is true if the separators are based on the exchange session.
+bool useExchangeSession = referenceInput == refOpt1
 
 
-// Get the `timeframe` parameters from the separator timeframe user inputs.
+// Convert the separator timeframe user inputs into `timeframe` parameters.
 
 var string separatorTimeframe1 = separatorTimeframeInput1.param()
 var string separatorTimeframe2 = separatorTimeframeInput2.param()
@@ -466,9 +465,9 @@ var string separatorTimeframe3 = separatorTimeframeInput3.param()
 var string separatorTimeframe4 = separatorTimeframeInput4.param()
 
 
-// Find the appropriate timeframe to display the separator 
-// Use a lower timeframe when the chart and selected separator uneven
-// Use at most the hourly timeframe when using a custom timezone
+// Find the suitable timeframe to resolve the separator timeframe onto the chart context: 
+//  1. Use a lower timeframe when the chart and separator timeframes are uneven.
+//  2. Use at highest the 15min timeframe when using a custom timezone (i.e., Kathmandu UTC+5:45).
 
 var string resolvingTimeframe1 = separatorTimeframe1.resolve()
 var string resolvingTimeframe2 = separatorTimeframe2.resolve()
@@ -487,25 +486,25 @@ var string resolvingTimeframe4 = separatorTimeframe4.resolve()
 array<bool> changeArray1 = request.security_lower_tf(
      syminfo.tickerid,
      resolvingTimeframe1,
-     change(enableSeparatorInput1, baseOnSessionInput, separatorTimeframe1)
+     change(enableSeparatorInput1, useExchangeSession, separatorTimeframe1)
      )
 
 array<bool> changeArray2 = request.security_lower_tf(
      syminfo.tickerid,
      resolvingTimeframe2,
-     change(enableSeparatorInput2, baseOnSessionInput, separatorTimeframe2)
+     change(enableSeparatorInput2, useExchangeSession, separatorTimeframe2)
      )
 
 array<bool> changeArray3 = request.security_lower_tf(
      syminfo.tickerid,
      resolvingTimeframe3,
-     change(enableSeparatorInput3, baseOnSessionInput, separatorTimeframe3)
+     change(enableSeparatorInput3, useExchangeSession, separatorTimeframe3)
      )
      
 array<bool> changeArray4 = request.security_lower_tf(
      syminfo.tickerid,
      resolvingTimeframe4,
-     change(enableSeparatorInput4, baseOnSessionInput, separatorTimeframe4)
+     change(enableSeparatorInput4, useExchangeSession, separatorTimeframe4)
      )
 
 //#endregion
