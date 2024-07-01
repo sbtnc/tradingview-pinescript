@@ -485,7 +485,7 @@ var string separatorTimeframe4 = separatorTimeframeInput4.param()
 
 // Find the suitable timeframe to resolve the separator timeframe onto the chart context: 
 //  1. Use a lower timeframe when the chart and separator timeframes are uneven.
-//  2. Use at highest a minute-timeframe when using a custom timezone (i.e., Kathmandu UTC+5:45).
+//  2. Use at highest a minute-timeframe when using a custom timezone.
 
 var string resolvingTimeframe1 = separatorTimeframe1.resolve()
 var string resolvingTimeframe2 = separatorTimeframe2.resolve()
