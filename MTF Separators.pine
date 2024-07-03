@@ -313,21 +313,21 @@ minuteChange(int multiplier, string tz) =>
     ta.change(_last) > 0
 
 
-// @function Check if the current bar seconds changed.
+// @function Check if the number of seconds has elapsed.
 // @returns  bool
 secondChange(int multiplier) =>
-    var int _last = na
-    int increment = multiplier * 1000
+    var int _lastTime = na
+    int incrementMs = multiplier * 1000
 
-    // At the bar change
-    if time % increment == 0
-        _last := time
+    // The exact number of seconds have elapsed.
+    if time % incrementMs == 0
+        _lastTime := time
 
-    // Some bars were missing
-    else if time - _last >= increment
-        _last := time - time % increment
+    // More seconds have elpased with missing bars.
+    else if time - _lastTime >= incrementMs
+        _lastTime := time - time % incrementMs
 
-    ta.change(_last)
+    ta.change(_lastTime)
 
 
 // @function Detects changes in the specified `timeframe`.
