@@ -334,7 +334,7 @@ secondChange(int multiplier) =>
 //           In contrario to `timeframe.change()`, it uses 00:00 - 00:00 rather than the exchange session.
 // @returns  bool
 timeChange(string timeframe) =>
-    var _tz = getTimezone(timezoneInput)
+    var string _tz = getTimezone(timezoneInput)
     
     switch timeframe
         "5S"  => secondChange   (5)
@@ -393,7 +393,8 @@ drawSeparator(bool change, color color, int width, string style, int lookback) =
 
 
 // @function Convert the timeframe string into seconds.
-//           In contrario to `timeframe.in_seconds()`, it bases the calculation on 30 days rather than 30.4167 days for finding the gcd of a monthly separator.
+//           In contrario to `timeframe.in_seconds()`, it can adjust the month calculation on 30 days rather than 30.4167 days (365/12).
+//           This rounding is required for finding the Greatest Common Divisor of a monthly separator on a monthly chart.
 // @returns  int
 method inSeconds(simple string timeframe) =>
     int _monthInSec = timeframe.ismonthly ? 2628003 : 2592000
@@ -405,9 +406,10 @@ method inSeconds(simple string timeframe) =>
         => timeframe.in_seconds(timeframe) 
 
 
-// @function Find the greatest common divisor timeframe string of two specified timeframes in seconds.
+// @function Find the greatest common divisor `timeframe` argument of two specified timeframes in seconds.
 // @returns  string
 gcd(simple int a, simple int b) =>
+    // The timeframes are uneven.
     if a % b != 0
         int _a = a
         int _b = b
@@ -418,14 +420,15 @@ gcd(simple int a, simple int b) =>
             _a := _temp
     
         timeframe.from_seconds(_a)
+    // The timeframes are even.
     else 
         timeframe.period
 
 
-// @function Detects changes in the specified timeframe or custom 00:00 - 23:59 session.
+// @function Detects changes in the specified timeframe.
 // @returns  bool
-change(bool enabled, bool sessionBased, string timeframe) =>
-    enabled ? (not sessionBased ? timeChange(timeframe) : timeframe.change(timeframe)) : na
+change(bool enabled, bool exchangeSession, string timeframe) =>
+    enabled ? (exchangeSession ? timeframe.change(timeframe) : timeChange(timeframe)) : na
 
 
 // @function Get the `timeframe` argument resolving a timezone with an one-hour/half-hour/quarter-hour offset.
