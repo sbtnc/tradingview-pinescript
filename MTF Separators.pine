@@ -295,7 +295,7 @@ hourChange(int multiplier, string tz) =>
     ta.change(_last) > 0
 
 
-// @function Check if the current bar minute changed.
+// @function Check if the current bar minute changed or number of minutes has elasped.
 // @returns  bool
 minuteChange() =>
     minute[1] != minute
@@ -303,29 +303,29 @@ minuteChange() =>
 
 minuteChange(int multiplier, string tz) =>
     var array<int> _minuteArray = getTimes(multiplier, 60)
-    var int _last = na
+    var int _lastTime = na
     var int _intervalMs = multiplier * timeframe.in_seconds("1") * 1000
     int _minute = minute(time, tz)
 
-    if (_minute[1] != _minute and _minuteArray.includes(_minute)) or time - _last >= _intervalMs
-        _last := time 
+    if (_minute[1] != _minute and _minuteArray.includes(_minute)) or time - _lastTime >= _intervalMs
+        _lastTime := time 
 
-    ta.change(_last) > 0
+    ta.change(_lastTime) > 0
 
 
 // @function Check if the number of seconds has elapsed.
 // @returns  bool
 secondChange(int multiplier) =>
     var int _lastTime = na
-    int incrementMs = multiplier * 1000
+    int _intervalMs = multiplier * 1000
 
     // The exact number of seconds have elapsed.
-    if time % incrementMs == 0
+    if time % _intervalMs == 0
         _lastTime := time
 
     // More seconds have elpased with missing bars.
-    else if time - _lastTime >= incrementMs
-        _lastTime := time - time % incrementMs
+    else if time - _lastTime >= _intervalMs
+        _lastTime := time - time % _intervalMs
 
     ta.change(_lastTime)
 
