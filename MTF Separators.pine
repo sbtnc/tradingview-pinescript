@@ -4,7 +4,7 @@
 // Version 1.0
 
 // @version=5
-indicator("Multi-Timeframe Separators", "MTF Separators", overlay = true, max_lines_count = 500)
+indicator("Multi-Timeframe Separators bis", "MTF Separators", overlay = true, max_lines_count = 500)
 
 
 //--------------------------------------------------------------------
@@ -295,20 +295,22 @@ hourChange(int multiplier, string tz) =>
     ta.change(_last) > 0
 
 
-// @function Check if the current bar minute changed or number of minutes has elasped.
+// @function Check if the number of minutes has elasped.
 // @returns  bool
-minuteChange() =>
-    minute[1] != minute
-
-
 minuteChange(int multiplier, string tz) =>
-    var array<int> _minuteArray = getTimes(multiplier, 60)
     var int _lastTime = na
-    var int _intervalMs = multiplier * timeframe.in_seconds("1") * 1000
+    int _intervalMs = multiplier * timeframe.in_seconds("1") * 1000
     int _minute = minute(time, tz)
 
-    if (_minute[1] != _minute and _minuteArray.includes(_minute)) or time - _lastTime >= _intervalMs
-        _lastTime := time 
+    // The time elapsed and fell on a minutes separator.
+    if _minute % multiplier == 0
+        _lastTime := timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz), hour(time, tz), _minute, 0)
+        //log.info("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
+
+    // The time elasped and fell after a minutes separator.
+    else if time - _lastTime >= _intervalMs
+        _lastTime := timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz), hour(time, tz), _minute - _minute % multiplier, 0)
+        //log.warning("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
 
     ta.change(_lastTime) > 0
 
@@ -319,11 +321,11 @@ secondChange(int multiplier) =>
     var int _lastTime = na
     int _intervalMs = multiplier * 1000
 
-    // The exact number of seconds have elapsed.
+    // The time elapsed and fell on a seconds separator.
     if time % _intervalMs == 0
         _lastTime := time
 
-    // More seconds have elpased with missing bars.
+    // The time elasped and fell after a seconds separator.
     else if time - _lastTime >= _intervalMs
         _lastTime := time - time % _intervalMs
 
@@ -341,7 +343,7 @@ timeChange(string timeframe) =>
         "10S" => secondChange   (10)
         "15S" => secondChange   (15)
         "30S" => secondChange   (30)
-        "1"   => minuteChange   ()
+        "1"   => minuteChange   (1, _tz)
         "2"   => minuteChange   (2, _tz)
         "3"   => minuteChange   (3, _tz)
         "5"   => minuteChange   (5, _tz)
