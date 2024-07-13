@@ -283,16 +283,31 @@ hourChange(string tz) =>
     not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if same hour but missing a whole day/month/year (use timestamp diff ?)
 
 
+//hourChange(int multiplier, string tz) =>
+//    var array<int> _hourArray = getTimes(multiplier, 24)
+//    var int _lastTime = na
+//    var int _intervalMs = multiplier * timeframe.in_seconds("60") * 1000
+//    int _hour = hour(time, tz)
+//
+//    if (_hour[1] != _hour and _hourArray.includes(_hour)) or time - _lastTime >= _intervalMs
+//        _lastTime := time 
+//
+//    ta.change(_lastTime) > 0
+
 hourChange(int multiplier, string tz) =>
-    var array<int> _hourArray = getTimes(multiplier, 24)
-    var int _last = na
+    var int _lastTime = na
     var int _intervalMs = multiplier * timeframe.in_seconds("60") * 1000
     int _hour = hour(time, tz)
 
-    if (_hour[1] != _hour and _hourArray.includes(_hour)) or time - _last >= _intervalMs
-        _last := time 
+    if _hour % multiplier == 0
+        _lastTime := timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz), _hour, 0, 0)
+        log.info("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
 
-    ta.change(_last) > 0
+    else if time - _lastTime >= _intervalMs
+        _lastTime := timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz), _hour - _hour % multiplier, 0, 0)
+        log.warning("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
+
+    ta.change(_lastTime) > 0
 
 
 // @function Check if the number of minutes has elasped.
