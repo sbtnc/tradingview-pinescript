@@ -277,23 +277,8 @@ dayChange(string tz) =>
     not na(time[1]) and dayofmonth(time[1], tz) != dayofmonth(time, tz) // can't catch if same day but missing a whole month/year (use timestamp diff ?)
  
 
-// @function Check if the current bar hour changed.
+// @function Check if the number of hours has elasped.
 // @returns  bool
-hourChange(string tz) =>
-    not na(time[1]) and hour(time[1], tz) != hour(time, tz) // can't catch if same hour but missing a whole day/month/year (use timestamp diff ?)
-
-
-//hourChange(int multiplier, string tz) =>
-//    var array<int> _hourArray = getTimes(multiplier, 24)
-//    var int _lastTime = na
-//    var int _intervalMs = multiplier * timeframe.in_seconds("60") * 1000
-//    int _hour = hour(time, tz)
-//
-//    if (_hour[1] != _hour and _hourArray.includes(_hour)) or time - _lastTime >= _intervalMs
-//        _lastTime := time 
-//
-//    ta.change(_lastTime) > 0
-
 hourChange(int multiplier, string tz) =>
     var int _lastTime = na
     var int _intervalMs = multiplier * timeframe.in_seconds("60") * 1000
@@ -301,11 +286,11 @@ hourChange(int multiplier, string tz) =>
 
     if _hour % multiplier == 0
         _lastTime := timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz), _hour, 0, 0)
-        log.info("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
+        //log.info("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
 
     else if time - _lastTime >= _intervalMs
         _lastTime := timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz), _hour - _hour % multiplier, 0, 0)
-        log.warning("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
+        //log.warning("\ntime {0}\n>>>> {1}", str.format_time(time, "yyyy-MM-dd HH:mm:ss", tz), str.format_time(_lastTime, "yyyy-MM-dd HH:mm:ss", tz))
 
     ta.change(_lastTime) > 0
 
@@ -365,7 +350,7 @@ timeChange(string timeframe) =>
         "10"  => minuteChange   (10, _tz)
         "15"  => minuteChange   (15, _tz)
         "30"  => minuteChange   (30, _tz)
-        "60"  => hourChange     (_tz)
+        "60"  => hourChange     (1, _tz)
         "120" => hourChange     (2, _tz)
         "180" => hourChange     (3, _tz)
         "240" => hourChange     (4, _tz)
