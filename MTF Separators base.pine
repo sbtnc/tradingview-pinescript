@@ -1,0 +1,601 @@
+// © sbtnc
+// Created: 2024-03-10
+// Last modified: 2024-03-10
+// Version 1.0
+
+// @version=5
+
+indicator("Multi-Timeframe Separators", "MTF Separators [year, month, dayofmonth...]", overlay = true, max_lines_count = 500)
+
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+color   COLOR_1 = color.green
+color   COLOR_2 = color.orange
+color   COLOR_3 = color.red
+color   COLOR_4 = color.blue
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
+
+opt1  = "5S"
+opt2  = "10S"
+opt3  = "15S"
+opt4  = "30S"
+opt5  = "1"
+opt6  = "2"
+opt7  = "3"
+opt8  = "5"
+opt9  = "10"
+opt10 = "15"
+opt11 = "30"
+opt12 = "45"
+opt13 = "60"
+opt14 = "120"
+opt15 = "180"
+opt16 = "240"
+opt17 = "360"
+opt18 = "480"
+opt19 = "720"
+opt20 = "1D"
+opt21 = "1W"
+opt22 = "1M"
+opt23 = "3M"
+opt24 = "6M"
+opt25 = "12M"
+
+g1 = "Separators"
+
+enableSeparatorInput1       = input.bool    (true,      "",             group = g1, inline = "#1")
+separatorTimeframeInput1    = input.string  ("1D",      "",             group = g1, inline = "#1", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
+separatorLookbackInput1     = input.int     (500,       "",             group = g1, inline = "#1", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput2       = input.bool    (true,      "",             group = g1, inline = "#2")
+separatorTimeframeInput2    = input.string  ("1W",      "",             group = g1, inline = "#2", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
+separatorLookbackInput2     = input.int     (500,       "",             group = g1, inline = "#2", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput3       = input.bool    (true,      "",             group = g1, inline = "#3")
+separatorTimeframeInput3    = input.string  ("1M",      "",             group = g1, inline = "#3", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
+separatorLookbackInput3     = input.int     (500,       "",             group = g1, inline = "#3", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput4       = input.bool    (false,     "",             group = g1, inline = "#4")
+separatorTimeframeInput4    = input.string  ("12M",     "",             group = g1, inline = "#4", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24, opt25])
+separatorLookbackInput4     = input.int     (500,       "",             group = g1, inline = "#4", minval = 1, maxval = 500, display = display.none)
+
+g2 = "Style"
+
+separatorColorInput1        = input.color   (COLOR_1,   "",             group = g2, inline = "#1")
+separatorWidthInput1        = input.int     (1,         "",             group = g2, inline = "#1", minval = 1, display = display.none)
+separatorStyleInput1        = input.string  ("Dotted",  "",             group = g2, inline = "#1", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput2        = input.color   (COLOR_2,   "",             group = g2, inline = "#2")
+separatorWidthInput2        = input.int     (1,         "",             group = g2, inline = "#2", minval = 1, display = display.none)
+separatorStyleInput2        = input.string  ("Solid",   "",             group = g2, inline = "#2", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput3        = input.color   (COLOR_3,   "",             group = g2, inline = "#3")
+separatorWidthInput3        = input.int     (2,         "",             group = g2, inline = "#3", minval = 1, display = display.none)
+separatorStyleInput3        = input.string  ("Solid",   "",             group = g2, inline = "#3", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput4        = input.color   (COLOR_4,   "",             group = g2, inline = "#4")
+separatorWidthInput4        = input.int     (3,         "",             group = g2, inline = "#4", minval = 1, display = display.none)
+separatorStyleInput4        = input.string  ("Solid",   "",             group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
+
+g3 = "Preferences"
+
+showNextSeparatorInput      = input.bool    (false,     "Show Next",    group = g3)
+baseOnSessionInput          = input.bool    (true,      "Base on Session", group = g3)
+timezoneInput   = input.string("Exchange", "Timezone",
+     [
+     "UTC",
+     "Exchange",
+     "Africa/Cairo",
+     "Africa/Johannesburg",
+     "Africa/Lagos",
+     "Africa/Nairobi",
+     "Africa/Tunis",
+     "America/Argentina/Buenos_Aires",
+     "America/Bogota",
+     "America/Caracas",
+     "America/Chicago",
+     "America/Denver",
+     "America/El_Salvador",
+     "America/Juneau",
+     "America/Lima",
+     "America/Los_Angeles",
+     "America/New_York",
+     "America/Mexico_City",
+     "America/Phoenix",
+     "America/Santiago",
+     "America/Sao_Paulo",
+     "America/Toronto",
+     "America/Vancouver",
+     "Asia/Almaty",
+     "Asia/Ashgabat",
+     "Asia/Bahrain",
+     "Asia/Bangkok",
+     "Asia/Dubai",
+     "Asia/Chongqing",
+     "Asia/Colombo",
+     "Asia/Ho_Chi_Minh",
+     "Asia/Hong_Kong",
+     "Asia/Istanbul",
+     "Asia/Jakarta",
+     "Asia/Jerusalem",
+     "Asia/Karachi",
+     "Asia/Kathmandu",
+     "Asia/Kolkata",
+     "Asia/Kuwait",
+     "Asia/Manila",
+     "Asia/Muscat",
+     "Asia/Nicosia",
+     "Asia/Qatar",
+     "Asia/Riyadh",
+     "Asia/Seoul",
+     "Asia/Shanghai",
+     "Asia/Singapore",
+     "Asia/Taipei",
+     "Asia/Tehran",
+     "Asia/Tokyo",
+     "Asia/Yangon",
+     "Atlantic/Reykjavik",
+     "Australia/Adelaide",
+     "Australia/Brisbane",
+     "Australia/Perth",
+     "Australia/Sydney",
+     "Europe/Amsterdam",
+     "Europe/Athens",
+     "Europe/Belgrade",
+     "Europe/Berlin",
+     "Europe/Bratislava",
+     "Europe/Brussels",
+     "Europe/Bucharest",
+     "Europe/Budapest",
+     "Europe/Copenhagen",
+     "Europe/Dublin",
+     "Europe/Helsinki",
+     "Europe/Madrid",
+     "Europe/Malta",
+     "Europe/Moscow",
+     "Europe/Lisbon",
+     "Europe/London",
+     "Europe/Luxembourg",
+     "Europe/Oslo",
+     "Europe/Paris",
+     "Europe/Riga",
+     "Europe/Rome",
+     "Europe/Stockholm",
+     "Europe/Tallinn",
+     "Europe/Vilnius",
+     "Europe/Warsaw",
+     "Europe/Zurich",
+     "Pacific/Auckland",
+     "Pacific/Chatham",
+     "Pacific/Fakaofo",
+     "Pacific/Honolulu",
+     "Pacific/Norfolk"
+     ],
+     display = display.none
+ )
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+//#endregion
+
+
+
+
+//--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+// @function Produce the `timezone` parameter from the given user input.
+// @returns  (string) Timezone
+getTimezone(simple string input) =>
+    string _tz = switch input
+        "UTC"       => "UTC+0"
+        "Exchange"  => syminfo.timezone  
+        => input
+
+// @function    Get the value at the last index of the given `array series` on the previous bar
+// @returns     The preceding last value
+getLast(arr) =>
+    // @variable The preceding `array serie`
+    _prevThis = arr[1]
+    
+    switch
+        na(_prevThis) => na // Array is undefined on the first bar
+        _prevThis.size() == 0 => na // Array is empty
+        => _prevThis.last()
+
+
+// @funcion Get the line style from a given input setting
+// @returns const string
+getLineStyle(string input) =>
+    var _style = switch input
+        "Solid"     => line.style_solid
+        "Dotted"    => line.style_dotted
+        "Dashed"    => line.style_dashed
+
+
+//yearChange(array<int> intraTimeArray, string tz) =>
+//    bool _changed = false
+//    int _prevTime = getLast(intraTimeArray)
+//    for _time in intraTimeArray
+//        if not na(_prevTime) and year(_prevTime, tz) != year(_time, tz)
+//            _changed := true
+//            //log.info("\n Change at {0}", str.format_time(_time))
+//            break
+//        _prevTime := _time
+//    _changed
+
+yearChange(array<int> timeArray, string tz) =>
+    bool _changed = false
+    var int _lastTime = na
+    for _time in timeArray
+        _changed := not na(_lastTime) and year(_lastTime, tz) != year(_time, tz)
+        _lastTime := _time
+        if _changed
+            break
+    _changed
+
+
+monthChange(array<int> intraTimeArray, string tz) =>
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        if month(_prevTime, tz) != month(_time, tz)
+            _changed := true
+            log.info("\n Change at {0}", str.format_time(_time))
+            break
+        _prevTime := _time
+    _changed
+
+
+weekChange(array<int> intraTimeArray, string tz) =>
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        if weekofyear(_prevTime, tz) != weekofyear(_time, tz)
+            _changed := true
+            //log.info("\n Change at {0}", str.format_time(_time))
+            break
+        _prevTime := _time
+    _changed
+
+
+dayChange(array<int> intraTimeArray, string tz) =>
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        if dayofmonth(_prevTime, tz) != dayofmonth(_time, tz)
+            _changed := true
+            //log.info("\n Change at {0}", str.format_time(_time))
+            break
+        _prevTime := _time
+    _changed 
+ 
+
+hourChange(array<int> intraTimeArray, string tz) =>
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        if hour(_prevTime, tz) != hour(_time, tz)
+            _changed := true
+            //log.info("\n Change at {0}", str.format_time(_time))
+            break
+        _prevTime := _time
+    _changed
+
+
+minuteChange() =>
+    minute[1] != minute
+
+
+// Multiplier of period functions
+
+monthChange(array<int> intraTimeArray, int multiplier, string tz) =>
+    var _count = 0
+    var _monthArray = array.new_int()
+
+    // Populate with hours
+    if barstate.isfirst
+        for i = 0 to 12 / multiplier -1
+            _monthArray.push(i * multiplier +1)
+        //log.info("\n Months list {0}", _monthArray)
+
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        // Change to an hour in hour list
+        //if month[1] != month and _monthArray.includes(month)
+        if month(_prevTime, tz) != month(_time, tz) and _monthArray.includes(month(_time, tz))
+            _changed := true
+            break
+        _prevTime := _time
+    _changed
+
+
+hourChange(array<int> intraTimeArray, int multiplier, string tz) =>
+    var _count = 0
+    var _hourArray = array.new_int()
+
+    // Populate with hours
+    if barstate.isfirst
+        for i = 0 to 24 / multiplier -1
+            _hourArray.push(i * multiplier)
+        //log.info("\n Hours list {0}", _hourArray)
+
+    bool _changed = false
+    int _prevTime = getLast(intraTimeArray)
+    for _time in intraTimeArray
+        // Change to an hour in hour list
+        if hour(_prevTime, tz) != hour(_time, tz) and _hourArray.includes(hour(_time, tz))
+            _changed := true
+            //log.info("\n Change at {0}", str.format_time(_time))
+            break
+        _prevTime := _time
+    _changed
+
+
+// - 45 minutes interval does not start at 00:00
+//   > start counting from 00:00 
+//   > remove 45 minute from supported list
+// - 45 minutes interval and 30 minutes timeframe -> odd need to implement ltf
+minuteChange(int multiplier, string tz) =>
+    var int _last = na
+    int increment = multiplier * 60 * 1000
+    log.info("{0}", tz)
+
+    // At the bar change
+    if time % increment == 0
+        _last := time
+        //log.info("At {0}", str.format_time(_last))
+
+    // Some bars were missing
+    else if time - _last >= increment
+        _last := time - time % increment
+        //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+    
+    else 
+        log.warning("{0}m", (time - _last) / 1000 / 60)
+
+    ta.change(_last)
+
+
+secondChange(int multiplier) =>
+    var int _last = na
+    int increment = multiplier * 1000
+
+    // At the bar change
+    if time % increment == 0
+        _last := time
+        //log.info("At {0}", str.format_time(_last))
+
+    // Some bars were missing
+    else if time - _last >= increment
+        _last := time - time % increment
+        //log.warning("Past {0} by {1}s", str.format_time(_last), (time % increment) / 1000)
+
+    ta.change(_last)
+
+
+timeChange(ltfTimeArray, string timeframe) =>
+    var _tz = getTimezone(timezoneInput)
+    
+    switch timeframe
+        "5S"  => secondChange(5)
+        "10S" => secondChange(10)
+        "15S" => secondChange(15)
+        "30S" => secondChange(30)
+        "1"   => minuteChange()
+        "2"   => minuteChange(2, _tz)
+        "3"   => minuteChange(3, _tz)
+        "5"   => minuteChange(5, _tz)
+        "10"  => minuteChange(10, _tz)
+        "15"  => minuteChange(15, _tz)
+        "30"  => minuteChange(30, _tz)
+        "45"  => minuteChange(45, _tz)
+        "60"  => hourChange(ltfTimeArray, _tz)
+        "120" => hourChange(ltfTimeArray, 2, _tz)
+        "180" => hourChange(ltfTimeArray, 3, _tz)
+        "240" => hourChange(ltfTimeArray, 4, _tz)
+        "360" => hourChange(ltfTimeArray, 6, _tz)
+        "480" => hourChange(ltfTimeArray, 8, _tz)
+        "720" => hourChange(ltfTimeArray, 12, _tz)
+        "1D"  => dayChange(ltfTimeArray, _tz)
+        "1W"  => weekChange(ltfTimeArray, _tz)
+        "1M"  => monthChange(ltfTimeArray, _tz)
+        "3M"  => monthChange(ltfTimeArray, 3, _tz)
+        "6M"  => monthChange(ltfTimeArray, 6, _tz)
+        "12M" => yearChange(ltfTimeArray, _tz)
+
+timeChange2(ltfArray) =>
+    ltfArray.some()
+
+
+
+//drawSeparator(ltfTimeArray, htfTime, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
+drawSeparator(ltfTimeArray, ltfChangeArray, bool isEnabled, string tf, color color, int width, string style, int lookback) =>
+    var lineArray = array.new_line()
+    _canDisplayOnChartTimeframe = timeframe.in_seconds(tf) > timeframe.in_seconds()
+
+    if isEnabled and _canDisplayOnChartTimeframe
+        bool change = baseOnSessionInput ? timeChange2(ltfChangeArray) : timeChange(ltfTimeArray, tf)
+
+        if change
+            // y1 and y2 should not be equal prices otherwise draw vertical lines
+            lineArray.push(
+                 line.new(time, open, time, open + syminfo.mintick, xloc.bar_time, extend.both, color, getLineStyle(style), width)
+                 )
+
+
+            if lineArray.size() > lookback
+                line.delete(lineArray.shift())
+
+//          // Projection
+//          if showNextSeparatorInput
+//              var line projectionLine = line.new(na, na, na, na, xloc.bar_time, extend.both, color, getLineStyle(style), width)
+//  
+//              nextTime = time + timeframe.in_seconds(tf) * 1000
+//              log.info("\n {0}", timeframe.in_seconds(tf))
+//              log.info(
+//                   "\n time {0}" +
+//                   "\n next time {1}",
+//                   str.format_time(time),
+//                   str.format_time(nextTime)
+//                   )
+//              projectionLine.set_xy1(nextTime, open)
+//              projectionLine.set_xy2(nextTime, syminfo.mintick)
+
+
+timeframeInSec(timeframe) =>
+    tfInsec = switch timeframe
+        "5S"  => 5
+        "10S" => 10
+        "15S" => 15
+        "30S" => 30
+        "1"   => 1   *60
+        "2"   => 2   *60
+        "3"   => 3   *60
+        "5"   => 5   *60
+        "10"  => 10  *60
+        "15"  => 15  *60
+        "30"  => 30  *60
+        "45"  => 45  *60
+        "60"  => 60  *60  
+        "120" => 120 *60 
+        "180" => 180 *60 
+        "240" => 240 *60 
+        "360" => 360 *60 
+        "480" => 480 *60 
+        "720" => 720 *60 
+        "1D"  => 24 * 60 * 60
+        "1W"  => 7 * 24 * 60 *60
+        "1M"  => timeframe.ismonthly ? 2628003 : 30 * 24 * 60 * 60
+        "3M"  => timeframe.ismonthly ? 3 *2628003 : 3 * 30 * 24 * 60 * 60
+        "6M"  => timeframe.ismonthly ? 6 *2628003 : 6 * 30 * 24 * 60 * 60
+        "12M" => timeframe.ismonthly ? 12 * 2628003 : 12 * 30 * 24 * 60 * 60
+
+
+getLtf(simple int a, simple int b) =>
+    simple string tf = if a % b != 0
+        int _a = a
+        int _tempA = na
+        int _b = b
+        int _tempB = na
+
+        while (_a % _b) != 0
+            if (_a % _b ) != 0
+                _tempA := _a
+                _a := _b
+                _b := _tempA % _b
+
+        timeframe.from_seconds(_b)
+    else 
+        timeframe.period
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+tz = getTimezone(timezoneInput)
+
+// TODO verifier avec exchange tz 
+sameTimezone = tz == syminfo.timezone
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+// If we use timezone, we must use at max 60min (ou peut etre 30min / 15min?) data
+tf1 = getLtf(timeframeInSec(separatorTimeframeInput1), timeframe.in_seconds())
+tf2 = getLtf(timeframeInSec(separatorTimeframeInput2), timeframe.in_seconds())
+tf3 = getLtf(timeframeInSec(separatorTimeframeInput3), timeframe.in_seconds())
+tf4 = getLtf(timeframeInSec(separatorTimeframeInput4), timeframe.in_seconds())
+
+ltf1 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf1) > timeframe.in_seconds("15")) ? "15" : tf1
+ltf2 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf2) > timeframe.in_seconds("15")) ? "15" : tf2
+ltf3 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf3) > timeframe.in_seconds("15")) ? "15" : tf3
+ltf4 = (not baseOnSessionInput) and (not sameTimezone) and (timeframe.in_seconds(tf4) > timeframe.in_seconds("15")) ? "15" : tf4
+
+[ltfTimeArray1, ltfChangeArray1] = request.security_lower_tf(syminfo.tickerid, ltf1, [time, timeframe.change(separatorTimeframeInput1)])
+[ltfTimeArray2, ltfChangeArray2] = request.security_lower_tf(syminfo.tickerid, ltf2, [time, timeframe.change(separatorTimeframeInput2)])
+[ltfTimeArray3, ltfChangeArray3] = request.security_lower_tf(syminfo.tickerid, ltf3, [time, timeframe.change(separatorTimeframeInput3)])
+[ltfTimeArray4, ltfChangeArray4] = request.security_lower_tf(syminfo.tickerid, ltf4, [time, timeframe.change(separatorTimeframeInput4)])
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+drawSeparator(ltfTimeArray1, ltfChangeArray1, enableSeparatorInput1, separatorTimeframeInput1, separatorColorInput1, separatorWidthInput1, separatorStyleInput1, separatorLookbackInput1)
+drawSeparator(ltfTimeArray2, ltfChangeArray2, enableSeparatorInput2, separatorTimeframeInput2, separatorColorInput2, separatorWidthInput2, separatorStyleInput2, separatorLookbackInput2)
+drawSeparator(ltfTimeArray3, ltfChangeArray3, enableSeparatorInput3, separatorTimeframeInput3, separatorColorInput3, separatorWidthInput3, separatorStyleInput3, separatorLookbackInput3)
+drawSeparator(ltfTimeArray4, ltfChangeArray4, enableSeparatorInput4, separatorTimeframeInput4, separatorColorInput4, separatorWidthInput4, separatorStyleInput4, separatorLookbackInput4)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Alerts
+//--------------------------------------------------------------------
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Debug
+//--------------------------------------------------------------------
+
+if barstate.islast
+    label.new(bar_index, high, str.format("{0} {1} == {2}", sameTimezone, tz, syminfo.timezone))
+
+
+// Table
+
+if barstate.islast
+    var table t = table.new(position.bottom_right, 3, 5)
+
+    t.cell(0, 0, "Chart", text_color = chart.fg_color)
+    t.cell(1, 0, "Separator", text_color = chart.fg_color)
+    t.cell(2, 0, "Intrabar", text_color = chart.fg_color)
+
+    if enableSeparatorInput1
+        t.cell(0, 1, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 1, separatorTimeframeInput1, text_color = chart.fg_color)
+        t.cell(2, 1, ltf1, text_color = timeframeInSec(separatorTimeframeInput1) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+    if enableSeparatorInput2
+        t.cell(0, 2, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 2, separatorTimeframeInput2, text_color = chart.fg_color)
+        t.cell(2, 2, ltf2, text_color = timeframeInSec(separatorTimeframeInput2) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+    if enableSeparatorInput3
+        t.cell(0, 3, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 3, separatorTimeframeInput3, text_color = chart.fg_color)
+        t.cell(2, 3, ltf3, text_color = timeframeInSec(separatorTimeframeInput3) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+    if enableSeparatorInput4
+        t.cell(0, 4, timeframe.period, text_color = chart.fg_color)
+        t.cell(1, 4, separatorTimeframeInput4, text_color = chart.fg_color)
+        t.cell(2, 4, ltf4, text_color = timeframeInSec(separatorTimeframeInput4) % timeframe.in_seconds() != 0 ? color.red : chart.fg_color)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                      Performances
+//--------------------------------------------------------------------
+//#endregion
