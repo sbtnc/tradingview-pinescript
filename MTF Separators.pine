@@ -308,14 +308,14 @@ method roundToHour(int t, string tz, int mult) =>
 // @function Check if the number of hours has elasped.
 // @returns  bool
 hourChange(int multiplier, string tz) =>
-    var int _intervalMs = multiplier * timeframe.in_seconds("60") * 1000
-    var int _lastTime = time.roundToHour(tz, multiplier)
+    var int _lastTime = 0
+    var int _intervalMs = multiplier * 3600000
 
-    // The candle start time is over the separator time.
+    // The bar opening time is over the separator time.
     if time >= _lastTime + _intervalMs
         _lastTime := time.roundToHour(tz, multiplier)
 
-    // The candle encloses the separator time.
+    // The bar encloses the separator time.
     if time_close > _lastTime + _intervalMs
         _lastTime := time_close.roundToHour(tz, multiplier)
 
@@ -332,14 +332,14 @@ method roundToMinute(int t, string tz, int mult) =>
 // @function Check if the number of minutes has elasped.
 // @returns  bool
 minuteChange(int multiplier, string tz) =>
-    int _intervalMs = multiplier * timeframe.in_seconds("1") * 1000
-    var int _lastTime = time.roundToMinute(tz, multiplier)
+    var int _lastTime = 0
+    int _intervalMs = multiplier * 60000
 
-    // The candle start time is over the separator time.
+    // The bar opening time is over the separator time.
     if time >= _lastTime + _intervalMs
         _lastTime := time.roundToMinute(tz, multiplier)
 
-    // The candle encloses the separator time.
+    // The bar encloses the separator time.
     if time_close > _lastTime + _intervalMs
         _lastTime := time_close.roundToMinute(tz, multiplier)
 
