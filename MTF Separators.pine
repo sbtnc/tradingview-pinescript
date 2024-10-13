@@ -265,12 +265,6 @@ monthChange(int multiplier, string tz) =>
     not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz)) // can't catch if missing multplied months or more
 
 
-// @function Check if the current bar week changed.
-// @returns  bool
-weekChange(string tz) =>
-    not na(time[1]) and weekofyear(time[1], tz) != weekofyear(time, tz)  // can't catch if same week but missing a whole year (use timestamp diff ?)
-
-
 // Does it handle missing bars? (test on weekend)
 checkForDefaultExchange(tfOpenTime, tfCloseTime) =>
     var int _lastTime = tfOpenTime
@@ -293,13 +287,35 @@ checkForDefaultExchange(tfOpenTime, tfCloseTime) =>
     ta.change(_lastTime) > 0
 
 
+
+// @function Check if one week has elasped.
+// @returns  bool
+weekChange(string tz) =>
+    var int _lastTime = 0
+    var int _intervalMs = 604800000
+
+    log.info("\n{0} ----- {1}", str.format_time(time, "yyyy-MM-dd (E) HH:mm:ss", tz), str.format_time(time_close, "yyyy-MM-dd (E) HH:mm:ss", tz))
+
+    // The bar opening time is over the separator time.
+    if time >= _lastTime + _intervalMs
+        _lastTime := time("W", "0000-0000", tz)
+        log.warning("\nopen >>>> {0}", str.format_time(_lastTime, "yyyy-MM-dd (E) HH:mm:ss", tz))
+
+    // The bar encloses the separator time.
+    if time_close > _lastTime + _intervalMs
+        _lastTime := time_close("W", "0000-0000", tz)
+        log.error("\nclose >>>> {0}", str.format_time(_lastTime, "yyyy-MM-dd (E) HH:mm:ss", tz))
+
+    ta.change(_lastTime) > 0
+
+
 // @function 
 // @returns
 method roundToDay(int t, string tz) =>
     timestamp(tz, year(t, tz), month(t, tz), dayofmonth(t, tz))    
 
 
-// @function Check if one day has elasped..
+// @function Check if one day has elasped.
 // @returns  bool
 dayChange(string tz) =>
     var int _lastTime = 0
