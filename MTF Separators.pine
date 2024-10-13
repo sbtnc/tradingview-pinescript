@@ -346,23 +346,6 @@ minuteChange(int multiplier, string tz) =>
     ta.change(_lastTime) > 0
 
 
-// @function Check if the number of seconds has elapsed.
-// @returns  bool
-secondChange(int multiplier) =>
-    var int _lastTime = na
-    int _intervalMs = multiplier * 1000
-
-    // The time elapsed and fell on a seconds separator.
-    if time % _intervalMs == 0
-        _lastTime := time
-
-    // The time elasped and fell after a seconds separator.
-    else if time >= _lastTime + _intervalMs
-        _lastTime := time - time % _intervalMs
-
-    ta.change(_lastTime)
-
-
 // @function Detects changes in the specified `timeframe`.
 //           In contrario to `timeframe.change()`, it uses 00:00 - 00:00 rather than the exchange session.
 // @returns  bool
@@ -370,10 +353,10 @@ timeChangeOLD(string timeframe) =>
     var string _tz = getTimezone(timezoneInput)
     
     switch timeframe
-        "5S"  => secondChange   (5)
-        "10S" => secondChange   (10)
-        "15S" => secondChange   (15)
-        "30S" => secondChange   (30)
+        "5S"  => timeframe.change(timeframe)
+        "10S" => timeframe.change(timeframe)
+        "15S" => timeframe.change(timeframe)
+        "30S" => timeframe.change(timeframe)
         "1"   => minuteChange   (1, _tz)
         "2"   => minuteChange   (2, _tz)
         "3"   => minuteChange   (3, _tz)
@@ -398,10 +381,10 @@ timeChangeOLD(string timeframe) =>
 timeChange(string timeframe, string tz) =>
    
     switch timeframe
-        "5S"  => secondChange   (5)
-        "10S" => secondChange   (10)
-        "15S" => secondChange   (15)
-        "30S" => secondChange   (30)
+        "5S"  => timeframe.change(timeframe)
+        "10S" => timeframe.change(timeframe)
+        "15S" => timeframe.change(timeframe)
+        "30S" => timeframe.change(timeframe)
         "1"   => minuteChange   (1,  tz)
         "2"   => minuteChange   (2,  tz)
         "3"   => minuteChange   (3,  tz)
