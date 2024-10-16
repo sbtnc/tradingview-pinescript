@@ -65,7 +65,7 @@ separatorLookbackInput4     = input.int     (50,        "",     group = g1, inli
 string g2 = "Style"
 
 separatorColorInput1        = input.color   (COLOR_1,   "",     group = g2, inline = "#1")
-separatorWidthInput1        = input.int     (1,         "",     group = g2, inline = "#1", minval = 1, display = display.none)
+separatorWidthInput1        = input.int     (3,         "",     group = g2, inline = "#1", minval = 1, display = display.none)
 separatorStyleInput1        = input.string  ("Dotted",  "",     group = g2, inline = "#1", options =["Solid", "Dashed", "Dotted"], display = display.none)
 separatorColorInput2        = input.color   (COLOR_2,   "",     group = g2, inline = "#2")
 separatorWidthInput2        = input.int     (1,         "",     group = g2, inline = "#2", minval = 1, display = display.none)
@@ -248,21 +248,27 @@ getTimes(int multiplier, int end) =>
     _timeArray
 
 
+
+intervalChange(string tf, string tz) =>
+    // @variable The next interval UNIX time.
+    var int _next = 0
+    
+    // The current bar opening time is at or over the interval.
+    if time >= _next 
+        _next := time_close(tf, "0000-0000", tz)
+
+    // The current bar encloses the interval intrabar. Bar can cover two interval (no else if).
+    if time_close > _next
+        _next := time_close(tf, "0000-0000", tz, -1)
+
+    ta.change(_next) > 0
+
+
+
 // @function Check if the current bar year changed.
 // @returns  bool
 yearChange(string tz) =>
     ta.change(year(time, tz)) > 0
-
-
-// @function Check if the current bar month changed.
-// @returns  bool
-monthChange(string tz) =>
-    not na(time[1]) and month(time[1], tz) != month(time, tz) // can't catch if same month but missing a whole year (use timestamp diff ?)
-
-
-monthChange(int multiplier, string tz) =>
-    var array<int> _monthArray = getTimes(multiplier, 12)
-    not na(time[1]) and month(time[1], tz) != month(time, tz) and _monthArray.includes(month(time, tz)) // can't catch if missing multplied months or more
 
 
 // Does it handle missing bars? (test on weekend)
@@ -287,99 +293,6 @@ checkForDefaultExchange(tfOpenTime, tfCloseTime) =>
     ta.change(_lastTime) > 0
 
 
-
-// @function Check if one week has elasped.
-// @returns  bool
-weekChange(string tz) =>
-    var int _lastTime = 0
-    var int _intervalMs = 604800000
-
-    log.info("\n{0} ----- {1}", str.format_time(time, "yyyy-MM-dd (E) HH:mm:ss", tz), str.format_time(time_close, "yyyy-MM-dd (E) HH:mm:ss", tz))
-
-    // The bar opening time is over the separator time.
-    if time >= _lastTime + _intervalMs
-        _lastTime := time("W", "0000-0000", tz)
-        log.warning("\nopen >>>> {0}", str.format_time(_lastTime, "yyyy-MM-dd (E) HH:mm:ss", tz))
-
-    // The bar encloses the separator time.
-    if time_close > _lastTime + _intervalMs
-        _lastTime := time_close("W", "0000-0000", tz)
-        log.error("\nclose >>>> {0}", str.format_time(_lastTime, "yyyy-MM-dd (E) HH:mm:ss", tz))
-
-    ta.change(_lastTime) > 0
-
-
-// @function 
-// @returns
-method roundToDay(int t, string tz) =>
-    timestamp(tz, year(t, tz), month(t, tz), dayofmonth(t, tz))    
-
-
-// @function Check if one day has elasped.
-// @returns  bool
-dayChange(string tz) =>
-    var int _lastTime = 0
-    var int _intervalMs = 86400000
-
-    // The bar opening time is over the separator time.
-    if time >= _lastTime + _intervalMs
-        _lastTime := time.roundToDay(tz)
-
-    // The bar encloses the separator time.
-    if time_close > _lastTime + _intervalMs
-        _lastTime := time_close.roundToDay(tz)
-
-    ta.change(_lastTime) > 0
-
-
-// @function 
-// @returns
-method roundToHour(int t, string tz, int mult) =>
-    int _offset = hour(t, tz) % mult
-    timestamp(tz, year(t, tz), month(t, tz), dayofmonth(t, tz), hour(t, tz) - _offset, 0, 0)
-
-
-// @function Check if the number of hours has elasped.
-// @returns  bool
-hourChange(int multiplier, string tz) =>
-    var int _lastTime = 0
-    var int _intervalMs = multiplier * 3600000
-
-    // The bar opening time is over the separator time.
-    if time >= _lastTime + _intervalMs
-        _lastTime := time.roundToHour(tz, multiplier)
-
-    // The bar encloses the separator time.
-    if time_close > _lastTime + _intervalMs
-        _lastTime := time_close.roundToHour(tz, multiplier)
-
-    ta.change(_lastTime) > 0
-
-
-// @function 
-// @returns
-method roundToMinute(int t, string tz, int mult) =>
-    int _offset = minute(t, tz) % mult
-    timestamp(tz, year(t, tz), month(t, tz), dayofmonth(t, tz), hour(t, tz), minute(t, tz) - _offset, 0)
-
-
-// @function Check if the number of minutes has elasped.
-// @returns  bool
-minuteChange(int multiplier, string tz) =>
-    var int _lastTime = 0
-    int _intervalMs = multiplier * 60000
-
-    // The bar opening time is over the separator time.
-    if time >= _lastTime + _intervalMs
-        _lastTime := time.roundToMinute(tz, multiplier)
-
-    // The bar encloses the separator time.
-    if time_close > _lastTime + _intervalMs
-        _lastTime := time_close.roundToMinute(tz, multiplier)
-
-    ta.change(_lastTime) > 0
-
-
 // @function Detects changes in the specified `timeframe`.
 //           In contrario to `timeframe.change()`, it uses 00:00 - 00:00 rather than the exchange session.
 // @returns  bool
@@ -393,54 +306,26 @@ timeChangeOLD(string timeframe) =>
         "15S" => timeframe.change(timeframe)
         "30S" => timeframe.change(timeframe)
         // can be uneven (45min chart / 30min separator), allow any chart tf (e.g., 27min), timezone offsets, possible trading day startime
-        "1"   => minuteChange   (1,  _tz)
-        "2"   => minuteChange   (2,  _tz)
-        "3"   => minuteChange   (3,  _tz)
-        "5"   => minuteChange   (5,  _tz)
-        "10"  => minuteChange   (10, _tz)
-        "15"  => minuteChange   (15, _tz)
-        "30"  => minuteChange   (30, _tz)
-        "60"  => hourChange     (1,  _tz)
-        "120" => hourChange     (2,  _tz)
-        "180" => hourChange     (3,  _tz)
-        "240" => hourChange     (4,  _tz)
-        "360" => hourChange     (6,  _tz)
-        "480" => hourChange     (8,  _tz)
-        "720" => hourChange     (12, _tz)
-        "1D"  => dayChange      (_tz)
-        "1W"  => weekChange     (_tz)
-        "1M"  => monthChange    (_tz)
-        "3M"  => monthChange    (3, _tz)
-        "6M"  => monthChange    (6, _tz)
-        "12M" => yearChange     (_tz)
-
-timeChange(string timeframe, string tz) =>
-   
-    switch timeframe
-        "5S"  => timeframe.change(timeframe)
-        "10S" => timeframe.change(timeframe)
-        "15S" => timeframe.change(timeframe)
-        "30S" => timeframe.change(timeframe)
-        "1"   => minuteChange   (1,  tz)
-        "2"   => minuteChange   (2,  tz)
-        "3"   => minuteChange   (3,  tz)
-        "5"   => minuteChange   (5,  tz)
-        "10"  => minuteChange   (10, tz)
-        "15"  => minuteChange   (15, tz)
-        "30"  => minuteChange   (30, tz)
-        "60"  => hourChange     (1,  tz)
-        "120" => hourChange     (2,  tz)
-        "180" => hourChange     (3,  tz)
-        "240" => hourChange     (4,  tz)
-        "360" => hourChange     (6,  tz)
-        "480" => hourChange     (8,  tz)
-        "720" => hourChange     (12, tz)
-        "1D"  => dayChange      (tz)
-        "1W"  => weekChange     (tz)
-        "1M"  => monthChange    (tz)
-        "3M"  => monthChange    (3, tz)
-        "6M"  => monthChange    (6, tz)
-        "12M" => yearChange     (tz)
+        "1"   => intervalChange (timeframe, _tz)
+        "2"   => intervalChange (timeframe, _tz)
+        "3"   => intervalChange (timeframe, _tz)
+        "5"   => intervalChange (timeframe, _tz)
+        "10"  => intervalChange (timeframe, _tz)
+        "15"  => intervalChange (timeframe, _tz)
+        "30"  => intervalChange (timeframe, _tz)
+        "60"  => intervalChange (timeframe, _tz)
+        "120" => intervalChange (timeframe, _tz)
+        "180" => intervalChange (timeframe, _tz)
+        "240" => intervalChange (timeframe, _tz)
+        "360" => intervalChange (timeframe, _tz)
+        "480" => intervalChange (timeframe, _tz)
+        "720" => intervalChange (timeframe, _tz)
+        "1D"  => intervalChange (timeframe, _tz)
+        "1W"  => intervalChange (timeframe, _tz)
+        "1M"  => intervalChange (timeframe, _tz)
+        "3M"  => intervalChange (timeframe, _tz)
+        "6M"  => intervalChange (timeframe, _tz)
+        "12M" => intervalChange (timeframe, _tz)
 
 
 // @function Draw and update time separators on the chart. 
