@@ -268,7 +268,7 @@ drawSeparator(bool change, color color, int width, string style, int lookback) =
             line.delete(_separatorArray.shift())
 
 
-intervalChange(string tf, string session = "", string tz = syminfo.timezone) =>
+intervalChange(string tf, string session, string tz) =>
     // @variable The next interval UNIX time.
     var int _next = 0
     
@@ -285,14 +285,12 @@ intervalChange(string tf, string session = "", string tz = syminfo.timezone) =>
 
 // @function Detects changes in the specified timeframe.
 // @returns  bool
-change(bool enabled, bool exchangeSession, string timeframe) =>
+change(bool enabled, string timeframe, bool customTime) =>
     switch 
-        not enabled => na 
+        not enabled         => na 
         timeframe.isseconds => timeframe.change(timeframe)
-        exchangeSession => intervalChange(timeframe)
-        => 
-            var string _tz = getTimezone(timezoneInput)
-            intervalChange(timeframe, "0000-0000", _tz)
+        customTime          => intervalChange(timeframe, "0000-0000", getTimezone(timezoneInput))
+        =>                     intervalChange(timeframe, "", syminfo.timezone)
 
 
 // @function Check if the specified separator `timeframe` can be displayed on the chart context.
@@ -308,7 +306,7 @@ method isVisible(simple string timeframe) =>
 //--------------------------------------------------------------------
 
 // @variable Is true if the separators are based on the exchange session.
-bool useExchangeSession = referenceInput == refOpt1
+var bool customTime = referenceInput == refOpt2
 
 
 // Convert the separator timeframe user inputs into `timeframe` parameters.
@@ -333,10 +331,10 @@ var bool display4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool change1 = change(display1, useExchangeSession, separatorTimeframe1)
-bool change2 = change(display2, useExchangeSession, separatorTimeframe2)
-bool change3 = change(display3, useExchangeSession, separatorTimeframe3)
-bool change4 = change(display4, useExchangeSession, separatorTimeframe4)
+bool change1 = change(display1, separatorTimeframe1, customTime)
+bool change2 = change(display2, separatorTimeframe2, customTime)
+bool change3 = change(display3, separatorTimeframe3, customTime)
+bool change4 = change(display4, separatorTimeframe4, customTime)
 
 //#endregion
 
