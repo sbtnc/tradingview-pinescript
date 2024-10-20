@@ -285,7 +285,7 @@ intervalChange(string tf, string session, string tz) =>
 
 // @function Detects changes in the specified timeframe.
 // @returns  bool
-change(string timeframe, bool customTime) =>
+method change(string timeframe, bool customTime) =>
     switch 
         timeframe.isseconds => timeframe.change(timeframe)
         customTime          => intervalChange(timeframe, "0000-0000", getTimezone(timezoneInput))
@@ -330,10 +330,10 @@ var bool display4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool change1 = display1 ? change(separatorTimeframe1, customTime) : na
-bool change2 = display2 ? change(separatorTimeframe2, customTime) : na
-bool change3 = display3 ? change(separatorTimeframe3, customTime) : na
-bool change4 = display4 ? change(separatorTimeframe4, customTime) : na
+bool change1 = display1 ? separatorTimeframe1.change(customTime) : na
+bool change2 = display2 ? separatorTimeframe2.change(customTime) : na
+bool change3 = display3 ? separatorTimeframe3.change(customTime) : na
+bool change4 = display4 ? separatorTimeframe4.change(customTime) : na
 
 //#endregion
 
