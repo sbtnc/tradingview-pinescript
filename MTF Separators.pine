@@ -318,6 +318,14 @@ var string separatorTimeframe2 = separatorTimeframeInput2.param()
 var string separatorTimeframe3 = separatorTimeframeInput3.param()
 var string separatorTimeframe4 = separatorTimeframeInput4.param()
 
+
+//
+
+var bool display1 = enableSeparatorInput1 and separatorTimeframe1.isVisible()
+var bool display2 = enableSeparatorInput2 and separatorTimeframe2.isVisible()
+var bool display3 = enableSeparatorInput3 and separatorTimeframe3.isVisible()
+var bool display4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
+
 //#endregion
 
 
@@ -325,10 +333,10 @@ var string separatorTimeframe4 = separatorTimeframeInput4.param()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool change1 = change(enableSeparatorInput1, useExchangeSession, separatorTimeframe1)
-bool change2 = change(enableSeparatorInput2, useExchangeSession, separatorTimeframe2)
-bool change3 = change(enableSeparatorInput3, useExchangeSession, separatorTimeframe3)
-bool change4 = change(enableSeparatorInput4, useExchangeSession, separatorTimeframe4)
+bool change1 = change(display1, useExchangeSession, separatorTimeframe1)
+bool change2 = change(display2, useExchangeSession, separatorTimeframe2)
+bool change3 = change(display3, useExchangeSession, separatorTimeframe3)
+bool change4 = change(display4, useExchangeSession, separatorTimeframe4)
 
 //#endregion
 
@@ -339,7 +347,7 @@ bool change4 = change(enableSeparatorInput4, useExchangeSession, separatorTimefr
 
 // Plot the higher timeframe separators enabled in the inputs settings.
 
-if enableSeparatorInput1 and separatorTimeframe1.isVisible()
+if display1
     drawSeparator(
          change1,
          separatorColorInput1,
@@ -348,7 +356,7 @@ if enableSeparatorInput1 and separatorTimeframe1.isVisible()
          separatorLookbackInput1
          )
 
-if enableSeparatorInput2 and separatorTimeframe2.isVisible()
+if display2
     drawSeparator(
          change2,
          separatorColorInput2,
@@ -357,7 +365,7 @@ if enableSeparatorInput2 and separatorTimeframe2.isVisible()
          separatorLookbackInput2
          )
 
-if enableSeparatorInput3 and separatorTimeframe3.isVisible()
+if display3
     drawSeparator(
          change3,
          separatorColorInput3,
@@ -366,7 +374,7 @@ if enableSeparatorInput3 and separatorTimeframe3.isVisible()
          separatorLookbackInput3
          )
 
-if enableSeparatorInput4 and separatorTimeframe4.isVisible()
+if display4
     drawSeparator(
          change4,
          separatorColorInput4,
