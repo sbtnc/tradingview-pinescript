@@ -239,95 +239,6 @@ getLineStyle(string input) =>
         "Dashed"    => line.style_dashed
 
 
-// @function Generate the list of time units separating each timeframes.
-// @returns  array<int> 
-getTimes(int multiplier, int end) =>
-    array<int> _timeArray = array.new_int()
-    for i = 0 to end -1 by multiplier
-        _timeArray.push(i)
-    _timeArray
-
-
-
-intervalChange(string tf, string tz) =>
-    // @variable The next interval UNIX time.
-    var int _next = 0
-    
-    // The current bar opening time is at or over the interval.
-    if time >= _next 
-        _next := time_close(tf, "0000-0000", tz)
-
-    // The current bar encloses the interval intrabar. Bar can cover two interval (no else if).
-    if time_close > _next
-        _next := time_close(tf, "0000-0000", tz, -1)
-
-    ta.change(_next) > 0
-
-
-
-// @function Check if the current bar year changed.
-// @returns  bool
-yearChange(string tz) =>
-    ta.change(year(time, tz)) > 0
-
-
-// Does it handle missing bars? (test on weekend)
-checkForDefaultExchange(tfOpenTime, tfCloseTime) =>
-    var int _lastTime = tfOpenTime
-
-    log.info("\n{0} ----- {1}\nHTF {2} - {3}",
-     str.format_time(time, "yyyy-MM-dd HH:mm:ss"),
-     str.format_time(time_close, "yyyy-MM-dd HH:mm:ss"),
-     str.format_time(tfOpenTime, "yyyy-MM-dd HH:mm:ss"),
-     str.format_time(tfCloseTime, "yyyy-MM-dd HH:mm:ss")
-     )
-
-    if tfOpenTime >= time// and tfOpenTime < time_close
-        _lastTime := tfOpenTime
-        log.warning("\nHTF {0}", str.format_time(tfOpenTime, "yyyy-MM-dd HH:mm:ss"))
-
-    else if tfCloseTime < time_close //tfCloseTime >= time and tfCloseTime < time_close
-        _lastTime := tfCloseTime
-        log.error("\nHTF {0}", str.format_time(tfCloseTime, "yyyy-MM-dd HH:mm:ss"))
-    
-    ta.change(_lastTime) > 0
-
-
-// @function Detects changes in the specified `timeframe`.
-//           In contrario to `timeframe.change()`, it uses 00:00 - 00:00 rather than the exchange session.
-// @returns  bool
-timeChangeOLD(string timeframe) =>
-    var string _tz = getTimezone(timezoneInput)
-    
-    switch timeframe
-        // Most granular timeframe, always even, allow chart tf [1s, 5s, 10s, 15s, 30s]
-        "5S"  => timeframe.change(timeframe)
-        "10S" => timeframe.change(timeframe)
-        "15S" => timeframe.change(timeframe)
-        "30S" => timeframe.change(timeframe)
-        // can be uneven (45min chart / 30min separator), allow any chart tf (e.g., 27min), timezone offsets, possible trading day startime
-        "1"   => intervalChange (timeframe, _tz)
-        "2"   => intervalChange (timeframe, _tz)
-        "3"   => intervalChange (timeframe, _tz)
-        "5"   => intervalChange (timeframe, _tz)
-        "10"  => intervalChange (timeframe, _tz)
-        "15"  => intervalChange (timeframe, _tz)
-        "30"  => intervalChange (timeframe, _tz)
-        "60"  => intervalChange (timeframe, _tz)
-        "120" => intervalChange (timeframe, _tz)
-        "180" => intervalChange (timeframe, _tz)
-        "240" => intervalChange (timeframe, _tz)
-        "360" => intervalChange (timeframe, _tz)
-        "480" => intervalChange (timeframe, _tz)
-        "720" => intervalChange (timeframe, _tz)
-        "1D"  => intervalChange (timeframe, _tz)
-        "1W"  => intervalChange (timeframe, _tz)
-        "1M"  => intervalChange (timeframe, _tz)
-        "3M"  => intervalChange (timeframe, _tz)
-        "6M"  => intervalChange (timeframe, _tz)
-        "12M" => intervalChange (timeframe, _tz)
-
-
 // @function Draw and update time separators on the chart. 
 // @returns  void
 drawSeparator(bool change, color color, int width, string style, int lookback) =>
@@ -357,13 +268,31 @@ drawSeparator(bool change, color color, int width, string style, int lookback) =
             line.delete(_separatorArray.shift())
 
 
+intervalChange(string tf, string session = "", string tz = syminfo.timezone) =>
+    // @variable The next interval UNIX time.
+    var int _next = 0
+    
+    // The current bar opening time is at or over the interval.
+    if time >= _next 
+        _next := time_close(tf, session, tz)
+
+    // The current bar encloses the interval intrabar. Bar can cover two interval (no else if).
+    if time_close > _next
+        _next := time_close(tf, session, tz, -1)
+
+    ta.change(_next) > 0
+
+
 // @function Detects changes in the specified timeframe.
 // @returns  bool
 change(bool enabled, bool exchangeSession, string timeframe, tfTime, tfTimeClose) =>
-    // Viable solution of uneven default timeframe
-    //enabled ? (exchangeSession ? checkForDefaultExchange(tfTime, tfTimeClose) : timeChange(timeframe, getTimezone(timezoneInput))) : na
-
-    enabled ? (exchangeSession ? timeframe.change(timeframe) : timeChangeOLD(timeframe)) : na
+    switch 
+        not enabled => na 
+        timeframe.isseconds => timeframe.change(timeframe)
+        exchangeSession => intervalChange(timeframe)
+        => 
+            var string _tz = getTimezone(timezoneInput)
+            intervalChange(timeframe, "0000-0000", _tz)
 
 
 // @function Check if the specified separator `timeframe` can be displayed on the chart context.
