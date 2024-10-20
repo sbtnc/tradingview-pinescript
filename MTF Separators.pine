@@ -1,6 +1,6 @@
 // © sbtnc
 // Created: 2024-03-10
-// Last modified: 2024-10-20
+// Last modified: 2024-10-12
 // Version 1.0
 
 // @version=5
@@ -20,62 +20,162 @@ color COLOR_4 = color.blue
 
 
 //--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+//@enum
+enum Timeframes
+    o1  = "5 seconds"
+    o2  = "10 seconds"
+    o3  = "15 seconds"
+    o4  = "30 seconds"
+    o5  = "1 minute"
+    o6  = "2 minutes"
+    o7  = "3 minutes"
+    o8  = "5 minutes"
+    o9  = "10 minutes"
+    o10 = "15 minutes"
+    o11 = "30 minutes"
+    o12 = "1 hour"
+    o13 = "2 hours"
+    o14 = "3 hours"
+    o15 = "4 hours"
+    o16 = "6 hours"
+    o17 = "8 hours"
+    o18 = "12 hours"
+    o19 = "1 day"
+    o20 = "1 week"
+    o21 = "1 month"
+    o22 = "3 months"
+    o23 = "6 months"
+    o24 = "12 months"
+
+//@enum
+enum Timezones
+    utc     = "UTC"
+    exch    = "Exchange"
+    cai     = "Africa/Cairo"
+    jnb     = "Africa/Johannesburg"
+    los     = "Africa/Lagos"
+    nbo     = "Africa/Nairobi"
+    tun     = "Africa/Tunis"
+    bue     = "America/Argentina/Buenos_Aires"
+    bog     = "America/Bogota"
+    ccs     = "America/Caracas"
+    chi     = "America/Chicago"
+    den     = "America/Denver"
+    esr     = "America/El_Salvador"
+    jnu     = "America/Juneau"
+    lim     = "America/Lima"
+    lax     = "America/Los_Angeles"
+    nyc     = "America/New_York"
+    mex     = "America/Mexico_City"
+    phx     = "America/Phoenix"
+    scl     = "America/Santiago"
+    sao     = "America/Sao_Paulo"
+    yto     = "America/Toronto"
+    yvr     = "America/Vancouver"
+    ala     = "Asia/Almaty"
+    asb     = "Asia/Ashgabat"
+    bah     = "Asia/Bahrain"
+    bkk     = "Asia/Bangkok"
+    dxb     = "Asia/Dubai"
+    ckg     = "Asia/Chongqing"
+    cmb     = "Asia/Colombo"
+    sgn     = "Asia/Ho_Chi_Minh"
+    hkg     = "Asia/Hong_Kong"
+    ist     = "Asia/Istanbul"
+    jkt     = "Asia/Jakarta"
+    jrs     = "Asia/Jerusalem"
+    khi     = "Asia/Karachi"
+    ktm     = "Asia/Kathmandu"
+    ccu     = "Asia/Kolkata"
+    kwi     = "Asia/Kuwait"
+    mnl     = "Asia/Manila"
+    mct     = "Asia/Muscat"
+    nic     = "Asia/Nicosia"
+    doh     = "Asia/Qatar"
+    ruh     = "Asia/Riyadh"
+    sel     = "Asia/Seoul"
+    sha     = "Asia/Shanghai"
+    sin     = "Asia/Singapore"
+    tpe     = "Asia/Taipei"
+    thr     = "Asia/Tehran"
+    tyo     = "Asia/Tokyo"
+    rgn     = "Asia/Yangon"
+    rek     = "Atlantic/Reykjavik"
+    adl     = "Australia/Adelaide"
+    bne     = "Australia/Brisbane"
+    per     = "Australia/Perth"
+    syd     = "Australia/Sydney"
+    ams     = "Europe/Amsterdam"
+    ath     = "Europe/Athens"
+    beg     = "Europe/Belgrade"
+    ber     = "Europe/Berlin"
+    bts     = "Europe/Bratislava"
+    bru     = "Europe/Brussels"
+    buh     = "Europe/Bucharest"
+    bud     = "Europe/Budapest"
+    cph     = "Europe/Copenhagen"
+    dub     = "Europe/Dublin"
+    hel     = "Europe/Helsinki"
+    mad     = "Europe/Madrid"
+    mla     = "Europe/Malta"
+    mow     = "Europe/Moscow"
+    lis     = "Europe/Lisbon"
+    lon     = "Europe/London"
+    lux     = "Europe/Luxembourg"
+    osl     = "Europe/Oslo"
+    par     = "Europe/Paris"
+    rix     = "Europe/Riga"
+    rom     = "Europe/Rome"
+    sto     = "Europe/Stockholm"
+    tll     = "Europe/Tallinn"
+    vno     = "Europe/Vilnius"
+    waw     = "Europe/Warsaw"
+    zrh     = "Europe/Zurich"
+    akl     = "Pacific/Auckland"
+    cht     = "Pacific/Chatham"
+    fko     = "Pacific/Fakaofo"
+    hnl     = "Pacific/Honolulu"
+    nlk     = "Pacific/Norfolk"
+
+//#endregion
+
+
+//--------------------------------------------------------------------
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string g1    = "Separators"
-string opt1  = "5 seconds"
-string opt2  = "10 seconds"
-string opt3  = "15 seconds"
-string opt4  = "30 seconds"
-string opt5  = "1 minute"
-string opt6  = "2 minutes"
-string opt7  = "3 minutes"
-string opt8  = "5 minutes"
-string opt9  = "10 minutes"
-string opt10 = "15 minutes"
-string opt11 = "30 minutes"
-string opt12 = "1 hour"
-string opt13 = "2 hours"
-string opt14 = "3 hours"
-string opt15 = "4 hours"
-string opt16 = "6 hours"
-string opt17 = "8 hours"
-string opt18 = "12 hours"
-string opt19 = "1 day"
-string opt20 = "1 week"
-string opt21 = "1 month"
-string opt22 = "3 months"
-string opt23 = "6 months"
-string opt24 = "12 months"
+string g1 = "Separators"
 
-enableSeparatorInput1       = input.bool    (true,      "",     group = g1, inline = "#1")
-separatorTimeframeInput1    = input.string  (opt19,     "",     group = g1, inline = "#1", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
-separatorLookbackInput1     = input.int     (50,        "",     group = g1, inline = "#1", minval = 1, maxval = 500, display = display.none)
-enableSeparatorInput2       = input.bool    (true,      "",     group = g1, inline = "#2")
-separatorTimeframeInput2    = input.string  (opt20,     "",     group = g1, inline = "#2", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
-separatorLookbackInput2     = input.int     (50,        "",     group = g1, inline = "#2", minval = 1, maxval = 500, display = display.none)
-enableSeparatorInput3       = input.bool    (true,      "",     group = g1, inline = "#3")
-separatorTimeframeInput3    = input.string  (opt21,     "",     group = g1, inline = "#3", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
-separatorLookbackInput3     = input.int     (50,        "",     group = g1, inline = "#3", minval = 1, maxval = 500, display = display.none)
-enableSeparatorInput4       = input.bool    (false,     "",     group = g1, inline = "#4")
-separatorTimeframeInput4    = input.string  (opt24,     "",     group = g1, inline = "#4", options = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9, opt10, opt11, opt12, opt13, opt14, opt15, opt16, opt17, opt18, opt19, opt20, opt21, opt22, opt23, opt24])
-separatorLookbackInput4     = input.int     (50,        "",     group = g1, inline = "#4", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput1       = input.bool    (true,              title = "", group = g1, inline = "#1")
+separatorTimeframeInput1    = input.enum    (Timeframes.o19,    title = "", group = g1, inline = "#1")
+separatorLookbackInput1     = input.int     (50,                title = "", group = g1, inline = "#1", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput2       = input.bool    (true,              title = "", group = g1, inline = "#2")
+separatorTimeframeInput2    = input.enum    (Timeframes.o20,    title = "", group = g1, inline = "#2")
+separatorLookbackInput2     = input.int     (50,                title = "", group = g1, inline = "#2", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput3       = input.bool    (true,              title = "", group = g1, inline = "#3")
+separatorTimeframeInput3    = input.enum    (Timeframes.o21,    title = "", group = g1, inline = "#3")
+separatorLookbackInput3     = input.int     (50,                title = "", group = g1, inline = "#3", minval = 1, maxval = 500, display = display.none)
+enableSeparatorInput4       = input.bool    (false,             title = "", group = g1, inline = "#4")
+separatorTimeframeInput4    = input.enum    (Timeframes.o24,    title = "", group = g1, inline = "#4")
+separatorLookbackInput4     = input.int     (50,                title = "", group = g1, inline = "#4", minval = 1, maxval = 500, display = display.none)
 
 string g2 = "Style"
 
-separatorColorInput1        = input.color   (COLOR_1,   "",     group = g2, inline = "#1")
-separatorWidthInput1        = input.int     (3,         "",     group = g2, inline = "#1", minval = 1, display = display.none)
-separatorStyleInput1        = input.string  ("Dotted",  "",     group = g2, inline = "#1", options =["Solid", "Dashed", "Dotted"], display = display.none)
-separatorColorInput2        = input.color   (COLOR_2,   "",     group = g2, inline = "#2")
-separatorWidthInput2        = input.int     (1,         "",     group = g2, inline = "#2", minval = 1, display = display.none)
-separatorStyleInput2        = input.string  ("Solid",   "",     group = g2, inline = "#2", options =["Solid", "Dashed", "Dotted"], display = display.none)
-separatorColorInput3        = input.color   (COLOR_3,   "",     group = g2, inline = "#3")
-separatorWidthInput3        = input.int     (2,         "",     group = g2, inline = "#3", minval = 1, display = display.none)
-separatorStyleInput3        = input.string  ("Solid",   "",     group = g2, inline = "#3", options =["Solid", "Dashed", "Dotted"], display = display.none)
-separatorColorInput4        = input.color   (COLOR_4,   "",     group = g2, inline = "#4")
-separatorWidthInput4        = input.int     (3,         "",     group = g2, inline = "#4", minval = 1, display = display.none)
-separatorStyleInput4        = input.string  ("Solid",   "",     group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput1        = input.color   (COLOR_1,           title = "", group = g2, inline = "#1")
+separatorWidthInput1        = input.int     (3,                 title = "", group = g2, inline = "#1", minval = 1, display = display.none)
+separatorStyleInput1        = input.string  ("Dotted",          title = "", group = g2, inline = "#1", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput2        = input.color   (COLOR_2,           title = "", group = g2, inline = "#2")
+separatorWidthInput2        = input.int     (1,                 title = "", group = g2, inline = "#2", minval = 1, display = display.none)
+separatorStyleInput2        = input.string  ("Solid",           title = "", group = g2, inline = "#2", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput3        = input.color   (COLOR_3,           title = "", group = g2, inline = "#3")
+separatorWidthInput3        = input.int     (2,                 title = "", group = g2, inline = "#3", minval = 1, display = display.none)
+separatorStyleInput3        = input.string  ("Solid",           title = "", group = g2, inline = "#3", options =["Solid", "Dashed", "Dotted"], display = display.none)
+separatorColorInput4        = input.color   (COLOR_4,           title = "", group = g2, inline = "#4")
+separatorWidthInput4        = input.int     (3,                 title = "", group = g2, inline = "#4", minval = 1, display = display.none)
+separatorStyleInput4        = input.string  ("Solid",           title = "", group = g2, inline = "#4", options =["Solid", "Dashed", "Dotted"], display = display.none)
 
 string g3               = "Preferences"
 string refOpt1          = "Session Time"
@@ -91,98 +191,8 @@ string timezoneTooltip  = "By default, the indicator uses the exchange timezone.
                          "When using the \"Day Time\" option as a reference, you can choose a particular timezone to determine the start of the day.\n\n" +
                          "Note: this implies looking at minutes data and might reduce the number of separators on higher timeframes charts."
 
-referenceInput              = input.string  (refOpt1,       "Reference",    group = g3, tooltip = referenceTooltip, options = [refOpt2, refOpt1])
-timezoneInput               = input.string  ("Exchange",    "Timezone",     group = g3, tooltip = timezoneTooltip, options = [
-     "UTC",
-     "Exchange",
-     "Africa/Cairo",
-     "Africa/Johannesburg",
-     "Africa/Lagos",
-     "Africa/Nairobi",
-     "Africa/Tunis",
-     "America/Argentina/Buenos_Aires",
-     "America/Bogota",
-     "America/Caracas",
-     "America/Chicago",
-     "America/Denver",
-     "America/El_Salvador",
-     "America/Juneau",
-     "America/Lima",
-     "America/Los_Angeles",
-     "America/New_York",
-     "America/Mexico_City",
-     "America/Phoenix",
-     "America/Santiago",
-     "America/Sao_Paulo",
-     "America/Toronto",
-     "America/Vancouver",
-     "Asia/Almaty",
-     "Asia/Ashgabat",
-     "Asia/Bahrain",
-     "Asia/Bangkok",
-     "Asia/Dubai",
-     "Asia/Chongqing",
-     "Asia/Colombo",
-     "Asia/Ho_Chi_Minh",
-     "Asia/Hong_Kong",
-     "Asia/Istanbul",
-     "Asia/Jakarta",
-     "Asia/Jerusalem",
-     "Asia/Karachi",
-     "Asia/Kathmandu",
-     "Asia/Kolkata",
-     "Asia/Kuwait",
-     "Asia/Manila",
-     "Asia/Muscat",
-     "Asia/Nicosia",
-     "Asia/Qatar",
-     "Asia/Riyadh",
-     "Asia/Seoul",
-     "Asia/Shanghai",
-     "Asia/Singapore",
-     "Asia/Taipei",
-     "Asia/Tehran",
-     "Asia/Tokyo",
-     "Asia/Yangon",
-     "Atlantic/Reykjavik",
-     "Australia/Adelaide",
-     "Australia/Brisbane",
-     "Australia/Perth",
-     "Australia/Sydney",
-     "Europe/Amsterdam",
-     "Europe/Athens",
-     "Europe/Belgrade",
-     "Europe/Berlin",
-     "Europe/Bratislava",
-     "Europe/Brussels",
-     "Europe/Bucharest",
-     "Europe/Budapest",
-     "Europe/Copenhagen",
-     "Europe/Dublin",
-     "Europe/Helsinki",
-     "Europe/Madrid",
-     "Europe/Malta",
-     "Europe/Moscow",
-     "Europe/Lisbon",
-     "Europe/London",
-     "Europe/Luxembourg",
-     "Europe/Oslo",
-     "Europe/Paris",
-     "Europe/Riga",
-     "Europe/Rome",
-     "Europe/Stockholm",
-     "Europe/Tallinn",
-     "Europe/Vilnius",
-     "Europe/Warsaw",
-     "Europe/Zurich",
-     "Pacific/Auckland",
-     "Pacific/Chatham",
-     "Pacific/Fakaofo",
-     "Pacific/Honolulu",
-     "Pacific/Norfolk"
-     ],
-     display = display.none
- )
+referenceInput              = input.string  (refOpt1,               "Reference", group = g3, tooltip = referenceTooltip, options = [refOpt2, refOpt1])
+timezoneInput               = input.enum    (Timezones.exch,        "Timezone",  group = g3, tooltip = timezoneTooltip, display = display.none)
 
 //#endregion
 
@@ -193,41 +203,41 @@ timezoneInput               = input.string  ("Exchange",    "Timezone",     grou
 
 // @function Produce the `timeframe` parameter from the given user string input.
 // @returns  string
-method param(simple string input) =>
-    switch input 
-        "5 seconds"  => "5S"
-        "10 seconds" => "10S"
-        "15 seconds" => "15S"
-        "30 seconds" => "30S"
-        "1 minute"   => "1"
-        "2 minutes"  => "2"
-        "3 minutes"  => "3"
-        "5 minutes"  => "5"
-        "10 minutes" => "10"
-        "15 minutes" => "15"
-        "30 minutes" => "30"
-        "1 hour"     => "60"
-        "2 hours"    => "120"
-        "3 hours"    => "180"
-        "4 hours"    => "240"
-        "6 hours"    => "360"
-        "8 hours"    => "480"
-        "12 hours"   => "720"
-        "1 day"      => "1D"
-        "1 week"     => "1W"
-        "1 month"    => "1M" 
-        "3 months"   => "3M"
-        "6 months"   => "6M"
-        "12 months"  => "12M"
+method param(simple Timeframes input) =>
+    switch input
+        Timeframes.o1  => "5S"
+        Timeframes.o2  => "10S"
+        Timeframes.o3  => "15S"
+        Timeframes.o4  => "30S"
+        Timeframes.o5  => "1"
+        Timeframes.o6  => "2"
+        Timeframes.o7  => "3"
+        Timeframes.o8  => "5"
+        Timeframes.o9  => "10"
+        Timeframes.o10 => "15"
+        Timeframes.o11 => "30"
+        Timeframes.o12 => "60"
+        Timeframes.o13 => "120"
+        Timeframes.o14 => "180"
+        Timeframes.o15 => "240"
+        Timeframes.o16 => "360"
+        Timeframes.o17 => "480"
+        Timeframes.o18 => "720"
+        Timeframes.o19 => "1D"
+        Timeframes.o20 => "1W"
+        Timeframes.o21 => "1M" 
+        Timeframes.o22 => "3M"
+        Timeframes.o23 => "6M"
+        Timeframes.o24 => "12M"
 
 
 // @function Produce the `timezone` parameter from the given user string input.
 // @returns  string
-getTimezone(simple string input) =>
+getTimezone(simple Timezones input) =>
     switch input
-        "UTC"       => "UTC+0"
-        "Exchange"  => syminfo.timezone  
-        => input
+        Timezones.utc   => "UTC+0"
+        Timezones.exch  => syminfo.timezone
+        =>                 str.tostring(input)
 
 
 // @function Produce the line `style` parameter from the given user string input.
