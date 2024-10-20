@@ -1,10 +1,10 @@
 // © sbtnc
 // Created: 2024-03-10
-// Last modified: 2024-10-12
+// Last modified: 2024-10-20
 // Version 1.0
 
 // @version=5
-indicator("Multi-Timeframe Separators bis", "MTF Separators", overlay = true, max_lines_count = 500)
+indicator("Multi-Timeframe Separators", "MTF Separators", overlay = true, max_lines_count = 500)
 
 
 //--------------------------------------------------------------------
@@ -268,6 +268,8 @@ drawSeparator(bool change, color color, int width, string style, int lookback) =
             line.delete(_separatorArray.shift())
 
 
+// @function
+// @returns  
 intervalChange(string tf, string session, string tz) =>
     // @variable The next interval UNIX time.
     var int _next = 0
@@ -286,9 +288,11 @@ intervalChange(string tf, string session, string tz) =>
 // @function Detects changes in the specified timeframe.
 // @returns  bool
 method change(string timeframe, bool customTime) =>
+    var string _customTz = getTimezone(timezoneInput)
+    
     switch 
         timeframe.isseconds => timeframe.change(timeframe)
-        customTime          => intervalChange(timeframe, "0000-0000", getTimezone(timezoneInput))
+        customTime          => intervalChange(timeframe, "0000-0000", _customTz)
         =>                     intervalChange(timeframe, "", syminfo.timezone)
 
 
