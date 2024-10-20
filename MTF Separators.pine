@@ -285,9 +285,8 @@ intervalChange(string tf, string session, string tz) =>
 
 // @function Detects changes in the specified timeframe.
 // @returns  bool
-change(bool enabled, string timeframe, bool customTime) =>
+change(string timeframe, bool customTime) =>
     switch 
-        not enabled         => na 
         timeframe.isseconds => timeframe.change(timeframe)
         customTime          => intervalChange(timeframe, "0000-0000", getTimezone(timezoneInput))
         =>                     intervalChange(timeframe, "", syminfo.timezone)
@@ -331,10 +330,10 @@ var bool display4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool change1 = change(display1, separatorTimeframe1, customTime)
-bool change2 = change(display2, separatorTimeframe2, customTime)
-bool change3 = change(display3, separatorTimeframe3, customTime)
-bool change4 = change(display4, separatorTimeframe4, customTime)
+bool change1 = display1 ? change(separatorTimeframe1, customTime) : na
+bool change2 = display2 ? change(separatorTimeframe2, customTime) : na
+bool change3 = display3 ? change(separatorTimeframe3, customTime) : na
+bool change4 = display4 ? change(separatorTimeframe4, customTime) : na
 
 //#endregion
 
@@ -342,8 +341,6 @@ bool change4 = change(display4, separatorTimeframe4, customTime)
 //--------------------------------------------------------------------
 //#region                        Visuals
 //--------------------------------------------------------------------
-
-// Plot the higher timeframe separators enabled in the inputs settings.
 
 if display1
     drawSeparator(
