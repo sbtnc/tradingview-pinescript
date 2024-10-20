@@ -285,7 +285,7 @@ intervalChange(string tf, string session = "", string tz = syminfo.timezone) =>
 
 // @function Detects changes in the specified timeframe.
 // @returns  bool
-change(bool enabled, bool exchangeSession, string timeframe, tfTime, tfTimeClose) =>
+change(bool enabled, bool exchangeSession, string timeframe) =>
     switch 
         not enabled => na 
         timeframe.isseconds => timeframe.change(timeframe)
@@ -325,15 +325,10 @@ var string separatorTimeframe4 = separatorTimeframeInput4.param()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-[tfTime1, tfTimeClose1] = request.security("", separatorTimeframe1, [time, time_close], lookahead = barmerge.lookahead_on)
-[tfTime2, tfTimeClose2] = request.security("", separatorTimeframe2, [time, time_close], lookahead = barmerge.lookahead_on)
-[tfTime3, tfTimeClose3] = request.security("", separatorTimeframe3, [time, time_close], lookahead = barmerge.lookahead_on)
-[tfTime4, tfTimeClose4] = request.security("", separatorTimeframe4, [time, time_close], lookahead = barmerge.lookahead_on)
-
-bool change1 = change(enableSeparatorInput1, useExchangeSession, separatorTimeframe1, tfTime1, tfTimeClose1)
-bool change2 = change(enableSeparatorInput2, useExchangeSession, separatorTimeframe2, tfTime2, tfTimeClose2)
-bool change3 = change(enableSeparatorInput3, useExchangeSession, separatorTimeframe3, tfTime3, tfTimeClose3)
-bool change4 = change(enableSeparatorInput4, useExchangeSession, separatorTimeframe4, tfTime4, tfTimeClose4)
+bool change1 = change(enableSeparatorInput1, useExchangeSession, separatorTimeframe1)
+bool change2 = change(enableSeparatorInput2, useExchangeSession, separatorTimeframe2)
+bool change3 = change(enableSeparatorInput3, useExchangeSession, separatorTimeframe3)
+bool change4 = change(enableSeparatorInput4, useExchangeSession, separatorTimeframe4)
 
 //#endregion
 
