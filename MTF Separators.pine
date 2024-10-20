@@ -296,9 +296,9 @@ change(bool enabled, bool exchangeSession, string timeframe) =>
 
 
 // @function Check if the specified separator `timeframe` can be displayed on the chart context.
-// @returns  bool
-method isVisible(string timeframe) =>
-    var bool _isVisible = timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+// @returns  simple bool
+method isVisible(simple string timeframe) =>
+    timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
 //#endregion
 
