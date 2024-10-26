@@ -199,7 +199,7 @@ string timezoneTooltip  = "By default, the indicator uses the exchange timezone.
                          "When using the \"Day Time\" option as a reference, you can choose a particular timezone to determine the start of the day.\n\n" +
                          "Note: this implies looking at minutes data and might reduce the number of separators on higher timeframes charts."
 
-string     referenceInput           = input.string  (refOpt1,           title = "Reference", group = g3, tooltip = referenceTooltip, options = [refOpt2, refOpt1])
+string     timeReferenceInput       = input.string  (refOpt1,           title = "Reference", group = g3, tooltip = referenceTooltip, options = [refOpt2, refOpt1])
 Timezones  timezoneInput            = input.enum    (Timezones.exch,    title = "Timezone",  group = g3, tooltip = timezoneTooltip, display = display.none)
 
 //#endregion
@@ -257,12 +257,12 @@ method param(simple LineStyles input) =>
         LineStyles.dashed => line.style_dashed
 
 
-// @function Draw and update time separators on the chart. 
+// @function Create and maintain time separators on the chart. 
 // @returns  void
 drawSeparator(bool change, color color, int width, simple LineStyles style, int lookback) =>
     // @variable The collection of visible separators.
     var array<line> _separatorArray = array.new_line()
-    // @variable The static separator line style.
+    // @variable The separator line style.
     var string _style = style.param()
 
     if change
@@ -286,24 +286,24 @@ drawSeparator(bool change, color color, int width, simple LineStyles style, int 
             line.delete(_separatorArray.shift())
 
 
-// @function
-// @returns  
-intervalChange(string tf, string session, string tz) =>
+// @function Check if the time has ellapsed since the last interval.
+// @returns  bool
+intervalChange(string timeframe, string session, string timezone) =>
     // @variable The next interval UNIX time.
     var int _next = 0
     
     // The current bar opening time is at or over the interval.
     if time >= _next 
-        _next := time_close(tf, session, tz)
+        _next := time_close(timeframe, session, timezone)
 
     // The current bar encloses the interval intrabar. Bar can cover two interval (no else if).
     if time_close > _next
-        _next := time_close(tf, session, tz, -1)
+        _next := time_close(timeframe, session, timezone, -1)
 
     ta.change(_next) > 0
 
 
-// @function Detects changes in the specified timeframe.
+// @function Detect changes in the specified timeframe.
 // @returns  bool
 method change(string timeframe, bool customTime) =>
     var string _customTz = timezoneInput.param()
@@ -326,20 +326,18 @@ method isVisible(simple string timeframe) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-// @variable Is true if the separators are based on the exchange session.
-var bool customTime = referenceInput == refOpt2
+// @variable Is true if the separators are based on 00:00.
+var bool customTime = timeReferenceInput == refOpt2
 
 
-// Convert the separator timeframe user inputs into `timeframe` parameters.
-
+// @variable The `timeframe` parameters produced from the user inputs.
 var string separatorTimeframe1 = separatorTimeframeInput1.param()
 var string separatorTimeframe2 = separatorTimeframeInput2.param()
 var string separatorTimeframe3 = separatorTimeframeInput3.param()
 var string separatorTimeframe4 = separatorTimeframeInput4.param()
 
 
-//
-
+// @variable Is true if the display setting is enabled and chart timeframe is lower than the separator's one.
 var bool display1 = enableSeparatorInput1 and separatorTimeframe1.isVisible()
 var bool display2 = enableSeparatorInput2 and separatorTimeframe2.isVisible()
 var bool display3 = enableSeparatorInput3 and separatorTimeframe3.isVisible()
