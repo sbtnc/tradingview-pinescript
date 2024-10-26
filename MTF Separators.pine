@@ -338,10 +338,10 @@ var string separatorTimeframe4 = separatorTimeframeInput4.param()
 
 
 // @variable Is true if the display setting is enabled and chart timeframe is lower than the separator's one.
-var bool display1 = enableSeparatorInput1 and separatorTimeframe1.isVisible()
-var bool display2 = enableSeparatorInput2 and separatorTimeframe2.isVisible()
-var bool display3 = enableSeparatorInput3 and separatorTimeframe3.isVisible()
-var bool display4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
+var bool displaySeparator1 = enableSeparatorInput1 and separatorTimeframe1.isVisible()
+var bool displaySeparator2 = enableSeparatorInput2 and separatorTimeframe2.isVisible()
+var bool displaySeparator3 = enableSeparatorInput3 and separatorTimeframe3.isVisible()
+var bool displaySeparator4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
 
 //#endregion
 
@@ -350,10 +350,10 @@ var bool display4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool change1 = display1 ? separatorTimeframe1.change(customTime) : na
-bool change2 = display2 ? separatorTimeframe2.change(customTime) : na
-bool change3 = display3 ? separatorTimeframe3.change(customTime) : na
-bool change4 = display4 ? separatorTimeframe4.change(customTime) : na
+bool separatorChange1 = displaySeparator1 ? separatorTimeframe1.change(customTime) : na
+bool separatorChange2 = displaySeparator2 ? separatorTimeframe2.change(customTime) : na
+bool separatorChange3 = displaySeparator3 ? separatorTimeframe3.change(customTime) : na
+bool separatorChange4 = displaySeparator4 ? separatorTimeframe4.change(customTime) : na
 
 //#endregion
 
@@ -362,36 +362,36 @@ bool change4 = display4 ? separatorTimeframe4.change(customTime) : na
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-if display1
+if displaySeparator1
     drawSeparator(
-         change1,
+         separatorChange1,
          separatorColorInput1,
          separatorWidthInput1,
          separatorStyleInput1,
          separatorLookbackInput1
          )
 
-if display2
+if displaySeparator2
     drawSeparator(
-         change2,
+         separatorChange2,
          separatorColorInput2,
          separatorWidthInput2,
          separatorStyleInput2,
          separatorLookbackInput2
          )
 
-if display3
+if displaySeparator3
     drawSeparator(
-         change3,
+         separatorChange3,
          separatorColorInput3,
          separatorWidthInput3,
          separatorStyleInput3,
          separatorLookbackInput3
          )
 
-if display4
+if displaySeparator4
     drawSeparator(
-         change4,
+         separatorChange4,
          separatorColorInput4,
          separatorWidthInput4,
          separatorStyleInput4,
