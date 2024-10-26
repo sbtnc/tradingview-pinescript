@@ -200,8 +200,7 @@ string referenceTooltip = "By default, the indicator uses the start of the tradi
                          "Drawing 2 hours separators produces for \"Session Time\" the intervals [09:30, 11:30, 13:30, 15:30] " +
                          "like the bars seen on the 2h chart, or for \"Day Time\" the intervals [10:00, 12:00, 14:00, 16:00]."       
 string timezoneTooltip  = "By default, the indicator uses the exchange timezone. See \"Security Info\" for more details.\n\n" +
-                         "When using the \"Day Time\" option as a reference, you can choose a particular timezone to determine the start of the day.\n\n" +
-                         "Note: this implies looking at minutes data and might reduce the number of separators on higher timeframes charts."
+                         "When using the \"Day Time\" option as a reference, you can choose a particular timezone to determine the start of the day."
 
 TimeReference timeReferenceInput    = input.enum    (TimeReference.session, title = "Reference", group = g3, tooltip = referenceTooltip)
 Timezones     timezoneInput         = input.enum    (Timezones.exch,        title = "Timezone",  group = g3, tooltip = timezoneTooltip, display = display.none)
