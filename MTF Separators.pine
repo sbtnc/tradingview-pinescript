@@ -186,8 +186,8 @@ int        separatorWidthInput4     = input.int     (3,                 title = 
 LineStyles separatorStyleInput4     = input.enum    (LineStyles.solid,  title = "", group = g2, inline = "#4", display = display.none)
 
 string g3               = "Preferences"
-string refOpt1          = "Session Time"
-string refOpt2          = "Day Time"
+string sessionReference = "Session Time"
+string dayReference     = "Day Time"
 string referenceTooltip = "By default, the indicator uses the start of the trading session as a point of reference. " +
                          "See \"Security Info\" for more details.\n\n" + 
                          "In some markets, when the start of the trading session differs from the start of the day, " +
@@ -199,7 +199,7 @@ string timezoneTooltip  = "By default, the indicator uses the exchange timezone.
                          "When using the \"Day Time\" option as a reference, you can choose a particular timezone to determine the start of the day.\n\n" +
                          "Note: this implies looking at minutes data and might reduce the number of separators on higher timeframes charts."
 
-string     timeReferenceInput       = input.string  (refOpt1,           title = "Reference", group = g3, tooltip = referenceTooltip, options = [refOpt2, refOpt1])
+string     timeReferenceInput       = input.string  (sessionReference,  title = "Reference", group = g3, tooltip = referenceTooltip, options = [sessionReference, dayReference])
 Timezones  timezoneInput            = input.enum    (Timezones.exch,    title = "Timezone",  group = g3, tooltip = timezoneTooltip, display = display.none)
 
 //#endregion
@@ -305,12 +305,12 @@ intervalChange(string timeframe, string session, string timezone) =>
 
 // @function Detect changes in the specified timeframe.
 // @returns  bool
-method change(string timeframe, bool customTime) =>
+method change(string timeframe, bool hasCustomTime) =>
     var string _customTz = timezoneInput.param()
     
     switch 
         timeframe.isseconds => timeframe.change(timeframe)
-        customTime          => intervalChange(timeframe, "0000-0000", _customTz)
+        hasCustomTime       => intervalChange(timeframe, "0000-0000", _customTz)
         =>                     intervalChange(timeframe, "", syminfo.timezone)
 
 
@@ -327,7 +327,7 @@ method isVisible(simple string timeframe) =>
 //--------------------------------------------------------------------
 
 // @variable Is true if the separators are based on 00:00.
-var bool customTime = timeReferenceInput == refOpt2
+var bool hasCustomTime = timeReferenceInput == dayReference
 
 
 // @variable The `timeframe` parameters produced from the user inputs.
@@ -350,10 +350,10 @@ var bool displaySeparator4 = enableSeparatorInput4 and separatorTimeframe4.isVis
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool separatorChange1 = displaySeparator1 ? separatorTimeframe1.change(customTime) : na
-bool separatorChange2 = displaySeparator2 ? separatorTimeframe2.change(customTime) : na
-bool separatorChange3 = displaySeparator3 ? separatorTimeframe3.change(customTime) : na
-bool separatorChange4 = displaySeparator4 ? separatorTimeframe4.change(customTime) : na
+bool separatorChange1 = displaySeparator1 ? separatorTimeframe1.change(hasCustomTime) : na
+bool separatorChange2 = displaySeparator2 ? separatorTimeframe2.change(hasCustomTime) : na
+bool separatorChange3 = displaySeparator3 ? separatorTimeframe3.change(hasCustomTime) : na
+bool separatorChange4 = displaySeparator4 ? separatorTimeframe4.change(hasCustomTime) : na
 
 //#endregion
 
