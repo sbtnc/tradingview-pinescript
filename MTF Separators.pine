@@ -1,20 +1,20 @@
 // © sbtnc
 // Created: 2024-03-10
-// Last modified: 2024-10-26
+// Last modified: 2024-11-03
 // Version 1.0
 
 // @version=5
-indicator("Multi-Timeframe Separators", "MTF Separators", overlay = true, max_lines_count = 500)
+indicator("Multi-Timeframe Period Separators", "MTF Separators", overlay = true, max_lines_count = 500)
 
 
 //--------------------------------------------------------------------
 //#region                      Constants
 //--------------------------------------------------------------------
 
-color COLOR_1 = color.green
-color COLOR_2 = color.orange
-color COLOR_3 = color.red
-color COLOR_4 = color.blue
+color COLOR_1 = color.new(color.green,  50)
+color COLOR_2 = color.new(color.orange, 50)
+color COLOR_3 = color.new(color.red,    50)
+color COLOR_4 = color.new(color.blue,   50)
 
 //#endregion
 
@@ -151,8 +151,8 @@ enum LineStyles
 
 // @enum Contains fields with the separator time references as titles.
 enum TimeReference 
-    session = "Session Time"
-    day     = "Day Time"
+    session = "Session"
+    day     = "Day"
 
 //#endregion
 
@@ -179,7 +179,7 @@ int        separatorLookbackInput4  = input.int     (50,                title = 
 string g2 = "Style"
 
 color      separatorColorInput1     = input.color   (COLOR_1,           title = "", group = g2, inline = "#1")
-int        separatorWidthInput1     = input.int     (3,                 title = "", group = g2, inline = "#1", minval = 1, display = display.none)
+int        separatorWidthInput1     = input.int     (1,                 title = "", group = g2, inline = "#1", minval = 1, display = display.none)
 LineStyles separatorStyleInput1     = input.enum    (LineStyles.dotted, title = "", group = g2, inline = "#1", display = display.none)
 color      separatorColorInput2     = input.color   (COLOR_2,           title = "", group = g2, inline = "#2")
 int        separatorWidthInput2     = input.int     (1,                 title = "", group = g2, inline = "#2", minval = 1, display = display.none)
@@ -192,15 +192,15 @@ int        separatorWidthInput4     = input.int     (3,                 title = 
 LineStyles separatorStyleInput4     = input.enum    (LineStyles.solid,  title = "", group = g2, inline = "#4", display = display.none)
 
 string g3               = "Preferences"
-string referenceTooltip = "By default, the indicator uses the start of the trading session as a point of reference. " +
+string referenceTooltip = "By default, the indicator uses the start of the exchange trading session as a point of reference. " +
                          "See \"Security Info\" for more details.\n\n" + 
                          "In some markets, when the start of the trading session differs from the start of the day, " +
-                         "you can use the \"Day Time\" option to prefer 00:00 instead.\n\n" +
-                         "For example, the trading session on S&P500 is from 09:30 to 16:10 New York time. " +
-                         "Drawing 2 hours separators produces for \"Session Time\" the intervals [09:30, 11:30, 13:30, 15:30] " +
-                         "like the bars seen on the 2h chart, or for \"Day Time\" the intervals [10:00, 12:00, 14:00, 16:00]."       
+                         "you can use the \"Day\" option to prefer midnight 00:00 instead.\n\n" +
+                         "For example, on EURUSD, the trading session is 17:00-17:00 New York time. " +
+                         "1-day separators plot at 17:00 with \"Session\" and 00:00 with \"Day\". " +
+                         "Furthermore, 6-hour separators plot at [17:00, 23:00, 05:00, 11:00] with \"Session\" and [00:00, 06:00, 12:00, 18:00] with \"Day\"."       
 string timezoneTooltip  = "By default, the indicator uses the exchange timezone. See \"Security Info\" for more details.\n\n" +
-                         "When using the \"Day Time\" option as a reference, you can choose a particular timezone to determine the start of the day."
+                         "When using the \"Day\" option as a reference, you can choose a particular timezone to determine the start of the day."
 
 TimeReference timeReferenceInput    = input.enum    (TimeReference.session, title = "Reference", group = g3, tooltip = referenceTooltip)
 Timezones     timezoneInput         = input.enum    (Timezones.exch,        title = "Timezone",  group = g3, tooltip = timezoneTooltip, display = display.none)
