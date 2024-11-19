@@ -71,21 +71,36 @@ bool    extendedHoursInput      = input.bool        (false,     title = "Extende
 
 
 //--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+// @function Check if the specified open `timeframe` can be displayed on the chart context.
+// @returns  simple bool
+method isVisible(simple string timeframe) =>
+    timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+
+//#endregion
+
+
+
+//--------------------------------------------------------------------
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-var a_lastOpens             = array.new_float(4)
-var canShowDaily            = enableOpenInput1 and timeframe.isintraday
-var canShowWeekly           = enableOpenInput2 and (timeframe.isintraday or timeframe.isdaily)
-var canShowMonthly          = enableOpenInput3 and not timeframe.ismonthly
-var canShowYearly           = enableOpenInput4 and not (timeframe.ismonthly and timeframe.multiplier >= 12)
-var hasExtendedHours        = extendedHoursInput and syminfo.session == session.extended
-var discoverPrices          = discoverPricesInput or hasExtendedHours
+var array<float> lastOpenArray  = array.new_float(4)
+var bool hasExtendedHours       = extendedHoursInput and syminfo.session == session.extended
+var bool discoverPrices         = discoverPricesInput or hasExtendedHours
 
-[dailyTime, dailyOpen]      = request.security(syminfo.tickerid, 'D',   [time, open], lookahead=barmerge.lookahead_on)
-[weeklyTime, weeklyOpen]    = request.security(syminfo.tickerid, 'W',   [time, open], lookahead=barmerge.lookahead_on)
-[monthlyTime, monthlyOpen]  = request.security(syminfo.tickerid, 'M',   [time, open], lookahead=barmerge.lookahead_on)
-[yearlyTime, yearlyOpen]    = request.security(syminfo.tickerid, '12M', [time, open], lookahead=barmerge.lookahead_on)
+// @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
+var bool displayOpen1 = enableOpenInput1 and openTimeframeInput1.isVisible()
+var bool displayOpen2 = enableOpenInput2 and openTimeframeInput2.isVisible()
+var bool displayOpen3 = enableOpenInput3 and openTimeframeInput3.isVisible()
+var bool displayOpen4 = enableOpenInput4 and openTimeframeInput4.isVisible()
+
+[time1, open1] = request.security("", openTimeframeInput1, [time, open], lookahead=barmerge.lookahead_on)
+[time2, open2] = request.security("", openTimeframeInput2, [time, open], lookahead=barmerge.lookahead_on)
+[time3, open3] = request.security("", openTimeframeInput3, [time, open], lookahead=barmerge.lookahead_on)
+[time4, open4] = request.security("", openTimeframeInput4, [time, open], lookahead=barmerge.lookahead_on)
 
 //#endregion
 
@@ -99,13 +114,13 @@ var discoverPrices          = discoverPricesInput or hasExtendedHours
 f_getPadding(int _index) =>
     _padding = 0
     // Weekly, monthly, or yearly overlaps the daily open
-    if _index > 0 and canShowDaily and array.get(a_lastOpens, 0) == array.get(a_lastOpens, _index)
+    if _index > 0 and displayOpen1 and array.get(lastOpenArray, 0) == array.get(lastOpenArray, _index)
         _padding += 1
     // Monthly or yearly overlaps the weekly open
-    if _index > 1 and canShowWeekly and array.get(a_lastOpens, 1) == array.get(a_lastOpens, _index)
+    if _index > 1 and displayOpen2 and array.get(lastOpenArray, 1) == array.get(lastOpenArray, _index)
         _padding += 1
     // Yearly overlaps the monthly open
-    if _index > 2 and canShowMonthly and array.get(a_lastOpens, 2) == array.get(a_lastOpens, _index)
+    if _index > 2 and displayOpen3 and array.get(lastOpenArray, 2) == array.get(lastOpenArray, _index)
         _padding += 1
     _padding
 
@@ -162,7 +177,7 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
             // Not updating the last open's projection
             for i = 0 to array.size(_heads) - 2
                 // Avoid projecting on last opens bodies
-                if not array.includes(a_lastOpens, line.get_y1(array.get(_heads, i)))
+                if not array.includes(lastOpenArray, line.get_y1(array.get(_heads, i)))
                     line.set_x2(array.get(_heads, i), f_getRightBarIndex(HEAD_PADDING))
 
 //#endregion
@@ -172,22 +187,22 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
 //#region                         Logic
 //--------------------------------------------------------------------
 
-hasDailyTimeChanged     = hasExtendedHours ? ta.change(time_tradingday) : discoverPrices ? f_hasChanged(dailyTime) and time == dailyTime        : f_hasChanged(dailyTime)
-hasWeekklyTimeChanged   = hasExtendedHours ? ta.change(weekofyear)      : discoverPrices ? f_hasChanged(weeklyTime) and time == weeklyTime      : f_hasChanged(weeklyTime)
-hasMonthlyTimeChanged   = hasExtendedHours ? ta.change(month)           : discoverPrices ? f_hasChanged(monthlyTime) and time == monthlyTime    : f_hasChanged(monthlyTime)
-hasYearlyTimeChanged    = hasExtendedHours ? ta.change(year)            : discoverPrices ? f_hasChanged(yearlyTime) and time == yearlyTime      : f_hasChanged(yearlyTime)
+bool hastime1Changed        = hasExtendedHours ? ta.change(time_tradingday) : discoverPrices ? f_hasChanged(time1) and time == time1        : f_hasChanged(time1)
+bool hasWeekklyTimeChanged  = hasExtendedHours ? ta.change(weekofyear)      : discoverPrices ? f_hasChanged(time2) and time == time2      : f_hasChanged(time2)
+bool hastime3Changed        = hasExtendedHours ? ta.change(month)           : discoverPrices ? f_hasChanged(time3) and time == time3    : f_hasChanged(time3)
+bool hastime4Changed        = hasExtendedHours ? ta.change(year)            : discoverPrices ? f_hasChanged(time4) and time == time4      : f_hasChanged(time4)
 
-if canShowDaily and hasDailyTimeChanged 
-    array.set(a_lastOpens, 0, discoverPrices ? open : dailyOpen)
+if displayOpen1 and hastime1Changed 
+    array.set(lastOpenArray, 0, discoverPrices ? open : open1)
 
-if canShowWeekly and hasWeekklyTimeChanged
-    array.set(a_lastOpens, 1, discoverPrices ? open : weeklyOpen)
+if displayOpen2 and hasWeekklyTimeChanged
+    array.set(lastOpenArray, 1, discoverPrices ? open : open2)
 
-if canShowMonthly and hasMonthlyTimeChanged
-    array.set(a_lastOpens, 2, discoverPrices ? open : monthlyOpen)
+if displayOpen3 and hastime3Changed
+    array.set(lastOpenArray, 2, discoverPrices ? open : open3)
 
-if canShowYearly and hasYearlyTimeChanged
-    array.set(a_lastOpens, 3, discoverPrices ? open : yearlyOpen)
+if displayOpen4 and hastime4Changed
+    array.set(lastOpenArray, 3, discoverPrices ? open : open4)
 
 //#endregion
 
@@ -196,23 +211,23 @@ if canShowYearly and hasYearlyTimeChanged
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-if canShowYearly
-    f_draw(hasYearlyTimeChanged, array.get(a_lastOpens, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
+if displayOpen4
+    f_draw(hastime4Changed, array.get(lastOpenArray, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(time4))
 
-if canShowMonthly
-    f_draw(hasMonthlyTimeChanged, array.get(a_lastOpens, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(monthlyTime))
+if displayOpen3
+    f_draw(hastime3Changed, array.get(lastOpenArray, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(time3))
 
-if canShowWeekly
-    f_draw(hasWeekklyTimeChanged, array.get(a_lastOpens, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
+if displayOpen2
+    f_draw(hasWeekklyTimeChanged, array.get(lastOpenArray, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
 
-if canShowDaily
-    f_draw(hasDailyTimeChanged, array.get(a_lastOpens, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
+if displayOpen1
+    f_draw(hastime1Changed, array.get(lastOpenArray, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
 
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
-plot(array.get(a_lastOpens, 0), "D",    color.new(openColorInput1, 100),   editable=false)
-plot(array.get(a_lastOpens, 1), "W",    color.new(openColorInput2, 100),  editable=false)
-plot(array.get(a_lastOpens, 2), "M",    color.new(openColorInput3, 100), editable=false)
-plot(array.get(a_lastOpens, 3), "Y",    color.new(openColorInput4, 100),  editable=false)
+plot(array.get(lastOpenArray, 0), "D",    color.new(openColorInput1, 100),   editable=false)
+plot(array.get(lastOpenArray, 1), "W",    color.new(openColorInput2, 100),  editable=false)
+plot(array.get(lastOpenArray, 2), "M",    color.new(openColorInput3, 100), editable=false)
+plot(array.get(lastOpenArray, 3), "Y",    color.new(openColorInput4, 100),  editable=false)
 
 //#endregion
