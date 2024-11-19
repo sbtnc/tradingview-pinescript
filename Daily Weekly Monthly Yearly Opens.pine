@@ -20,6 +20,10 @@ string  LINE_STYLE      = line.style_solid
 int     LINE_WIDTH      = 1
 int     OFFSET_PADDING  = 4
 string  TAIL_STYLE      = line.style_dotted
+color   COLOR_1         = color.green
+color   COLOR_2         = color.orange
+color   COLOR_3         = color.red
+color   COLOR_4         = color.blue
 
 //#endregion
 
@@ -28,28 +32,40 @@ string  TAIL_STYLE      = line.style_dotted
 //#region                        Inputs
 //--------------------------------------------------------------------
 
+string  g1 = "Opens"
+string  g2 = "Style"
+string  g3 = "Preferences"
+
 string  tailsTooltip            = "Extends last opens on historical bars."
 string  headsTooltip            = "Extends previous opens in the future."
 string  discoverPricesTooltip   = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
 string  extendedHoursTooltip    = "Discovers the opening prices from the extended trading hours if available."
 
-bool    isDailyEnabledInput     = input.bool    (true,          "Daily",                                inline="Daily",     group="Opens")
-color   dailyColorInput         = input.color   (color.green,   "",                                     inline="Daily",     group="Opens")
-int     dailyLookbackInput      = input.int     (1,             "", 1,                                  inline="Daily",     group="Opens")
-bool    isWeeklyEnabledInput    = input.bool    (true,          "Weekly",                               inline="Weekly",    group="Opens")
-color   weeklyColorInput        = input.color   (color.orange,  "",                                     inline="Weekly",    group="Opens")
-int     weeklyLookbackInput     = input.int     (1,             "", 1,                                  inline="Weekly",    group="Opens")
-bool    isMonthlyEnabledInput   = input.bool    (true,          "Monthly",                              inline="Monthly",   group="Opens")
-color   monthlyColorInput       = input.color   (color.red,     "",                                     inline="Monthly",   group="Opens")
-int     monthlyLookbackInput    = input.int     (1,             "", 1,                                  inline="Monthly",   group="Opens")
-bool    isYearlyEnabledInput    = input.bool    (true,          "Yearly",                               inline="Yearly",    group="Opens")
-color   yearlyColorInput        = input.color   (color.blue,    "",                                     inline="Yearly",    group="Opens")
-int     yearlyLookbackInput     = input.int     (1,             "", 1,                                  inline="Yearly",    group="Opens")
-int     rightOffsetInput        = input.int     (20,            "Offset", 1,                                                group="Style")
-bool    areTailsEnabledInput    = input.bool    (false,         "Show Tails",       tailsTooltip,                           group="Style")
-bool    areHeadsEnabledInput    = input.bool    (false,         "Show Projections", headsTooltip,                           group="Style")
-bool    discoverPricesInput     = input.bool    (false,         "Discover Prices",  discoverPricesTooltip,                  group="Settings")
-bool    extendedHoursInput      = input.bool    (false,         "Extended Hours",   extendedHoursTooltip,                   group="Settings")
+bool    enableOpenInput1        = input.bool        (true,      title = "", group = g1, inline = "#1")
+string  openTimeframeInput1     = input.timeframe   ("D",       title = "", group = g1, inline = "#1")
+color   openColorInput1         = input.color       (COLOR_1,   title = "", group = g1, inline = "#1")
+int     openLookbackInput1      = input.int         (1,         title = "", group = g1, inline = "#1", minval = 1)
+
+bool    enableOpenInput2        = input.bool        (true,      title = "", group = g1, inline = "#2")
+string  openTimeframeInput2     = input.timeframe   ("W",       title = "", group = g1, inline = "#2")
+color   openColorInput2         = input.color       (COLOR_2,   title = "", group = g1, inline = "#2")
+int     openLookbackInput2      = input.int         (1,         title = "", group = g1, inline = "#2", minval = 1)
+
+bool    enableOpenInput3        = input.bool        (true,      title = "", group = g1, inline = "#3")
+string  openTimeframeInput3     = input.timeframe   ("M",       title = "", group = g1, inline = "#3")
+color   openColorInput3         = input.color       (COLOR_3,   title = "", group = g1, inline = "#3")
+int     openLookbackInput3      = input.int         (1,         title = "", group = g1, inline = "#3", minval = 1)
+
+bool    enableOpenInput4        = input.bool        (true,      title = "", group = g1, inline = "#4")
+string  openTimeframeInput4     = input.timeframe   ("12M",     title = "", group = g1, inline = "#4")
+color   openColorInput4         = input.color       (COLOR_4,   title = "", group = g1, inline = "#4")
+int     openLookbackInput4      = input.int         (1,         title = "", group = g1, inline = "#4", minval = 1)
+
+int     rightOffsetInput        = input.int         (20,        title = "Offset",           group = g2, minval = 1)
+bool    areTailsEnabledInput    = input.bool        (false,     title = "Show Tails",       group = g2, tooltip = tailsTooltip)
+bool    areHeadsEnabledInput    = input.bool        (false,     title = "Show Projections", group = g2, tooltip = headsTooltip)
+bool    discoverPricesInput     = input.bool        (false,     title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
+bool    extendedHoursInput      = input.bool        (false,     title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
 
 //#endregion
 
@@ -59,10 +75,10 @@ bool    extendedHoursInput      = input.bool    (false,         "Extended Hours"
 //--------------------------------------------------------------------
 
 var a_lastOpens             = array.new_float(4)
-var canShowDaily            = isDailyEnabledInput and timeframe.isintraday
-var canShowWeekly           = isWeeklyEnabledInput and (timeframe.isintraday or timeframe.isdaily)
-var canShowMonthly          = isMonthlyEnabledInput and not timeframe.ismonthly
-var canShowYearly           = isYearlyEnabledInput and not (timeframe.ismonthly and timeframe.multiplier >= 12)
+var canShowDaily            = enableOpenInput1 and timeframe.isintraday
+var canShowWeekly           = enableOpenInput2 and (timeframe.isintraday or timeframe.isdaily)
+var canShowMonthly          = enableOpenInput3 and not timeframe.ismonthly
+var canShowYearly           = enableOpenInput4 and not (timeframe.ismonthly and timeframe.multiplier >= 12)
 var hasExtendedHours        = extendedHoursInput and syminfo.session == session.extended
 var discoverPrices          = discoverPricesInput or hasExtendedHours
 
@@ -181,22 +197,22 @@ if canShowYearly and hasYearlyTimeChanged
 //--------------------------------------------------------------------
 
 if canShowYearly
-    f_draw(hasYearlyTimeChanged, array.get(a_lastOpens, 3), yearlyLookbackInput, f_getPadding(3), yearlyColorInput, "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
+    f_draw(hasYearlyTimeChanged, array.get(a_lastOpens, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
 
 if canShowMonthly
-    f_draw(hasMonthlyTimeChanged, array.get(a_lastOpens, 2), monthlyLookbackInput, f_getPadding(2), monthlyColorInput, "M   ", f_isContainedOnPrevWeekly(monthlyTime))
+    f_draw(hasMonthlyTimeChanged, array.get(a_lastOpens, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(monthlyTime))
 
 if canShowWeekly
-    f_draw(hasWeekklyTimeChanged, array.get(a_lastOpens, 1), weeklyLookbackInput, f_getPadding(1), weeklyColorInput, "W   ")
+    f_draw(hasWeekklyTimeChanged, array.get(a_lastOpens, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
 
 if canShowDaily
-    f_draw(hasDailyTimeChanged, array.get(a_lastOpens, 0), dailyLookbackInput, f_getPadding(0), dailyColorInput, "D   ")
+    f_draw(hasDailyTimeChanged, array.get(a_lastOpens, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
 
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
-plot(array.get(a_lastOpens, 0), "D",    color.new(dailyColorInput, 100),   editable=false)
-plot(array.get(a_lastOpens, 1), "W",    color.new(weeklyColorInput, 100),  editable=false)
-plot(array.get(a_lastOpens, 2), "M",    color.new(monthlyColorInput, 100), editable=false)
-plot(array.get(a_lastOpens, 3), "Y",    color.new(yearlyColorInput, 100),  editable=false)
+plot(array.get(a_lastOpens, 0), "D",    color.new(openColorInput1, 100),   editable=false)
+plot(array.get(a_lastOpens, 1), "W",    color.new(openColorInput2, 100),  editable=false)
+plot(array.get(a_lastOpens, 2), "M",    color.new(openColorInput3, 100), editable=false)
+plot(array.get(a_lastOpens, 3), "Y",    color.new(openColorInput4, 100),  editable=false)
 
 //#endregion
