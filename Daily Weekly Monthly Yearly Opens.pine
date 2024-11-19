@@ -1,14 +1,15 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2022-02-05
+// Last modified: 2024-11-19
 // version 6.0
 
 // @version=5
 indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true, max_lines_count=500)
 
+
 //--------------------------------------------------------------------
-//                             Constants
+//#region                      Constants
 //--------------------------------------------------------------------
 
 var HEAD_PADDING        = -2
@@ -20,8 +21,11 @@ var LINE_WIDTH          = 1
 var OFFSET_PADDING      = 4
 var TAIL_STYLE          = line.style_dotted
 
+//#endregion
+
+
 //--------------------------------------------------------------------
-//                               Inputs
+//#region                        Inputs
 //--------------------------------------------------------------------
 
 t_tails                 = "Extends last opens on historical bars."
@@ -47,8 +51,11 @@ var i_areHeadsEnabled   = input     (false,         "Show Projections", t_heads,
 var i_discoverPrices    = input     (false,         "Discover Prices",  t_discoverPrices,                       group="Settings")
 var i_extendedHours     = input     (false,         "Extended Hours",   t_extendedHours,                        group="Settings")
 
+//#endregion
+
+
 //--------------------------------------------------------------------
-//                        Variables declarations
+//#region                 Variables declarations
 //--------------------------------------------------------------------
 
 var a_lastOpens             = array.new_float(4)
@@ -64,8 +71,11 @@ var discoverPrices          = i_discoverPrices or hasExtendedHours
 [monthlyTime, monthlyOpen]  = request.security(syminfo.tickerid, 'M',   [time, open], lookahead=barmerge.lookahead_on)
 [yearlyTime, yearlyOpen]    = request.security(syminfo.tickerid, '12M', [time, open], lookahead=barmerge.lookahead_on)
 
+//#endregion
+
+
 //--------------------------------------------------------------------
-//                              Functions 
+//#region                   Functions & methods
 //--------------------------------------------------------------------
 
 // If different opens share the same opening prices, their labels will overlap
@@ -139,8 +149,11 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
                 if not array.includes(a_lastOpens, line.get_y1(array.get(_heads, i)))
                     line.set_x2(array.get(_heads, i), f_getRightBarIndex(HEAD_PADDING))
 
+//#endregion
+
+
 //--------------------------------------------------------------------
-//                                Logic
+//#region                         Logic
 //--------------------------------------------------------------------
 
 hasDailyTimeChanged     = hasExtendedHours ? ta.change(time_tradingday) : discoverPrices ? f_hasChanged(dailyTime) and time == dailyTime        : f_hasChanged(dailyTime)
@@ -160,8 +173,11 @@ if canShowMonthly and hasMonthlyTimeChanged
 if canShowYearly and hasYearlyTimeChanged
     array.set(a_lastOpens, 3, discoverPrices ? open : yearlyOpen)
 
+//#endregion
+
+
 //--------------------------------------------------------------------
-//                          Plotting & styling
+//#region                        Visuals
 //--------------------------------------------------------------------
 
 if canShowYearly
@@ -182,3 +198,5 @@ plot(array.get(a_lastOpens, 0), "D",    color.new(i_dailyColor, 100),   editable
 plot(array.get(a_lastOpens, 1), "W",    color.new(i_weeklyColor, 100),  editable=false)
 plot(array.get(a_lastOpens, 2), "M",    color.new(i_monthlyColor, 100), editable=false)
 plot(array.get(a_lastOpens, 3), "Y",    color.new(i_yearlyColor, 100),  editable=false)
+
+//#endregion
