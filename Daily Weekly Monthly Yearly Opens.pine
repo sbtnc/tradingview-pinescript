@@ -12,14 +12,14 @@ indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true, max_lines_count=5
 //#region                      Constants
 //--------------------------------------------------------------------
 
-var HEAD_PADDING        = -2
-var HEAD_TRANSP         = 60
-var LABEL_SIZE          = size.small
-var LABEL_STYLE         = label.style_none
-var LINE_STYLE          = line.style_solid
-var LINE_WIDTH          = 1
-var OFFSET_PADDING      = 4
-var TAIL_STYLE          = line.style_dotted
+int     HEAD_PADDING    = -2
+int     HEAD_TRANSP     = 60
+string  LABEL_SIZE      = size.small
+string  LABEL_STYLE     = label.style_none
+string  LINE_STYLE      = line.style_solid
+int     LINE_WIDTH      = 1
+int     OFFSET_PADDING  = 4
+string  TAIL_STYLE      = line.style_dotted
 
 //#endregion
 
@@ -28,28 +28,28 @@ var TAIL_STYLE          = line.style_dotted
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-t_tails                 = "Extends last opens on historical bars."
-t_heads                 = "Extends previous opens in the future."
-t_discoverPrices        = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
-t_extendedHours         = "Discovers the opening prices from the extended trading hours if available."
+string  tailsTooltip            = "Extends last opens on historical bars."
+string  headsTooltip            = "Extends previous opens in the future."
+string  discoverPricesTooltip   = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
+string  extendedHoursTooltip    = "Discovers the opening prices from the extended trading hours if available."
 
-var i_isDailyEnabled    = input     (true,          "Daily",                                inline="Daily",     group="Opens")
-var i_dailyColor        = input     (color.green,   "",                                     inline="Daily",     group="Opens")
-var i_dailyLookback     = input.int (1,             "", 1,                                  inline="Daily",     group="Opens")
-var i_isWeeklyEnabled   = input     (true,          "Weekly",                               inline="Weekly",    group="Opens")
-var i_weeklyColor       = input     (color.orange,  "",                                     inline="Weekly",    group="Opens")
-var i_weeklyLookback    = input.int (1,             "", 1,                                  inline="Weekly",    group="Opens")
-var i_isMonthlyEnabled  = input     (true,          "Monthly",                              inline="Monthly",   group="Opens")
-var i_monthlyColor      = input     (color.red,     "",                                     inline="Monthly",   group="Opens")
-var i_monthlyLookback   = input.int (1,             "", 1,                                  inline="Monthly",   group="Opens")
-var i_isYearlyEnabled   = input     (true,          "Yearly",                               inline="Yearly",    group="Opens")
-var i_yearlyColor       = input     (color.blue,    "",                                     inline="Yearly",    group="Opens")
-var i_yearlyLookback    = input.int (1,             "", 1,                                  inline="Yearly",    group="Opens")
-var i_rightOffset       = input.int (20,            "Offset", 1,                                                group="Style")
-var i_areTailsEnabled   = input     (false,         "Show Tails",       t_tails,                                group="Style")
-var i_areHeadsEnabled   = input     (false,         "Show Projections", t_heads,                                group="Style")
-var i_discoverPrices    = input     (false,         "Discover Prices",  t_discoverPrices,                       group="Settings")
-var i_extendedHours     = input     (false,         "Extended Hours",   t_extendedHours,                        group="Settings")
+bool    isDailyEnabledInput     = input.bool    (true,          "Daily",                                inline="Daily",     group="Opens")
+color   dailyColorInput         = input.color   (color.green,   "",                                     inline="Daily",     group="Opens")
+int     dailyLookbackInput      = input.int     (1,             "", 1,                                  inline="Daily",     group="Opens")
+bool    isWeeklyEnabledInput    = input.bool    (true,          "Weekly",                               inline="Weekly",    group="Opens")
+color   weeklyColorInput        = input.color   (color.orange,  "",                                     inline="Weekly",    group="Opens")
+int     weeklyLookbackInput     = input.int     (1,             "", 1,                                  inline="Weekly",    group="Opens")
+bool    isMonthlyEnabledInput   = input.bool    (true,          "Monthly",                              inline="Monthly",   group="Opens")
+color   monthlyColorInput       = input.color   (color.red,     "",                                     inline="Monthly",   group="Opens")
+int     monthlyLookbackInput    = input.int     (1,             "", 1,                                  inline="Monthly",   group="Opens")
+bool    isYearlyEnabledInput    = input.bool    (true,          "Yearly",                               inline="Yearly",    group="Opens")
+color   yearlyColorInput        = input.color   (color.blue,    "",                                     inline="Yearly",    group="Opens")
+int     yearlyLookbackInput     = input.int     (1,             "", 1,                                  inline="Yearly",    group="Opens")
+int     rightOffsetInput        = input.int     (20,            "Offset", 1,                                                group="Style")
+bool    areTailsEnabledInput    = input.bool    (false,         "Show Tails",       tailsTooltip,                           group="Style")
+bool    areHeadsEnabledInput    = input.bool    (false,         "Show Projections", headsTooltip,                           group="Style")
+bool    discoverPricesInput     = input.bool    (false,         "Discover Prices",  discoverPricesTooltip,                  group="Settings")
+bool    extendedHoursInput      = input.bool    (false,         "Extended Hours",   extendedHoursTooltip,                   group="Settings")
 
 //#endregion
 
@@ -59,12 +59,12 @@ var i_extendedHours     = input     (false,         "Extended Hours",   t_extend
 //--------------------------------------------------------------------
 
 var a_lastOpens             = array.new_float(4)
-var canShowDaily            = i_isDailyEnabled and timeframe.isintraday
-var canShowWeekly           = i_isWeeklyEnabled and (timeframe.isintraday or timeframe.isdaily)
-var canShowMonthly          = i_isMonthlyEnabled and not timeframe.ismonthly
-var canShowYearly           = i_isYearlyEnabled and not (timeframe.ismonthly and timeframe.multiplier >= 12)
-var hasExtendedHours        = i_extendedHours and syminfo.session == session.extended
-var discoverPrices          = i_discoverPrices or hasExtendedHours
+var canShowDaily            = isDailyEnabledInput and timeframe.isintraday
+var canShowWeekly           = isWeeklyEnabledInput and (timeframe.isintraday or timeframe.isdaily)
+var canShowMonthly          = isMonthlyEnabledInput and not timeframe.ismonthly
+var canShowYearly           = isYearlyEnabledInput and not (timeframe.ismonthly and timeframe.multiplier >= 12)
+var hasExtendedHours        = extendedHoursInput and syminfo.session == session.extended
+var discoverPrices          = discoverPricesInput or hasExtendedHours
 
 [dailyTime, dailyOpen]      = request.security(syminfo.tickerid, 'D',   [time, open], lookahead=barmerge.lookahead_on)
 [weeklyTime, weeklyOpen]    = request.security(syminfo.tickerid, 'W',   [time, open], lookahead=barmerge.lookahead_on)
@@ -93,7 +93,7 @@ f_getPadding(int _index) =>
         _padding += 1
     _padding
 
-f_getRightBarIndex(int _padding) => bar_index + i_rightOffset + _padding * OFFSET_PADDING
+f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OFFSET_PADDING
 
 // On the weekly time frame, the monthly/yearly open is drawn from the first candle of the month/year
 // The first weekly candle is not necessarily containing the first day of the month
@@ -125,11 +125,11 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
         array.push(_bodies, _body)
 
         // Head
-        if i_areHeadsEnabled
+        if areHeadsEnabledInput
             array.push(_heads, line.new(bar_index, _y, bar_index, _y, color=color.new(_color, HEAD_TRANSP), style=LINE_STYLE, width=LINE_WIDTH))
 
         // Tail
-        if i_areTailsEnabled
+        if areTailsEnabledInput
             line.set_xy1(_tail, _start - 1, _y)
             line.set_xy2(_tail, _start, _y)
 
@@ -142,7 +142,7 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
         line.set_x2(_body, _end)
         label.set_x(_label, _end)
 
-        if i_areHeadsEnabled and array.size(_heads) > 1
+        if areHeadsEnabledInput and array.size(_heads) > 1
             // Not updating the last open's projection
             for i = 0 to array.size(_heads) - 2
                 // Avoid projecting on last opens bodies
@@ -181,22 +181,22 @@ if canShowYearly and hasYearlyTimeChanged
 //--------------------------------------------------------------------
 
 if canShowYearly
-    f_draw(hasYearlyTimeChanged, array.get(a_lastOpens, 3), i_yearlyLookback, f_getPadding(3), i_yearlyColor, "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
+    f_draw(hasYearlyTimeChanged, array.get(a_lastOpens, 3), yearlyLookbackInput, f_getPadding(3), yearlyColorInput, "Y   ", f_isContainedOnPrevWeekly(yearlyTime))
 
 if canShowMonthly
-    f_draw(hasMonthlyTimeChanged, array.get(a_lastOpens, 2), i_monthlyLookback, f_getPadding(2), i_monthlyColor, "M   ", f_isContainedOnPrevWeekly(monthlyTime))
+    f_draw(hasMonthlyTimeChanged, array.get(a_lastOpens, 2), monthlyLookbackInput, f_getPadding(2), monthlyColorInput, "M   ", f_isContainedOnPrevWeekly(monthlyTime))
 
 if canShowWeekly
-    f_draw(hasWeekklyTimeChanged, array.get(a_lastOpens, 1), i_weeklyLookback, f_getPadding(1), i_weeklyColor, "W   ")
+    f_draw(hasWeekklyTimeChanged, array.get(a_lastOpens, 1), weeklyLookbackInput, f_getPadding(1), weeklyColorInput, "W   ")
 
 if canShowDaily
-    f_draw(hasDailyTimeChanged, array.get(a_lastOpens, 0), i_dailyLookback, f_getPadding(0), i_dailyColor, "D   ")
+    f_draw(hasDailyTimeChanged, array.get(a_lastOpens, 0), dailyLookbackInput, f_getPadding(0), dailyColorInput, "D   ")
 
 // Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
-plot(array.get(a_lastOpens, 0), "D",    color.new(i_dailyColor, 100),   editable=false)
-plot(array.get(a_lastOpens, 1), "W",    color.new(i_weeklyColor, 100),  editable=false)
-plot(array.get(a_lastOpens, 2), "M",    color.new(i_monthlyColor, 100), editable=false)
-plot(array.get(a_lastOpens, 3), "Y",    color.new(i_yearlyColor, 100),  editable=false)
+plot(array.get(a_lastOpens, 0), "D",    color.new(dailyColorInput, 100),   editable=false)
+plot(array.get(a_lastOpens, 1), "W",    color.new(weeklyColorInput, 100),  editable=false)
+plot(array.get(a_lastOpens, 2), "M",    color.new(monthlyColorInput, 100), editable=false)
+plot(array.get(a_lastOpens, 3), "Y",    color.new(yearlyColorInput, 100),  editable=false)
 
 //#endregion
