@@ -1,145 +1,356 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
+// Created: 2020-09-06
+// Last modified: 2023-11-19
+// Version 6.0
 
-//@version=4
-study("ATR Daily Levels", shorttitle = "D ATR", overlay = true)
+// @version=5
+indicator("Daily ATR Levels", "D ATR", true)
 
-//------------------------------ Config -------------------------------
 
-var DEFAULT_COLOR           = color.gray
-var DEFAULT_HIGHLIGHT_COLOR = color.new(DEFAULT_COLOR, 60)
+//--------------------------------------------------------------------
+//                             Constants
+//--------------------------------------------------------------------
+
 var DEFAULT_OFFSET_START    = 1
+var DEFAULT_LINE_LENGTH     = 8
 var DEFAULT_LINE_STYLE      = line.style_dotted
 var DEFAULT_LINE_WIDTH      = 2
-var DEFAULT_LINE_LENGTH     = 8
-var DEFAULT_LABEL_STYLE     = label.style_label_left
 var DEFAULT_LABEL_COLOR     = color(na)
+var DEFAULT_LABEL_STYLE     = label.style_label_left
+var DEFAULT_NOTIF_POSITION  = position.bottom_right
+var DEFAULT_NOTIF_TEXTCOLOR = chart.fg_color
+var DEFAULT_NOTIF_BGCOLOR   = color.new(color.gray, 90)
 
-//------------------------------ Inputs -------------------------------
 
-var i_period            = input(defval = 20, title = "Length")
-var i_value             = input(defval = "Yesterday", title = "Value", options = ["Today", "Yesterday"])
-var i_color             = input(defval = DEFAULT_COLOR, title = "Color")
-var i_overflow_color    = input(defval = DEFAULT_HIGHLIGHT_COLOR, title = "Overflow Color")
-var i_start_offset      = input(defval = true, title = "Show Start Offset")
+//--------------------------------------------------------------------
+//                               Inputs
+//--------------------------------------------------------------------
 
-//----------------------- Variables declarations ----------------------
+// Groups
 
-[d1_high, d1_low, d1_atr, d1_open, prev_d1_close] = security(
+var g1                  = "ATR"
+var g2                  = "Style"
+var g3                  = "Preferences"
+
+
+// Tooltips
+
+var t_value             = "Calculate the levels using yesterday's ATR or today's ATR."
+var t_overflowColor     = "Coloring after the price reached or exceeded the ATR boundary."
+var t_showStartOffset   = "Draw levels on the right side of the price only.\n\n" +
+                             "When disabled, draw levels from the start of the day."
+var t_showNext          = "Plot the next day's ATR levels when the market is closed.\n\n" +
+                             "Use this option if you like to plan your trades ahead of the next day or prepare on the weekend for Monday."
+
+
+// Inputs
+
+var i_period            = input.int     (20,                        "Length", 1,                                                group=g1)
+var i_value             = input.string  ("Yesterday",               "Reference", ["Today", "Yesterday"],                        group=g1)
+var i_color             = input         (color.gray,                "Color",                                                    group=g2)
+var i_overflowColor     = input         (color.new(#50535e, 50),    "Overflow Color",                       t_overflowColor,    group=g2)
+var i_showStartOffset   = input         (true,                      "Show Start Offset",                    t_showStartOffset,  group=g3)
+var i_showNextDay       = input         (false,                     "Show Next ATR Levels",                 t_showNext,         group=g3)
+
+
+//--------------------------------------------------------------------
+//                              Functions 
+//--------------------------------------------------------------------
+
+// @function Return the number of decimals from a given number
+// @return int
+f_countDecimals(float _n) =>
+    _str    = str.tostring(_n)
+    _count  = 0
+
+    // Number is a decimal
+    if str.contains(_str, ".")
+        _split = str.split(_str, ".")
+        _count := str.length(array.get(_split, 1))
+
+    _count
+
+
+// @function Return a number rounded to the precision of the symbol's mintick (different than `math.round_to_mintick`)
+// @return float
+f_roundToMinPrecision(float _n) =>
+    var minPrecision = f_countDecimals(syminfo.mintick)
+    math.round(_n, minPrecision)
+
+
+// @function Check if the market is closed
+// @return bool
+f_isMarketClosed() => 
+    barstate.islast and barstate.islastconfirmedhistory
+
+
+// @function Check if the indicator should display the next session ATR
+// return bool
+f_canShowNextATR() =>
+    i_showNextDay and f_isMarketClosed()
+
+
+// @function Return the ATR value used as a reference
+// @return float
+f_getRefAtr(float _current, float _previous) =>
+    switch i_value
+        "Today"     => _current
+        "Yesterday" => _previous
+
+
+// @function Return the "true" high price (considering gaps volatility)
+// @return float
+f_getTopPrice(_prevClose, float _high) =>
+    math.max(_prevClose, _high)
+
+
+// @function Return the "true" low price (considering gaps volatility)
+// @return float
+f_getBottomPrice(float _prevClose, float _low) =>
+    math.min(_prevClose, _low)
+
+
+// @function Calculate the upside ATR level
+// @return float
+f_calculateAtrHigh(float _bottom, float _atr) =>
+    _bottom + _atr
+
+
+// @function Calculate the downside ATR level
+// @return float
+f_calculateAtrLow(float _top, float _atr) =>
+    _top - _atr
+
+
+// @function Draw a level's line
+// @return void
+f_drawLine(int _x1, int _x2, float _y, color _c) =>
+    var _l = line.new(na, na, na, na, style=DEFAULT_LINE_STYLE, width=DEFAULT_LINE_WIDTH)
+
+    if barstate.islast
+        line.set_xy1(_l, _x1, _y)
+        line.set_xy2(_l, _x2, _y)
+        line.set_color(_l, _c)
+
+
+// @function Draw a level's label and tooltips
+// @return void
+f_drawLabel(int _x, float _y, string _t, color _textColor, string _tooltip) =>
+    var _l = label.new(na, na, style=DEFAULT_LABEL_STYLE, color=DEFAULT_LABEL_COLOR)
+
+    if barstate.islast
+        label.set_xy(_l, _x, _y)
+        label.set_text(_l, _t)
+        label.set_textcolor(_l, _textColor)
+        label.set_tooltip(_l, _tooltip)
+
+
+// @function Draw the table showing the indicator notifications
+// return int
+f_drawNotificationTable(array<bool> _conditions, array<string> _texts, array<string> _tooltips) =>
+    // For the implementation purpose, throw an error when missing an element
+    
+    _conditionsSize = array.size(_conditions)
+    _textsSize      = array.size(_texts)
+    _tooltipsSize   = array.size(_tooltips)
+
+    if _conditionsSize != _textsSize or _conditionsSize != _tooltipsSize
+        runtime.error("Notification error: missing element in arrays.")
+
+    // Create the notification table
+    
+    var table _t    = na
+    var _columns    = _conditionsSize
+    var _rows       = 1
+
+    if barstate.isfirst
+        _t := table.new(DEFAULT_NOTIF_POSITION, _columns, _rows)
+
+    if barstate.islast
+        // Clear previous notifications
+        table.clear(_t, 0, 0, _columns - 1, _rows - 1)
+
+        // Count the number of active notifications
+        _active = 0
+        
+        for [index, _condition] in _conditions
+            if _condition
+                _text       = array.get(_texts, index)
+                _tooltip    = array.get(_tooltips, index)
+
+                table.cell(_t, _active, 0, _text, text_color=DEFAULT_NOTIF_TEXTCOLOR, bgcolor=DEFAULT_NOTIF_BGCOLOR, tooltip=_tooltip)
+
+                _active += 1 
+
+
+// @function Returns the indicator strings
+// @return [string, string, string]
+f_getStrings(float _upperLevel, float _lowerlevel, float _atr) =>
+    [
+     str.tostring(f_roundToMinPrecision(_upperLevel)),
+     str.tostring(f_roundToMinPrecision(_lowerlevel)),
+     str.tostring(f_roundToMinPrecision(_atr))
+     ]
+
+
+//--------------------------------------------------------------------
+//                        Variables declarations
+//--------------------------------------------------------------------
+
+var float dayHigh       = na
+var float dayLow        = na
+var float prevDayClose  = na
+var int dayBarIndex     = na
+var float bottomPrice   = na
+var float topPrice      = na
+
+[dayAtr, prevDayAtr] = request.security(
      syminfo.tickerid,
      'D',
-     [high, low, atr(i_period)[i_value == "Yesterday" ? 1 : 0], open, close[1]],
-     lookahead = barmerge.lookahead_on)
-[intraday_high, intraday_low, intraday_time, intraday_open, prev_intraday_close] = security(
-     syminfo.tickerid,
-     '1440',
-     [high, low, time, open, close[1]],
+     [ta.atr(i_period), ta.atr(i_period)[1]],
      lookahead = barmerge.lookahead_on)
 
-// daily data might be inconsistent between intradays and D1 charts
-// we ensure the data is relevant per the displayed chart, so when user is on:
-//  - an intraday chart we requests daily data as "1440 minutes";
-//  - D1 chart we request daily data as "1 day".
-isIntraday      = timeframe.isintraday
-day_high        = isIntraday ? intraday_high : d1_high
-day_low         = isIntraday ? intraday_low : d1_low
-day_open        = isIntraday ? intraday_open : d1_open
-prev_day_close  = isIntraday ? prev_intraday_close : prev_d1_close
-// intraday time is accurate when extra hours are available and on
-// otherwise it's always consistent with D1 time
-day_time        = intraday_time
-// an exception is made for the ATR data:
-// a user expects the `Daily ATR Levels' ATR value
-// to be the same as the the built-in `ATR` value one plotted on D1 timeframe 
-day_atr         = d1_atr 
+// For avoiding unexpected behaviors, don't display the indicator when requesting daily data on higher time frames
+canDisplay = timeframe.in_seconds() <= timeframe.in_seconds("D")
 
-var line atr_high_line      = na
-var line atr_low_line       = na
-var label atr_high_label    = na
-var label atr_low_label     = na
-can_display_timeframe       = not (timeframe.isweekly or timeframe.ismonthly)
+atr = f_getRefAtr(dayAtr, prevDayAtr)
 
-//------------------------- Functions helpers -------------------------
 
-// rounds a given number per symbol's miniumum tick precision
-f_round(number) =>
-    exponent = abs(log10(syminfo.mintick))
-    factor = pow(10, exponent)
-    round(number * factor) / factor
+//--------------------------------------------------------------------
+//                                Logic
+//--------------------------------------------------------------------
 
-// for including gaps in level computations 
-f_hasGapped()       => day_open != prev_day_close
-f_getTopPrice()     => f_hasGapped() ? prev_day_close > day_high ? prev_day_close : day_high : day_high
-f_getBottomPrice()  => f_hasGapped() ? prev_day_close < day_low ? prev_day_close : day_low : day_low
+// *
+// * For the historical values
+// *
 
-// get consistent bar time difference (ignoring weekends and holidays)
-f_getMinTimeDiff() => min(time - time[1], time[1] - time[2])
+// Track the day's high and low on runtime instead of fetching them from a security call
+// This aims to avoid the `future leak` from the "jump" when using the bar replay function
 
-//----------------------------- Plotting ------------------------------
 
-bar = nz(f_getMinTimeDiff())
+// 1/ Init on the first bar of the chart
+// 2/ Reset on new day change (condition should cover the extended sessions bars)
 
-if barstate.islast and can_display_timeframe
-    // ATR computing
-    atr_high            = f_getBottomPrice() + day_atr
-    atr_low             = f_getTopPrice() - day_atr
+if timeframe.change("D") or barstate.isfirst
+    dayHigh         := high
+    dayLow          := low
+    prevDayClose    := close[1]
+    dayBarIndex     := bar_index
 
-    // levels positioning
-    offset              = time + bar * DEFAULT_OFFSET_START
-    level_start         = i_start_offset ? offset : day_time
-    level_end           = i_start_offset ? level_start + bar * DEFAULT_LINE_LENGTH : offset + bar * DEFAULT_LINE_LENGTH
 
-    // when price is passed the upper or lower, this last gets highlighted
-    level_high_color    = day_high > atr_high ? i_overflow_color : i_color
-    level_low_color     = day_low < atr_low ? i_overflow_color : i_color
-    
-    // levels
+// Track the new higher high and lower low
 
-    atr_high_line := line.new(
-     x1     = level_start,
-     x2     = level_end,
-     y1     = atr_high,
-     y2     = atr_high,
-     xloc   = xloc.bar_time,
-     style  = DEFAULT_LINE_STYLE,
-     color  = level_high_color,
-     width  = DEFAULT_LINE_WIDTH)
-    
-    atr_low_line := line.new(
-     x1     = level_start,
-     x2     = level_end,
-     y1     = atr_low,
-     y2     = atr_low,
-     xloc   = xloc.bar_time,
-     style  = DEFAULT_LINE_STYLE,
-     color  = level_low_color,
-     width  = DEFAULT_LINE_WIDTH)
+dayHigh     := math.max(high, dayHigh)
+dayLow      := math.min(low, dayLow)
 
-    atr_high_text = tostring(f_round(atr_high)) + " (" + tostring(f_round(day_atr)) + ")"
-    atr_low_text = tostring(f_round(atr_low))
 
-    // labels
+// Get the top and bottom anchor prices for calculating the levels (gap minded)
 
-    atr_high_label := label.new(
-     x          = level_end,
-     y          = atr_high,
-     text       = atr_high_text,
-     xloc       = xloc.bar_time,
-     color      = DEFAULT_LABEL_COLOR,
-     style      = DEFAULT_LABEL_STYLE,
-     textcolor  = level_high_color)
-    
-    atr_low_label := label.new(
-     x          = level_end,
-     y          = atr_low,
-     text       = atr_low_text,
-     xloc       = xloc.bar_time,
-     color      = DEFAULT_LABEL_COLOR,
-     style      = DEFAULT_LABEL_STYLE,
-     textcolor  = level_low_color)
-    
-    // fix multiple drawings on the current candle update
-    line.delete(atr_high_line[1])
-    line.delete(atr_low_line[1])
-    label.delete(atr_high_label[1])
-    label.delete(atr_low_label[1])
+bottomPrice := f_getBottomPrice (prevDayClose, dayLow)
+topPrice    := f_getTopPrice    (prevDayClose, dayHigh)
+
+
+// Compute the ATR levels prices
+
+atrHigh     = f_calculateAtrHigh(bottomPrice, atr)
+atrLow      = f_calculateAtrLow (topPrice, atr)
+
+
+// Handle the condiditional coloring
+
+c_atrHigh   = dayHigh >= atrHigh    ? i_overflowColor : i_color
+c_atrLow    = dayLow <= atrLow      ? i_overflowColor : i_color
+
+
+// *
+// * For the levels
+// *
+
+// Normally showing the current/last ATR levels
+
+upperLevel      = atrHigh
+lowerLevel      = atrLow
+
+c_upperLevel    = c_atrHigh
+c_lowerLevel    = c_atrLow
+
+
+// Except when showing the next ATR levels
+// In this case, we override values
+
+if f_canShowNextATR()
+    atr             := dayAtr
+    upperLevel      := f_calculateAtrHigh(close, atr)
+    lowerLevel      := f_calculateAtrLow (close, atr)
+
+    c_upperLevel    := i_color
+    c_lowerLevel    := i_color
+
+
+//--------------------------------------------------------------------
+//                          Plotting & styling
+//--------------------------------------------------------------------
+
+// Draw the upper and lower levels (lines and labels)
+
+if canDisplay
+
+    //  Get all the strings
+
+    [_atrHighStr, _atrLowStr, _atrStr] = f_getStrings(upperLevel, lowerLevel, atr)
+
+
+    // Composes labels and tooltips' texts
+
+    upperLabelText      = str.format("{0} ({1})", _atrHighStr, _atrStr)
+    lowerLabelText      = _atrLowStr
+
+    upperLabelTooltip   = str.format("{0} (D ATR: {1})", _atrHighStr, _atrStr)
+    lowerLabelTooltip   = str.format("{0} (D ATR: {1})", _atrLowStr, _atrStr)
+
+
+    // Draw lines and labels
+
+    _offset     = bar_index + DEFAULT_OFFSET_START
+    _start      = i_showStartOffset ? _offset : dayBarIndex
+    _end        = _offset + DEFAULT_LINE_LENGTH
+
+    f_drawLine  (_start, _end, upperLevel, c_upperLevel)
+    f_drawLine  (_start, _end, lowerLevel,  c_lowerLevel)
+
+    f_drawLabel (_end, upperLevel, upperLabelText, c_upperLevel,   upperLabelTooltip)
+    f_drawLabel (_end, lowerLevel,  lowerLabelText, c_lowerLevel,   lowerLabelTooltip)
+
+
+// Plot the levels' labels on the price scale
+// (as well as providing generic alert conditions)
+
+plot(canDisplay ? upperLevel    : na,   "Upper Level",  c_upperLevel,       editable=false, show_last=1,    display=display.price_scale)
+plot(canDisplay ? lowerLevel    : na,   "Lower Level",  c_lowerLevel,       editable=false, show_last=1,    display=display.price_scale)
+
+
+// Plot all historical values on the status line and data window
+// (as well as providing generic alert conditions)
+
+plot(canDisplay ? atrHigh       : na,   "ATR High",     c_atrHigh,          editable=false,                 display=display.status_line + display.data_window)
+plot(canDisplay ? atrLow        : na,   "ATR Low",      c_atrLow,           editable=false,                 display=display.status_line + display.data_window)
+plot(canDisplay ? atr           : na,   "ATR",          i_overflowColor,    editable=false,                 display=display.status_line + display.data_window)
+
+
+// Draw the notification table
+
+notifications           = array.from(
+                             f_canShowNextATR() and canDisplay,
+                             not canDisplay
+                             )
+notificationMessages    = array.from(
+                             "»",
+                             "▽"
+                             )
+notificationsTooltips   = array.from(
+                             "The D ATR is currently displaying how the levels would look at the next session's open.",
+                             "The D ATR is currently not displayed. Please select a higher timeframe on the indicator's settings."
+                             )
+
+f_drawNotificationTable(notifications, notificationMessages, notificationsTooltips)

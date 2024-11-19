@@ -1,0 +1,404 @@
+// © sbtnc
+// Created: 2024-03-10
+// Last modified: 2024-11-03
+// Version 1.0
+
+// @version=5
+indicator("Multi-Timeframe Period Separators", "MTF Separators", overlay = true, max_lines_count = 500)
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+color COLOR_1 = color.new(color.green,  50)
+color COLOR_2 = color.new(color.orange, 50)
+color COLOR_3 = color.new(color.red,    50)
+color COLOR_4 = color.new(color.blue,   50)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+// @enum Contains fields with the indicator configurable timeframes as titles.
+enum Timeframes
+    s5  = "5 seconds"
+    s10 = "10 seconds"
+    s15 = "15 seconds"
+    s30 = "30 seconds"
+    m1  = "1 minute"
+    m2  = "2 minutes"
+    m3  = "3 minutes"
+    m5  = "5 minutes"
+    m10 = "10 minutes"
+    m15 = "15 minutes"
+    m30 = "30 minutes"
+    h1  = "1 hour"
+    h2  = "2 hours"
+    h3  = "3 hours"
+    h4  = "4 hours"
+    h6  = "6 hours"
+    h8  = "8 hours"
+    h12 = "12 hours"
+    D1  = "1 day"
+    W1  = "1 week"
+    M1  = "1 month"
+    M3  = "3 months"
+    M6  = "6 months"
+    M12 = "12 months"
+
+
+// @enum Contains fields with the complete UI list of timezones as titles.
+enum Timezones
+    utc  = "UTC"
+    exch = "Exchange"
+    cai  = "Africa/Cairo"
+    jnb  = "Africa/Johannesburg"
+    los  = "Africa/Lagos"
+    nbo  = "Africa/Nairobi"
+    tun  = "Africa/Tunis"
+    bue  = "America/Argentina/Buenos_Aires"
+    bog  = "America/Bogota"
+    ccs  = "America/Caracas"
+    chi  = "America/Chicago"
+    den  = "America/Denver"
+    esr  = "America/El_Salvador"
+    jnu  = "America/Juneau"
+    lim  = "America/Lima"
+    lax  = "America/Los_Angeles"
+    nyc  = "America/New_York"
+    mex  = "America/Mexico_City"
+    phx  = "America/Phoenix"
+    scl  = "America/Santiago"
+    sao  = "America/Sao_Paulo"
+    yto  = "America/Toronto"
+    yvr  = "America/Vancouver"
+    ala  = "Asia/Almaty"
+    asb  = "Asia/Ashgabat"
+    bah  = "Asia/Bahrain"
+    bkk  = "Asia/Bangkok"
+    dxb  = "Asia/Dubai"
+    ckg  = "Asia/Chongqing"
+    cmb  = "Asia/Colombo"
+    sgn  = "Asia/Ho_Chi_Minh"
+    hkg  = "Asia/Hong_Kong"
+    ist  = "Asia/Istanbul"
+    jkt  = "Asia/Jakarta"
+    jrs  = "Asia/Jerusalem"
+    khi  = "Asia/Karachi"
+    ktm  = "Asia/Kathmandu"
+    ccu  = "Asia/Kolkata"
+    kwi  = "Asia/Kuwait"
+    mnl  = "Asia/Manila"
+    mct  = "Asia/Muscat"
+    nic  = "Asia/Nicosia"
+    doh  = "Asia/Qatar"
+    ruh  = "Asia/Riyadh"
+    sel  = "Asia/Seoul"
+    sha  = "Asia/Shanghai"
+    sin  = "Asia/Singapore"
+    tpe  = "Asia/Taipei"
+    thr  = "Asia/Tehran"
+    tyo  = "Asia/Tokyo"
+    rgn  = "Asia/Yangon"
+    rek  = "Atlantic/Reykjavik"
+    adl  = "Australia/Adelaide"
+    bne  = "Australia/Brisbane"
+    per  = "Australia/Perth"
+    syd  = "Australia/Sydney"
+    ams  = "Europe/Amsterdam"
+    ath  = "Europe/Athens"
+    beg  = "Europe/Belgrade"
+    ber  = "Europe/Berlin"
+    bts  = "Europe/Bratislava"
+    bru  = "Europe/Brussels"
+    buh  = "Europe/Bucharest"
+    bud  = "Europe/Budapest"
+    cph  = "Europe/Copenhagen"
+    dub  = "Europe/Dublin"
+    hel  = "Europe/Helsinki"
+    mad  = "Europe/Madrid"
+    mla  = "Europe/Malta"
+    mow  = "Europe/Moscow"
+    lis  = "Europe/Lisbon"
+    lon  = "Europe/London"
+    lux  = "Europe/Luxembourg"
+    osl  = "Europe/Oslo"
+    par  = "Europe/Paris"
+    rix  = "Europe/Riga"
+    rom  = "Europe/Rome"
+    sto  = "Europe/Stockholm"
+    tll  = "Europe/Tallinn"
+    vno  = "Europe/Vilnius"
+    waw  = "Europe/Warsaw"
+    zrh  = "Europe/Zurich"
+    akl  = "Pacific/Auckland"
+    cht  = "Pacific/Chatham"
+    fko  = "Pacific/Fakaofo"
+    hnl  = "Pacific/Honolulu"
+    nlk  = "Pacific/Norfolk"
+
+
+// @enum Contains fields with the line styles as titles.
+enum LineStyles 
+    solid  = "Solid" 
+    dashed = "Dashed"
+    dotted = "Dotted" 
+
+
+// @enum Contains fields with the separator time references as titles.
+enum TimeReference 
+    session = "Session"
+    day     = "Day"
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
+
+string g1 = "Separators"
+
+bool       enableSeparatorInput1    = input.bool    (true,              title = "", group = g1, inline = "#1")
+Timeframes separatorTimeframeInput1 = input.enum    (Timeframes.D1,     title = "", group = g1, inline = "#1")
+int        separatorLookbackInput1  = input.int     (50,                title = "", group = g1, inline = "#1", minval = 1, maxval = 500, display = display.none)
+bool       enableSeparatorInput2    = input.bool    (true,              title = "", group = g1, inline = "#2")
+Timeframes separatorTimeframeInput2 = input.enum    (Timeframes.W1,     title = "", group = g1, inline = "#2")
+int        separatorLookbackInput2  = input.int     (50,                title = "", group = g1, inline = "#2", minval = 1, maxval = 500, display = display.none)
+bool       enableSeparatorInput3    = input.bool    (true,              title = "", group = g1, inline = "#3")
+Timeframes separatorTimeframeInput3 = input.enum    (Timeframes.M1,     title = "", group = g1, inline = "#3")
+int        separatorLookbackInput3  = input.int     (50,                title = "", group = g1, inline = "#3", minval = 1, maxval = 500, display = display.none)
+bool       enableSeparatorInput4    = input.bool    (false,             title = "", group = g1, inline = "#4")
+Timeframes separatorTimeframeInput4 = input.enum    (Timeframes.M12,    title = "", group = g1, inline = "#4")
+int        separatorLookbackInput4  = input.int     (50,                title = "", group = g1, inline = "#4", minval = 1, maxval = 500, display = display.none)
+
+string g2 = "Style"
+
+color      separatorColorInput1     = input.color   (COLOR_1,           title = "", group = g2, inline = "#1")
+int        separatorWidthInput1     = input.int     (1,                 title = "", group = g2, inline = "#1", minval = 1, display = display.none)
+LineStyles separatorStyleInput1     = input.enum    (LineStyles.dotted, title = "", group = g2, inline = "#1", display = display.none)
+color      separatorColorInput2     = input.color   (COLOR_2,           title = "", group = g2, inline = "#2")
+int        separatorWidthInput2     = input.int     (1,                 title = "", group = g2, inline = "#2", minval = 1, display = display.none)
+LineStyles separatorStyleInput2     = input.enum    (LineStyles.solid,  title = "", group = g2, inline = "#2", display = display.none)
+color      separatorColorInput3     = input.color   (COLOR_3,           title = "", group = g2, inline = "#3")
+int        separatorWidthInput3     = input.int     (2,                 title = "", group = g2, inline = "#3", minval = 1, display = display.none)
+LineStyles separatorStyleInput3     = input.enum    (LineStyles.solid,  title = "", group = g2, inline = "#3", display = display.none)
+color      separatorColorInput4     = input.color   (COLOR_4,           title = "", group = g2, inline = "#4")
+int        separatorWidthInput4     = input.int     (3,                 title = "", group = g2, inline = "#4", minval = 1, display = display.none)
+LineStyles separatorStyleInput4     = input.enum    (LineStyles.solid,  title = "", group = g2, inline = "#4", display = display.none)
+
+string g3               = "Preferences"
+string referenceTooltip = "By default, the indicator uses the start of the exchange trading session as a point of reference. " +
+                         "See \"Security Info\" for more details.\n\n" + 
+                         "In some markets, when the start of the trading session differs from the start of the day, " +
+                         "you can use the \"Day\" option to prefer midnight 00:00 instead.\n\n" +
+                         "For example, on EURUSD, the trading session is 17:00-17:00 New York time. " +
+                         "1-day separators plot at 17:00 with \"Session\" and 00:00 with \"Day\". " +
+                         "Furthermore, 6-hour separators plot at [17:00, 23:00, 05:00, 11:00] with \"Session\" and [00:00, 06:00, 12:00, 18:00] with \"Day\"."       
+string timezoneTooltip  = "By default, the indicator uses the exchange timezone. See \"Security Info\" for more details.\n\n" +
+                         "When using the \"Day\" option as a reference, you can choose a particular timezone to determine the start of the day."
+
+TimeReference timeReferenceInput    = input.enum    (TimeReference.session, title = "Reference", group = g3, tooltip = referenceTooltip)
+Timezones     timezoneInput         = input.enum    (Timezones.exch,        title = "Timezone",  group = g3, tooltip = timezoneTooltip, display = display.none)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+// @function Produce the `timeframe` parameter from the given user input.
+// @returns  string
+method param(simple Timeframes input) =>
+    switch input
+        Timeframes.s5  => "5S"
+        Timeframes.s10 => "10S"
+        Timeframes.s15 => "15S"
+        Timeframes.s30 => "30S"
+        Timeframes.m1  => "1"
+        Timeframes.m2  => "2"
+        Timeframes.m3  => "3"
+        Timeframes.m5  => "5"
+        Timeframes.m10 => "10"
+        Timeframes.m15 => "15"
+        Timeframes.m30 => "30"
+        Timeframes.h1  => "60"
+        Timeframes.h2  => "120"
+        Timeframes.h3  => "180"
+        Timeframes.h4  => "240"
+        Timeframes.h6  => "360"
+        Timeframes.h8  => "480"
+        Timeframes.h12 => "720"
+        Timeframes.D1  => "1D"
+        Timeframes.W1  => "1W"
+        Timeframes.M1  => "1M" 
+        Timeframes.M3  => "3M"
+        Timeframes.M6  => "6M"
+        Timeframes.M12 => "12M"
+
+
+// @function Produce the `timezone` parameter from the given user input.
+// @returns  string
+method param(simple Timezones input) =>
+    switch input
+        Timezones.utc  => "UTC+0"
+        Timezones.exch => syminfo.timezone
+        =>                str.tostring(input)
+
+
+// @function Produce the line `style` parameter from the given user input.
+// @returns  string
+method param(simple LineStyles input) =>
+    switch input
+        LineStyles.solid  => line.style_solid
+        LineStyles.dotted => line.style_dotted
+        LineStyles.dashed => line.style_dashed
+
+
+// @function Create and maintain time separators on the chart. 
+// @returns  void
+drawSeparator(bool change, color color, int width, simple LineStyles style, int lookback) =>
+    // @variable The collection of visible separators.
+    var array<line> _separatorArray = array.new_line()
+    // @variable The separator line style.
+    var string _style = style.param()
+
+    if change
+        _separatorArray.push(
+             line.new(
+                 x1     = time,
+                 x2     = time,
+                 y1     = open,
+                 // y1 and y2 must be distinct or otherwise result in a vertical line.
+                 y2     = open + syminfo.mintick,
+                 xloc   = xloc.bar_time, 
+                 extend = extend.both, 
+                 color  = color,
+                 style  = _style,
+                 width  = width
+                 )
+             )
+
+        // Trim the exceeding number of visible separators.
+        if _separatorArray.size() > lookback
+            line.delete(_separatorArray.shift())
+
+
+// @function Check if the time has ellapsed since the last interval.
+// @returns  bool
+intervalChange(string timeframe, string session, string timezone) =>
+    // @variable The next interval UNIX time.
+    var int _next = 0
+    
+    // The current bar opening time is at or over the interval.
+    if time >= _next 
+        _next := time_close(timeframe, session, timezone)
+
+    // The current bar encloses the interval intrabar. Bar can cover two interval (no else if).
+    if time_close > _next
+        _next := time_close(timeframe, session, timezone, -1)
+
+    ta.change(_next) > 0
+
+
+// @function Detect changes in the specified timeframe.
+// @returns  bool
+method change(string timeframe, bool hasCustomTime) =>
+    var string _customTz = timezoneInput.param()
+    
+    switch 
+        timeframe.isseconds => timeframe.change(timeframe)
+        hasCustomTime       => intervalChange(timeframe, "0000-0000", _customTz)
+        =>                     intervalChange(timeframe, "", syminfo.timezone)
+
+
+// @function Check if the specified separator `timeframe` can be displayed on the chart context.
+// @returns  simple bool
+method isVisible(simple string timeframe) =>
+    timeframe.in_seconds(timeframe) > timeframe.in_seconds()
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+// @variable Is true if the separators are based on 00:00.
+var bool hasCustomTime = timeReferenceInput == TimeReference.day
+
+
+// @variable The `timeframe` parameters produced from the user inputs.
+var string separatorTimeframe1 = separatorTimeframeInput1.param()
+var string separatorTimeframe2 = separatorTimeframeInput2.param()
+var string separatorTimeframe3 = separatorTimeframeInput3.param()
+var string separatorTimeframe4 = separatorTimeframeInput4.param()
+
+
+// @variable Is true if the display setting is enabled and chart timeframe is lower than the separator's one.
+var bool displaySeparator1 = enableSeparatorInput1 and separatorTimeframe1.isVisible()
+var bool displaySeparator2 = enableSeparatorInput2 and separatorTimeframe2.isVisible()
+var bool displaySeparator3 = enableSeparatorInput3 and separatorTimeframe3.isVisible()
+var bool displaySeparator4 = enableSeparatorInput4 and separatorTimeframe4.isVisible()
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+bool separatorChange1 = displaySeparator1 ? separatorTimeframe1.change(hasCustomTime) : na
+bool separatorChange2 = displaySeparator2 ? separatorTimeframe2.change(hasCustomTime) : na
+bool separatorChange3 = displaySeparator3 ? separatorTimeframe3.change(hasCustomTime) : na
+bool separatorChange4 = displaySeparator4 ? separatorTimeframe4.change(hasCustomTime) : na
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+if displaySeparator1
+    drawSeparator(
+         separatorChange1,
+         separatorColorInput1,
+         separatorWidthInput1,
+         separatorStyleInput1,
+         separatorLookbackInput1
+         )
+
+if displaySeparator2
+    drawSeparator(
+         separatorChange2,
+         separatorColorInput2,
+         separatorWidthInput2,
+         separatorStyleInput2,
+         separatorLookbackInput2
+         )
+
+if displaySeparator3
+    drawSeparator(
+         separatorChange3,
+         separatorColorInput3,
+         separatorWidthInput3,
+         separatorStyleInput3,
+         separatorLookbackInput3
+         )
+
+if displaySeparator4
+    drawSeparator(
+         separatorChange4,
+         separatorColorInput4,
+         separatorWidthInput4,
+         separatorStyleInput4,
+         separatorLookbackInput4
+         )
+
+//#endregion
