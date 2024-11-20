@@ -87,67 +87,23 @@ method change(simple string timeframe, series int regularTime, simple bool enabl
         true  => timeframe.change(timeframe)
         false => ta.change(regularTime) > 0
 
-//#endregion
 
-
-
-//--------------------------------------------------------------------
-//#region                 Variables declarations
-//--------------------------------------------------------------------
-
-var array<float> lastOpenArray   = array.new_float(4)
-
-// @variable True if using the open price of the extended session.
-var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.session == session.extended
-
-// @variable True if the open price is sourced from the chart context.
-var bool discoverPrices = discoverPricesInput or useExtendedTradingHours
-
-// @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
-var bool displayOpen1 = enableOpenInput1 and openTimeframeInput1.isVisible()
-var bool displayOpen2 = enableOpenInput2 and openTimeframeInput2.isVisible()
-var bool displayOpen3 = enableOpenInput3 and openTimeframeInput3.isVisible()
-var bool displayOpen4 = enableOpenInput4 and openTimeframeInput4.isVisible()
-
-// @variable The opening time and price sourced from the user-selected timeframe context.
-[time1, open1] = request.security("", openTimeframeInput1, [time, open], lookahead=barmerge.lookahead_on)
-[time2, open2] = request.security("", openTimeframeInput2, [time, open], lookahead=barmerge.lookahead_on)
-[time3, open3] = request.security("", openTimeframeInput3, [time, open], lookahead=barmerge.lookahead_on)
-[time4, open4] = request.security("", openTimeframeInput4, [time, open], lookahead=barmerge.lookahead_on)
-
-//#endregion
-
-
-//--------------------------------------------------------------------
-//#region                   Functions & methods
-//--------------------------------------------------------------------
-
-// If different opens share the same opening prices, their labels will overlap
-// Instead, we pad the higher time frame ones for achieving a "separator sheet"
-f_getPadding(int _index) =>
-    _padding = 0
-    // Weekly, monthly, or yearly overlaps the daily open
-    if _index > 0 and displayOpen1 and array.get(lastOpenArray, 0) == array.get(lastOpenArray, _index)
-        _padding += 1
-    // Monthly or yearly overlaps the weekly open
-    if _index > 1 and displayOpen2 and array.get(lastOpenArray, 1) == array.get(lastOpenArray, _index)
-        _padding += 1
-    // Yearly overlaps the monthly open
-    if _index > 2 and displayOpen3 and array.get(lastOpenArray, 2) == array.get(lastOpenArray, _index)
-        _padding += 1
-    _padding
-
-f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OFFSET_PADDING
-
+// @function 
+// @returns  
 // On the weekly time frame, the monthly/yearly open is drawn from the first candle of the month/year
 // The first weekly candle is not necessarily containing the first day of the month
 // In such case, we visually anchor the open of the previous weekly candle
 f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
 
 
+// @function 
+// @returns  
+f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OFFSET_PADDING
+
+
 // @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
 // @returns  void
-draw(bool change, float y, int lookback, int padding, color color, string txt, bool prevTime = false) =>
+draw(bool change, float y, int lookback, int padding, color color, string txt, array<float> lastOpenArray, bool prevTime = false) =>
     // @variable The reference of the last open line.
     var line _bodyLine = na
     // @variable The reference of the last open label.
@@ -200,6 +156,52 @@ draw(bool change, float y, int lookback, int padding, color color, string txt, b
                 if not lastOpenArray.includes(_headLineArray.get(i).get_y1())
                     _headLineArray.get(i).set_x2(f_getRightBarIndex(HEAD_PADDING))
 
+
+// @function 
+// @returns 
+// If different opens share the same opening prices, their labels will overlap
+// Instead, we pad the higher time frame ones for achieving a "separator sheet"
+f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3, array<float> lastOpenArray) =>
+    _padding = 0
+    // Weekly, monthly, or yearly overlaps the daily open
+    if _index > 0 and displayOpen1 and array.get(lastOpenArray, 0) == array.get(lastOpenArray, _index)
+        _padding += 1
+    // Monthly or yearly overlaps the weekly open
+    if _index > 1 and displayOpen2 and array.get(lastOpenArray, 1) == array.get(lastOpenArray, _index)
+        _padding += 1
+    // Yearly overlaps the monthly open
+    if _index > 2 and displayOpen3 and array.get(lastOpenArray, 2) == array.get(lastOpenArray, _index)
+        _padding += 1
+    _padding
+
+//#endregion
+
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+var array<float> lastOpenArray   = array.new_float(4)
+
+// @variable True if using the open price of the extended session.
+var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.session == session.extended
+
+// @variable True if the open price is sourced from the chart context.
+var bool discoverPrices = discoverPricesInput or useExtendedTradingHours
+
+// @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
+var bool displayOpen1 = enableOpenInput1 and openTimeframeInput1.isVisible()
+var bool displayOpen2 = enableOpenInput2 and openTimeframeInput2.isVisible()
+var bool displayOpen3 = enableOpenInput3 and openTimeframeInput3.isVisible()
+var bool displayOpen4 = enableOpenInput4 and openTimeframeInput4.isVisible()
+
+// @variable The opening time and price sourced from the user-selected timeframe context.
+[time1, open1] = request.security("", openTimeframeInput1, [time, open], lookahead=barmerge.lookahead_on)
+[time2, open2] = request.security("", openTimeframeInput2, [time, open], lookahead=barmerge.lookahead_on)
+[time3, open3] = request.security("", openTimeframeInput3, [time, open], lookahead=barmerge.lookahead_on)
+[time4, open4] = request.security("", openTimeframeInput4, [time, open], lookahead=barmerge.lookahead_on)
+
 //#endregion
 
 
@@ -233,16 +235,50 @@ if displayOpen4 and openChange4
 //--------------------------------------------------------------------
 
 if displayOpen4
-    draw(openChange4, array.get(lastOpenArray, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(time4))
+    draw(
+         openChange4,
+         array.get(lastOpenArray, 3),
+         openLookbackInput4,
+         f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         openColorInput4,
+         "Y   ",
+         lastOpenArray,
+         f_isContainedOnPrevWeekly(time4)
+         )
 
 if displayOpen3
-    draw(openChange3, array.get(lastOpenArray, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(time3))
+    draw(
+         openChange3,
+         array.get(lastOpenArray, 2),
+         openLookbackInput3,
+         f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         openColorInput3,
+         "M   ",
+         lastOpenArray,
+         f_isContainedOnPrevWeekly(time3)
+         )
 
 if displayOpen2
-    draw(openChange2, array.get(lastOpenArray, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
+    draw(
+         openChange2,
+         array.get(lastOpenArray, 1),
+         openLookbackInput2,
+         f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         openColorInput2,
+         "W   ",
+         lastOpenArray
+         )
 
 if displayOpen1
-    draw(openChange1, array.get(lastOpenArray, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
+    draw(
+         openChange1,
+         array.get(lastOpenArray, 0),
+         openLookbackInput1,
+         f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         openColorInput1,
+         "D   ",
+         lastOpenArray
+         )
 
 
 // Plot the open prices on the `status line`, `scale`, `data window` as well for providing default alert conditions.
