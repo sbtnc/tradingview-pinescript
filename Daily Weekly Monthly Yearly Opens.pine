@@ -1,11 +1,11 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-19
+// Last modified: 2024-11-20
 // version 6.0
 
 // @version=5
-indicator("Daily Weekly Monthly Yearly Opens", "DWMY O", true, max_lines_count=500)
+indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_lines_count = 500)
 
 
 //--------------------------------------------------------------------
@@ -29,43 +29,78 @@ color   COLOR_4         = color.blue
 
 
 //--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+// @enum Contains fields with the indicator configurable timeframes as titles.
+enum Timeframes
+    s5  = "5 seconds"
+    s10 = "10 seconds"
+    s15 = "15 seconds"
+    s30 = "30 seconds"
+    m1  = "1 minute"
+    m2  = "2 minutes"
+    m3  = "3 minutes"
+    m5  = "5 minutes"
+    m10 = "10 minutes"
+    m15 = "15 minutes"
+    m30 = "30 minutes"
+    m45 = "45 minutes"
+    h1  = "1 hour"
+    h2  = "2 hours"
+    h3  = "3 hours"
+    h4  = "4 hours"
+    h6  = "6 hours"
+    h8  = "8 hours"
+    h12 = "12 hours"
+    D1  = "1 day"
+    W1  = "1 week"
+    M1  = "1 month"
+    M3  = "3 months"
+    M6  = "6 months"
+    M12 = "12 months"
+
+//#endregion
+
+
+//--------------------------------------------------------------------
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string  g1 = "Opens"
-string  g2 = "Style"
-string  g3 = "Preferences"
+string      g1                          = "Opens"
+string      g2                          = "Style"
+string      g3                          = "Preferences"
 
-string  tailsTooltip                = "Extends last opens on historical bars."
-string  headsTooltip                = "Extends previous opens in the future."
-string  discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
-string  extendedHoursTooltip        = "Discovers the opening prices from the extended trading hours if available."
+string      tailsTooltip                = "Extends last opens on historical bars."
+string      headsTooltip                = "Extends previous opens in the future."
+string      discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
+string      extendedHoursTooltip        = "Discovers the opening prices from the extended trading hours if available."
 
-bool    enableOpenInput1            = input.bool        (true,      title = "", group = g1, inline = "#1")
-string  openTimeframeInput1         = input.timeframe   ("D",       title = "", group = g1, inline = "#1")
-color   openColorInput1             = input.color       (COLOR_1,   title = "", group = g1, inline = "#1")
-int     openLookbackInput1          = input.int         (1,         title = "", group = g1, inline = "#1", minval = 1)
+bool        enableOpenInput1            = input.bool        (true,              title = "", group = g1, inline = "#1")
+Timeframes  openTimeframeInput1         = input.enum        (Timeframes.D1,     title = "", group = g1, inline = "#1", display = display.none)
+color       openColorInput1             = input.color       (COLOR_1,           title = "", group = g1, inline = "#1")
+int         openLookbackInput1          = input.int         (1,                 title = "", group = g1, inline = "#1", minval = 1, display = display.none)
 
-bool    enableOpenInput2            = input.bool        (true,      title = "", group = g1, inline = "#2")
-string  openTimeframeInput2         = input.timeframe   ("W",       title = "", group = g1, inline = "#2")
-color   openColorInput2             = input.color       (COLOR_2,   title = "", group = g1, inline = "#2")
-int     openLookbackInput2          = input.int         (1,         title = "", group = g1, inline = "#2", minval = 1)
+bool        enableOpenInput2            = input.bool        (true,              title = "", group = g1, inline = "#2")
+Timeframes  openTimeframeInput2         = input.enum        (Timeframes.W1,     title = "", group = g1, inline = "#2", display = display.none)
+color       openColorInput2             = input.color       (COLOR_2,           title = "", group = g1, inline = "#2")
+int         openLookbackInput2          = input.int         (1,                 title = "", group = g1, inline = "#2", minval = 1, display = display.none)
 
-bool    enableOpenInput3            = input.bool        (true,      title = "", group = g1, inline = "#3")
-string  openTimeframeInput3         = input.timeframe   ("M",       title = "", group = g1, inline = "#3")
-color   openColorInput3             = input.color       (COLOR_3,   title = "", group = g1, inline = "#3")
-int     openLookbackInput3          = input.int         (1,         title = "", group = g1, inline = "#3", minval = 1)
+bool        enableOpenInput3            = input.bool        (true,              title = "", group = g1, inline = "#3")
+Timeframes  openTimeframeInput3         = input.enum        (Timeframes.M1,     title = "", group = g1, inline = "#3", display = display.none)
+color       openColorInput3             = input.color       (COLOR_3,           title = "", group = g1, inline = "#3")
+int         openLookbackInput3          = input.int         (1,                 title = "", group = g1, inline = "#3", minval = 1, display = display.none)
 
-bool    enableOpenInput4            = input.bool        (true,      title = "", group = g1, inline = "#4")
-string  openTimeframeInput4         = input.timeframe   ("12M",     title = "", group = g1, inline = "#4")
-color   openColorInput4             = input.color       (COLOR_4,   title = "", group = g1, inline = "#4")
-int     openLookbackInput4          = input.int         (1,         title = "", group = g1, inline = "#4", minval = 1)
+bool        enableOpenInput4            = input.bool        (true,              title = "", group = g1, inline = "#4")
+Timeframes  openTimeframeInput4         = input.enum        (Timeframes.M12,    title = "", group = g1, inline = "#4", display = display.none)
+color       openColorInput4             = input.color       (COLOR_4,           title = "", group = g1, inline = "#4")
+int         openLookbackInput4          = input.int         (1,                 title = "", group = g1, inline = "#4", minval = 1, display = display.none)
 
-int     rightOffsetInput            = input.int         (20,        title = "Offset",           group = g2, minval = 1)
-bool    enableTailsInput        = input.bool        (false,     title = "Show Tails",       group = g2, tooltip = tailsTooltip)
-bool    enableHeadsInput        = input.bool        (false,     title = "Show Projections", group = g2, tooltip = headsTooltip)
-bool    discoverPricesInput         = input.bool        (false,     title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
-bool    enableExtendedSessionInput  = input.bool        (false,     title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
+int         rightOffsetInput            = input.int         (20,                title = "Offset",           group = g2, minval = 1, display = display.none)
+bool        enableTailsInput            = input.bool        (false,             title = "Show Tails",       group = g2, tooltip = tailsTooltip)
+bool        enableHeadsInput            = input.bool        (false,             title = "Show Projections", group = g2, tooltip = headsTooltip)
+bool        discoverPricesInput         = input.bool        (false,             title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
+bool        enableExtendedSessionInput  = input.bool        (false,             title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
 
 //#endregion
 
@@ -99,6 +134,37 @@ f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) 
 // @function 
 // @returns  
 f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OFFSET_PADDING
+
+
+// @function Produce the `timeframe` parameter from the given user input.
+// @returns  string
+method param(simple Timeframes input) =>
+    switch input
+        Timeframes.s5  => "5S"
+        Timeframes.s10 => "10S"
+        Timeframes.s15 => "15S"
+        Timeframes.s30 => "30S"
+        Timeframes.m1  => "1"
+        Timeframes.m2  => "2"
+        Timeframes.m3  => "3"
+        Timeframes.m5  => "5"
+        Timeframes.m10 => "10"
+        Timeframes.m15 => "15"
+        Timeframes.m30 => "30"
+        Timeframes.m45 => "45"
+        Timeframes.h1  => "60"
+        Timeframes.h2  => "120"
+        Timeframes.h3  => "180"
+        Timeframes.h4  => "240"
+        Timeframes.h6  => "360"
+        Timeframes.h8  => "480"
+        Timeframes.h12 => "720"
+        Timeframes.D1  => "1D"
+        Timeframes.W1  => "1W"
+        Timeframes.M1  => "1M" 
+        Timeframes.M3  => "3M"
+        Timeframes.M6  => "6M"
+        Timeframes.M12 => "12M"
 
 
 // @function Return the short display string for minutes and hours `timeframe` string
@@ -223,17 +289,23 @@ var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.sessio
 // @variable True if the open price is sourced from the chart context.
 var bool discoverPrices = discoverPricesInput or useExtendedTradingHours
 
+// @variable The `timeframe` parameters produced from the user inputs.
+var string openTimeframe1 = openTimeframeInput1.param()
+var string openTimeframe2 = openTimeframeInput2.param()
+var string openTimeframe3 = openTimeframeInput3.param()
+var string openTimeframe4 = openTimeframeInput4.param()
+
 // @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
-var bool displayOpen1 = enableOpenInput1 and openTimeframeInput1.isVisible()
-var bool displayOpen2 = enableOpenInput2 and openTimeframeInput2.isVisible()
-var bool displayOpen3 = enableOpenInput3 and openTimeframeInput3.isVisible()
-var bool displayOpen4 = enableOpenInput4 and openTimeframeInput4.isVisible()
+var bool displayOpen1 = enableOpenInput1 and openTimeframe1.isVisible()
+var bool displayOpen2 = enableOpenInput2 and openTimeframe2.isVisible()
+var bool displayOpen3 = enableOpenInput3 and openTimeframe3.isVisible()
+var bool displayOpen4 = enableOpenInput4 and openTimeframe4.isVisible()
 
 // @variable The opening time and price sourced from the user-selected timeframe context.
-[time1, open1] = request.security("", openTimeframeInput1, [time, open], lookahead=barmerge.lookahead_on)
-[time2, open2] = request.security("", openTimeframeInput2, [time, open], lookahead=barmerge.lookahead_on)
-[time3, open3] = request.security("", openTimeframeInput3, [time, open], lookahead=barmerge.lookahead_on)
-[time4, open4] = request.security("", openTimeframeInput4, [time, open], lookahead=barmerge.lookahead_on)
+[time1, open1] = request.security("", openTimeframe1, [time, open], lookahead=barmerge.lookahead_on)
+[time2, open2] = request.security("", openTimeframe2, [time, open], lookahead=barmerge.lookahead_on)
+[time3, open3] = request.security("", openTimeframe3, [time, open], lookahead=barmerge.lookahead_on)
+[time4, open4] = request.security("", openTimeframe4, [time, open], lookahead=barmerge.lookahead_on)
 
 //#endregion
 
@@ -242,10 +314,10 @@ var bool displayOpen4 = enableOpenInput4 and openTimeframeInput4.isVisible()
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool openChange1 = openTimeframeInput1.change(time1, useExtendedTradingHours)
-bool openChange2 = openTimeframeInput2.change(time2, useExtendedTradingHours)
-bool openChange3 = openTimeframeInput3.change(time3, useExtendedTradingHours)
-bool openChange4 = openTimeframeInput4.change(time4, useExtendedTradingHours)
+bool openChange1 = openTimeframe1.change(time1, useExtendedTradingHours)
+bool openChange2 = openTimeframe2.change(time2, useExtendedTradingHours)
+bool openChange3 = openTimeframe3.change(time3, useExtendedTradingHours)
+bool openChange4 = openTimeframe4.change(time4, useExtendedTradingHours)
 
 
 if displayOpen1 and openChange1 
@@ -274,7 +346,7 @@ if displayOpen4
          openLookbackInput4,
          f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput4,
-         openTimeframeInput4.displayString(),
+         openTimeframe4.displayString(),
          lastOpenArray,
          f_isContainedOnPrevWeekly(time4)
          )
@@ -286,7 +358,7 @@ if displayOpen3
          openLookbackInput3,
          f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput3,
-         openTimeframeInput3.displayString(),
+         openTimeframe3.displayString(),
          lastOpenArray,
          f_isContainedOnPrevWeekly(time3)
          )
@@ -298,7 +370,7 @@ if displayOpen2
          openLookbackInput2,
          f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput2,
-         openTimeframeInput2.displayString(),
+         openTimeframe2.displayString(),
          lastOpenArray
          )
 
@@ -309,7 +381,7 @@ if displayOpen1
          openLookbackInput1,
          f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput1,
-         openTimeframeInput1.displayString(),
+         openTimeframe1.displayString(),
          lastOpenArray
          )
 
