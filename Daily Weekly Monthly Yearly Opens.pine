@@ -36,36 +36,36 @@ string  g1 = "Opens"
 string  g2 = "Style"
 string  g3 = "Preferences"
 
-string  tailsTooltip            = "Extends last opens on historical bars."
-string  headsTooltip            = "Extends previous opens in the future."
-string  discoverPricesTooltip   = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
-string  extendedHoursTooltip    = "Discovers the opening prices from the extended trading hours if available."
+string  tailsTooltip                = "Extends last opens on historical bars."
+string  headsTooltip                = "Extends previous opens in the future."
+string  discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
+string  extendedHoursTooltip        = "Discovers the opening prices from the extended trading hours if available."
 
-bool    enableOpenInput1        = input.bool        (true,      title = "", group = g1, inline = "#1")
-string  openTimeframeInput1     = input.timeframe   ("D",       title = "", group = g1, inline = "#1")
-color   openColorInput1         = input.color       (COLOR_1,   title = "", group = g1, inline = "#1")
-int     openLookbackInput1      = input.int         (1,         title = "", group = g1, inline = "#1", minval = 1)
+bool    enableOpenInput1            = input.bool        (true,      title = "", group = g1, inline = "#1")
+string  openTimeframeInput1         = input.timeframe   ("D",       title = "", group = g1, inline = "#1")
+color   openColorInput1             = input.color       (COLOR_1,   title = "", group = g1, inline = "#1")
+int     openLookbackInput1          = input.int         (1,         title = "", group = g1, inline = "#1", minval = 1)
 
-bool    enableOpenInput2        = input.bool        (true,      title = "", group = g1, inline = "#2")
-string  openTimeframeInput2     = input.timeframe   ("W",       title = "", group = g1, inline = "#2")
-color   openColorInput2         = input.color       (COLOR_2,   title = "", group = g1, inline = "#2")
-int     openLookbackInput2      = input.int         (1,         title = "", group = g1, inline = "#2", minval = 1)
+bool    enableOpenInput2            = input.bool        (true,      title = "", group = g1, inline = "#2")
+string  openTimeframeInput2         = input.timeframe   ("W",       title = "", group = g1, inline = "#2")
+color   openColorInput2             = input.color       (COLOR_2,   title = "", group = g1, inline = "#2")
+int     openLookbackInput2          = input.int         (1,         title = "", group = g1, inline = "#2", minval = 1)
 
-bool    enableOpenInput3        = input.bool        (true,      title = "", group = g1, inline = "#3")
-string  openTimeframeInput3     = input.timeframe   ("M",       title = "", group = g1, inline = "#3")
-color   openColorInput3         = input.color       (COLOR_3,   title = "", group = g1, inline = "#3")
-int     openLookbackInput3      = input.int         (1,         title = "", group = g1, inline = "#3", minval = 1)
+bool    enableOpenInput3            = input.bool        (true,      title = "", group = g1, inline = "#3")
+string  openTimeframeInput3         = input.timeframe   ("M",       title = "", group = g1, inline = "#3")
+color   openColorInput3             = input.color       (COLOR_3,   title = "", group = g1, inline = "#3")
+int     openLookbackInput3          = input.int         (1,         title = "", group = g1, inline = "#3", minval = 1)
 
-bool    enableOpenInput4        = input.bool        (true,      title = "", group = g1, inline = "#4")
-string  openTimeframeInput4     = input.timeframe   ("12M",     title = "", group = g1, inline = "#4")
-color   openColorInput4         = input.color       (COLOR_4,   title = "", group = g1, inline = "#4")
-int     openLookbackInput4      = input.int         (1,         title = "", group = g1, inline = "#4", minval = 1)
+bool    enableOpenInput4            = input.bool        (true,      title = "", group = g1, inline = "#4")
+string  openTimeframeInput4         = input.timeframe   ("12M",     title = "", group = g1, inline = "#4")
+color   openColorInput4             = input.color       (COLOR_4,   title = "", group = g1, inline = "#4")
+int     openLookbackInput4          = input.int         (1,         title = "", group = g1, inline = "#4", minval = 1)
 
-int     rightOffsetInput        = input.int         (20,        title = "Offset",           group = g2, minval = 1)
-bool    areTailsEnabledInput    = input.bool        (false,     title = "Show Tails",       group = g2, tooltip = tailsTooltip)
-bool    areHeadsEnabledInput    = input.bool        (false,     title = "Show Projections", group = g2, tooltip = headsTooltip)
-bool    discoverPricesInput     = input.bool        (false,     title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
-bool    extendedHoursInput      = input.bool        (false,     title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
+int     rightOffsetInput            = input.int         (20,        title = "Offset",           group = g2, minval = 1)
+bool    areTailsEnabledInput        = input.bool        (false,     title = "Show Tails",       group = g2, tooltip = tailsTooltip)
+bool    areHeadsEnabledInput        = input.bool        (false,     title = "Show Projections", group = g2, tooltip = headsTooltip)
+bool    discoverPricesInput         = input.bool        (false,     title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
+bool    enableExtendedSessionInput  = input.bool        (false,     title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
 
 //#endregion
 
@@ -79,6 +79,14 @@ bool    extendedHoursInput      = input.bool        (false,     title = "Extende
 method isVisible(simple string timeframe) =>
     timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
+
+// @function Check if the specified open change.
+// @returns  series bool
+method change(simple string timeframe, series int regularTime, simple bool enableExtended) =>
+    switch enableExtended
+        true  => timeframe.change(timeframe)
+        false => ta.change(regularTime) > 0
+
 //#endregion
 
 
@@ -87,9 +95,13 @@ method isVisible(simple string timeframe) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-var array<float> lastOpenArray  = array.new_float(4)
-var bool hasExtendedHours       = extendedHoursInput and syminfo.session == session.extended
-var bool discoverPrices         = discoverPricesInput or hasExtendedHours
+var array<float> lastOpenArray   = array.new_float(4)
+
+// @variable True if using the open price of the extended session.
+var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.session == session.extended
+
+// @variable True if the open price is sourced from the chart context.
+var bool discoverPrices = discoverPricesInput or useExtendedTradingHours
 
 // @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
 var bool displayOpen1 = enableOpenInput1 and openTimeframeInput1.isVisible()
@@ -97,6 +109,7 @@ var bool displayOpen2 = enableOpenInput2 and openTimeframeInput2.isVisible()
 var bool displayOpen3 = enableOpenInput3 and openTimeframeInput3.isVisible()
 var bool displayOpen4 = enableOpenInput4 and openTimeframeInput4.isVisible()
 
+// @variable The opening time and price sourced from the user-selected timeframe context.
 [time1, open1] = request.security("", openTimeframeInput1, [time, open], lookahead=barmerge.lookahead_on)
 [time2, open2] = request.security("", openTimeframeInput2, [time, open], lookahead=barmerge.lookahead_on)
 [time3, open3] = request.security("", openTimeframeInput3, [time, open], lookahead=barmerge.lookahead_on)
@@ -131,9 +144,6 @@ f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OF
 // In such case, we visually anchor the open of the previous weekly candle
 f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
 
-// Compare previous value and new value
-// When the argument series contains `na` don't resolve `na` (returns true on the first bar's comparaison)
-f_hasChanged(_series) => not (_series == _series[1])
 
 // Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions
 f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, string _text, bool _prevTime=false) =>
@@ -187,22 +197,23 @@ f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, strin
 //#region                         Logic
 //--------------------------------------------------------------------
 
-bool hastime1Changed        = hasExtendedHours ? ta.change(time_tradingday) : discoverPrices ? f_hasChanged(time1) and time == time1        : f_hasChanged(time1)
-bool hasWeekklyTimeChanged  = hasExtendedHours ? ta.change(weekofyear)      : discoverPrices ? f_hasChanged(time2) and time == time2      : f_hasChanged(time2)
-bool hastime3Changed        = hasExtendedHours ? ta.change(month)           : discoverPrices ? f_hasChanged(time3) and time == time3    : f_hasChanged(time3)
-bool hastime4Changed        = hasExtendedHours ? ta.change(year)            : discoverPrices ? f_hasChanged(time4) and time == time4      : f_hasChanged(time4)
+bool openChange1 = openTimeframeInput1.change(time1, useExtendedTradingHours)
+bool openChange2 = openTimeframeInput2.change(time2, useExtendedTradingHours)
+bool openChange3 = openTimeframeInput3.change(time3, useExtendedTradingHours)
+bool openChange4 = openTimeframeInput4.change(time4, useExtendedTradingHours)
 
-if displayOpen1 and hastime1Changed 
-    array.set(lastOpenArray, 0, discoverPrices ? open : open1)
 
-if displayOpen2 and hasWeekklyTimeChanged
-    array.set(lastOpenArray, 1, discoverPrices ? open : open2)
+if displayOpen1 and openChange1 
+    lastOpenArray.set(0, discoverPrices ? open : open1)
 
-if displayOpen3 and hastime3Changed
-    array.set(lastOpenArray, 2, discoverPrices ? open : open3)
+if displayOpen2 and openChange2
+    lastOpenArray.set(1, discoverPrices ? open : open2)
 
-if displayOpen4 and hastime4Changed
-    array.set(lastOpenArray, 3, discoverPrices ? open : open4)
+if displayOpen3 and openChange3
+    lastOpenArray.set(2, discoverPrices ? open : open3)
+
+if displayOpen4 and openChange4
+    lastOpenArray.set(3, discoverPrices ? open : open4)
 
 //#endregion
 
@@ -212,22 +223,25 @@ if displayOpen4 and hastime4Changed
 //--------------------------------------------------------------------
 
 if displayOpen4
-    f_draw(hastime4Changed, array.get(lastOpenArray, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(time4))
+    f_draw(openChange4, array.get(lastOpenArray, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(time4))
 
 if displayOpen3
-    f_draw(hastime3Changed, array.get(lastOpenArray, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(time3))
+    f_draw(openChange3, array.get(lastOpenArray, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(time3))
 
 if displayOpen2
-    f_draw(hasWeekklyTimeChanged, array.get(lastOpenArray, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
+    f_draw(openChange2, array.get(lastOpenArray, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
 
 if displayOpen1
-    f_draw(hastime1Changed, array.get(lastOpenArray, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
+    f_draw(openChange1, array.get(lastOpenArray, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
 
-// Plot invisible opens for displaying last values in `status line`, `scale`, `data window` as well for providing defaults alert conditions
 
-plot(array.get(lastOpenArray, 0), "D",    color.new(openColorInput1, 100),   editable=false)
-plot(array.get(lastOpenArray, 1), "W",    color.new(openColorInput2, 100),  editable=false)
-plot(array.get(lastOpenArray, 2), "M",    color.new(openColorInput3, 100), editable=false)
-plot(array.get(lastOpenArray, 3), "Y",    color.new(openColorInput4, 100),  editable=false)
+// Plot the open prices on the `status line`, `scale`, `data window` as well for providing default alert conditions.
+
+displayControls = display.status_line + display.price_scale + display.data_window
+
+plot(series = lastOpenArray.get(0), title = "#1", color = COLOR_1, editable = false, display = displayControls)
+plot(series = lastOpenArray.get(1), title = "#2", color = COLOR_2, editable = false, display = displayControls)
+plot(series = lastOpenArray.get(2), title = "#3", color = COLOR_3, editable = false, display = displayControls)
+plot(series = lastOpenArray.get(3), title = "#4", color = COLOR_4, editable = false, display = displayControls)
 
 //#endregion
