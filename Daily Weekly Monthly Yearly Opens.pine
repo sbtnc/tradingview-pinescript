@@ -101,6 +101,39 @@ f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) 
 f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OFFSET_PADDING
 
 
+// @function Return the short display string for minutes and hours `timeframe` string
+// @returns  string
+method displayString(string this) =>
+    // Format
+    _str = switch this
+        "1"     => "1m"
+        "2"     => "2m"
+        "3"     => "3m"
+        "5"     => "5m"
+        "10"    => "10m"
+        "15"    => "15m"
+        "30"    => "30m"
+        "45"    => "45m"
+        "60"    => "1H"
+        "120"   => "2H"
+        "180"   => "3H"
+        "240"   => "4H"
+        "360"   => "6H"
+        "480"   => "8H"
+        "720"   => "12H"
+        "1440"  => "24H"
+        "1D"    => "D"
+        "1W"    => "W"
+        "1M"    => "M"
+        => this
+
+    // Add spacing
+    switch str.length(_str)
+        1 => _str + "   "
+        2 => _str + "     "
+        3 => _str + "       "
+
+
 // @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
 // @returns  void
 draw(bool change, float y, int lookback, int padding, color color, string txt, array<float> lastOpenArray, bool prevTime = false) =>
@@ -241,7 +274,7 @@ if displayOpen4
          openLookbackInput4,
          f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput4,
-         "Y   ",
+         openTimeframeInput4.displayString(),
          lastOpenArray,
          f_isContainedOnPrevWeekly(time4)
          )
@@ -253,7 +286,7 @@ if displayOpen3
          openLookbackInput3,
          f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput3,
-         "M   ",
+         openTimeframeInput3.displayString(),
          lastOpenArray,
          f_isContainedOnPrevWeekly(time3)
          )
@@ -265,7 +298,7 @@ if displayOpen2
          openLookbackInput2,
          f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput2,
-         "W   ",
+         openTimeframeInput2.displayString(),
          lastOpenArray
          )
 
@@ -276,7 +309,7 @@ if displayOpen1
          openLookbackInput1,
          f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput1,
-         "D   ",
+         openTimeframeInput1.displayString(),
          lastOpenArray
          )
 
