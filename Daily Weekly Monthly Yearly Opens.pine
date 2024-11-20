@@ -62,8 +62,8 @@ color   openColorInput4             = input.color       (COLOR_4,   title = "", 
 int     openLookbackInput4          = input.int         (1,         title = "", group = g1, inline = "#4", minval = 1)
 
 int     rightOffsetInput            = input.int         (20,        title = "Offset",           group = g2, minval = 1)
-bool    areTailsEnabledInput        = input.bool        (false,     title = "Show Tails",       group = g2, tooltip = tailsTooltip)
-bool    areHeadsEnabledInput        = input.bool        (false,     title = "Show Projections", group = g2, tooltip = headsTooltip)
+bool    enableTailsInput        = input.bool        (false,     title = "Show Tails",       group = g2, tooltip = tailsTooltip)
+bool    enableHeadsInput        = input.bool        (false,     title = "Show Projections", group = g2, tooltip = headsTooltip)
 bool    discoverPricesInput         = input.bool        (false,     title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
 bool    enableExtendedSessionInput  = input.bool        (false,     title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
 
@@ -145,50 +145,60 @@ f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OF
 f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
 
 
-// Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions
-f_draw(bool _newOpen, float _y, int _lookback, int _padding, color _color, string _text, bool _prevTime=false) =>
-    var line _body  = na 
-    var _label      = label.new(na, na, _text, style=LABEL_STYLE, textcolor=_color, size=LABEL_SIZE)
-    var _tail       = line.new(na, na, na, na, color=_color, style=TAIL_STYLE, width=LINE_WIDTH, extend=extend.left)
-    var _bodies     = array.new_line()
-    var _heads      = array.new_line()
-    _start          = _prevTime ? bar_index - 1 : bar_index
-    _end            = f_getRightBarIndex(_padding)
+// @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
+// @returns  void
+draw(bool change, float y, int lookback, int padding, color color, string txt, bool prevTime = false) =>
+    // @variable The reference of the last open line.
+    var line _bodyLine = na
+    // @variable The reference of the last open label.
+    var label _label = label.new(x = na, y = na, text = txt, style = LABEL_STYLE, textcolor = color, size = LABEL_SIZE)
+    // @variable The reference of the last open left extending line.
+    var line _tailLine = line.new(x1 = na, y1 = na, x2 = na, y2 = na, color = color, style = TAIL_STYLE, width = LINE_WIDTH, extend = extend.left)
+    // @variable The collection of historical open lines.
+    var array<line> _bodyLineArray  = array.new_line()
+    // @variable The collection of historical right extending open lines.
+    var array<line> _headLineArray  = array.new_line()
 
-    if _newOpen
-        // Label
-        label.set_xy(_label, _end, _y)
-        label.set_tooltip(_label, str.tostring(_y, format.mintick))
+    int _startBarIndex  = prevTime ? bar_index - 1 : bar_index
+    int _endBarIndex    = f_getRightBarIndex(padding)
 
-        // Body
-        line.set_x2(_body, bar_index)
-        _body := line.new(_start, _y, _end, _y, color=_color, style=LINE_STYLE, width=LINE_WIDTH)
-        array.push(_bodies, _body)
+    if change
+        // Anchor the old open position.
+        _bodyLine.set_x2(bar_index)
 
-        // Head
-        if areHeadsEnabledInput
-            array.push(_heads, line.new(bar_index, _y, bar_index, _y, color=color.new(_color, HEAD_TRANSP), style=LINE_STYLE, width=LINE_WIDTH))
+        // Update the last open label position and tooltip.
+        _label.set_xy(_endBarIndex, y)
+        _label.set_tooltip(str.tostring(y, format.mintick))
 
-        // Tail
-        if areTailsEnabledInput
-            line.set_xy1(_tail, _start - 1, _y)
-            line.set_xy2(_tail, _start, _y)
+        // Create the last open line.
+        _bodyLine := line.new(x1 = _startBarIndex, y1 = y, x2 = _endBarIndex, y2 = y, color = color, style = LINE_STYLE, width = LINE_WIDTH)
+        array.push(_bodyLineArray, _bodyLine)
 
-        if array.size(_bodies) > _lookback
-            line.delete(array.shift(_bodies))
-        if array.size(_heads) > _lookback
-            line.delete(array.shift(_heads))
+        // Create the last open right extension.
+        if enableHeadsInput
+            _headLineArray.push(line.new(x1 = bar_index, y1 = y, x2 = bar_index, y2 = y, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
+
+        // Create the last open left extension.
+        if enableTailsInput
+            _tailLine.set_xy1(_startBarIndex -1, y)
+            _tailLine.set_xy2(_startBarIndex,    y)
+
+        // Trim the exceeding number of drawings.
+        if _bodyLineArray.size() > lookback
+            line.delete(_bodyLineArray.shift())
+        if _headLineArray.size() > lookback
+            line.delete(_headLineArray.shift())
 
     if barstate.islast
-        line.set_x2(_body, _end)
-        label.set_x(_label, _end)
+        _bodyLine.set_x2(_endBarIndex)
+        _label.set_x(_endBarIndex)
 
-        if areHeadsEnabledInput and array.size(_heads) > 1
+        if enableHeadsInput and _headLineArray.size() > 1
             // Not updating the last open's projection
-            for i = 0 to array.size(_heads) - 2
+            for i = 0 to _headLineArray.size() - 2
                 // Avoid projecting on last opens bodies
-                if not array.includes(lastOpenArray, line.get_y1(array.get(_heads, i)))
-                    line.set_x2(array.get(_heads, i), f_getRightBarIndex(HEAD_PADDING))
+                if not lastOpenArray.includes(_headLineArray.get(i).get_y1())
+                    _headLineArray.get(i).set_x2(f_getRightBarIndex(HEAD_PADDING))
 
 //#endregion
 
@@ -223,16 +233,16 @@ if displayOpen4 and openChange4
 //--------------------------------------------------------------------
 
 if displayOpen4
-    f_draw(openChange4, array.get(lastOpenArray, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(time4))
+    draw(openChange4, array.get(lastOpenArray, 3), openLookbackInput4, f_getPadding(3), openColorInput4, "Y   ", f_isContainedOnPrevWeekly(time4))
 
 if displayOpen3
-    f_draw(openChange3, array.get(lastOpenArray, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(time3))
+    draw(openChange3, array.get(lastOpenArray, 2), openLookbackInput3, f_getPadding(2), openColorInput3, "M   ", f_isContainedOnPrevWeekly(time3))
 
 if displayOpen2
-    f_draw(openChange2, array.get(lastOpenArray, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
+    draw(openChange2, array.get(lastOpenArray, 1), openLookbackInput2, f_getPadding(1), openColorInput2, "W   ")
 
 if displayOpen1
-    f_draw(openChange1, array.get(lastOpenArray, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
+    draw(openChange1, array.get(lastOpenArray, 0), openLookbackInput1, f_getPadding(0), openColorInput1, "D   ")
 
 
 // Plot the open prices on the `status line`, `scale`, `data window` as well for providing default alert conditions.
