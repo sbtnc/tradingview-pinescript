@@ -73,7 +73,7 @@ string      g3                          = "Preferences"
 
 string      tailsTooltip                = "Extends last opens on historical bars."
 string      headsTooltip                = "Extends previous opens in the future."
-string      discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
+string      discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames datafeeds."
 string      extendedHoursTooltip        = "Display the opening prices on the extended trading hours if visible."
 
 bool        enableOpenInput1            = input.bool        (true,              title = "", group = g1, inline = "#1")
@@ -126,7 +126,7 @@ method change(simple string timeframe, series int regularTime, simple bool enabl
 // @function 
 // @returns  
 method request(string timeframe, bool useExtendedTradingHours) =>
-    string tickerId = ticker.new(syminfo.prefix, syminfo.ticker, useExtendedTradingHours ? session.extended : session.regular)
+    string tickerId = ticker.modify(syminfo.tickerid, useExtendedTradingHours ? session.extended : session.regular)
     request.security(tickerId, timeframe, [time, open], lookahead = barmerge.lookahead_on)
 
 
@@ -303,7 +303,7 @@ var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.sessio
 // @variable True if the open price is sourced from the chart context.
 // Discover only if timeframe >= D ?
 discoverPrice(timeframe) =>
-    discoverPricesInput or (useExtendedTradingHours and timeframe.in_seconds(timeframe) >= timeframe.in_seconds("D"))
+    ((discoverPricesInput and timeframe.isintraday) or useExtendedTradingHours) and timeframe.in_seconds(timeframe) >= timeframe.in_seconds("D") 
 
 
 // @variable The `timeframe` parameters produced from the user inputs.
@@ -420,4 +420,27 @@ plot(series = lastOpenArray.get(1), title = "#2", color = COLOR_2, editable = fa
 plot(series = lastOpenArray.get(2), title = "#3", color = COLOR_3, editable = false, display = displayControls)
 plot(series = lastOpenArray.get(3), title = "#4", color = COLOR_4, editable = false, display = displayControls)
 
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Debug
+//--------------------------------------------------------------------
+
+var debugDashboard = table.new(position.bottom_right, 2, 5)
+
+if barstate.isfirst
+    debugDashboard.cell(0, 0, "extended",       text_color = chart.fg_color)
+    debugDashboard.cell(0, 1, "discovery 1",    text_color = chart.fg_color)
+    debugDashboard.cell(0, 2, "discovery 2",    text_color = chart.fg_color)
+    debugDashboard.cell(0, 3, "discovery 3",    text_color = chart.fg_color)
+    debugDashboard.cell(0, 4, "discovery 4",    text_color = chart.fg_color)
+
+if barstate.islast
+    debugDashboard.cell(1, 0, str.tostring(useExtendedTradingHours),        text_color = chart.fg_color)
+    debugDashboard.cell(1, 1, str.tostring(discoverPrice(openTimeframe1)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 2, str.tostring(discoverPrice(openTimeframe2)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 3, str.tostring(discoverPrice(openTimeframe3)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 4, str.tostring(discoverPrice(openTimeframe4)),  text_color = chart.fg_color)
+ 
 //#endregion
