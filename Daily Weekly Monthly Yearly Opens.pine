@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-20
+// Last modified: 2024-11-21
 // version 6.0
 
 // @version=5
@@ -31,6 +31,12 @@ color   COLOR_4         = color.blue
 //--------------------------------------------------------------------
 //#region                         Types 
 //--------------------------------------------------------------------
+
+// @type 
+type Open 
+    float   price 
+    int     barIndex
+
 
 // @enum Contains fields with the indicator configurable timeframes as titles.
 enum Timeframes
@@ -119,7 +125,7 @@ method isVisible(simple string timeframe) =>
 // @returns  series bool
 method change(simple string timeframe, series int regularTime, simple bool enableExtended) =>
     switch enableExtended
-        true  => timeframe.change(timeframe)
+        true  => timeframe.change(timeframe) // extended and HTF datafeed
         false => ta.change(regularTime) > 0
 
 
@@ -132,18 +138,14 @@ method request(string timeframe, bool useExtendedTradingHours) =>
 
 // @function 
 // @returns  
-// On the weekly time frame, the monthly/yearly open is drawn from the first candle of the month/year
-// The first weekly candle is not necessarily containing the first day of the month
-// In such case, we visually anchor the open of the previous weekly candle
-f_isContainedOnPrevWeekly(int _time) =>
-    // timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
+adjustStartBarIndex(int _time) =>
     time_close[1] > _time
-    //false 
 
 
 // @function 
 // @returns  
-f_getRightBarIndex(int _padding) => bar_index + rightOffsetInput + _padding * OFFSET_PADDING
+f_getRightBarIndex(int _padding) =>
+    bar_index + rightOffsetInput + _padding * OFFSET_PADDING
 
 
 // @function Produce the `timeframe` parameter from the given user input.
@@ -213,7 +215,7 @@ method displayString(string this) =>
 
 // @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
 // @returns  void
-draw(bool change, float y, int lookback, int padding, color color, string txt, array<float> lastOpenArray, bool prevTime = false) =>
+draw(bool change, Open o, int lookback, int padding, color color, string txt, array<float> lastOpenArray) =>
     // @variable The reference of the last open line.
     var line _bodyLine = na
     // @variable The reference of the last open label.
@@ -225,29 +227,28 @@ draw(bool change, float y, int lookback, int padding, color color, string txt, a
     // @variable The collection of historical right extending open lines.
     var array<line> _headLineArray  = array.new_line()
 
-    int _startBarIndex  = prevTime ? bar_index - 1 : bar_index
     int _endBarIndex    = f_getRightBarIndex(padding)
 
     if change
         // Anchor the old open position.
-        _bodyLine.set_x2(prevTime ? bar_index - 1 : bar_index)
+        _bodyLine.set_x2(o.barIndex)
 
         // Update the last open label position and tooltip.
-        _label.set_xy(_endBarIndex, y)
-        _label.set_tooltip(str.tostring(y, format.mintick))
+        _label.set_xy(_endBarIndex, o.price)
+        _label.set_tooltip(str.tostring(o.price, format.mintick))
 
         // Create the last open line.
-        _bodyLine := line.new(x1 = _startBarIndex, y1 = y, x2 = _endBarIndex, y2 = y, color = color, style = LINE_STYLE, width = LINE_WIDTH)
+        _bodyLine := line.new(x1 = o.barIndex, y1 = o.price, x2 = _endBarIndex, y2 = o.price, color = color, style = LINE_STYLE, width = LINE_WIDTH)
         array.push(_bodyLineArray, _bodyLine)
 
         // Create the last open right extension.
         if enableHeadsInput
-            _headLineArray.push(line.new(x1 = bar_index, y1 = y, x2 = bar_index, y2 = y, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
+            _headLineArray.push(line.new(x1 = bar_index, y1 = o.price, x2 = bar_index, y2 = o.price, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
 
         // Create the last open left extension.
         if enableTailsInput
-            _tailLine.set_xy1(_startBarIndex -1, y)
-            _tailLine.set_xy2(_startBarIndex,    y)
+            _tailLine.set_xy1(o.barIndex -1, o.price)
+            _tailLine.set_xy2(o.barIndex,    o.price)
 
         // Trim the exceeding number of drawings.
         if _bodyLineArray.size() > lookback
@@ -263,24 +264,24 @@ draw(bool change, float y, int lookback, int padding, color color, string txt, a
             // Not updating the last open's projection
             for i = 0 to _headLineArray.size() - 2
                 // Avoid projecting on last opens bodies
-                if not lastOpenArray.includes(_headLineArray.get(i).get_y1())
-                    _headLineArray.get(i).set_x2(f_getRightBarIndex(HEAD_PADDING))
+                //if not lastOpenArray.includes(_headLineArray.get(i).get_y1())
+                _headLineArray.get(i).set_x2(f_getRightBarIndex(HEAD_PADDING))
 
 
 // @function 
 // @returns 
 // If different opens share the same opening prices, their labels will overlap
 // Instead, we pad the higher time frame ones for achieving a "separator sheet"
-f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3, array<float> lastOpenArray) =>
+f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3, array<Open> lastOpenArray) =>
     _padding = 0
     // Weekly, monthly, or yearly overlaps the daily open
-    if _index > 0 and displayOpen1 and array.get(lastOpenArray, 0) == array.get(lastOpenArray, _index)
+    if _index > 0 and displayOpen1 and array.get(lastOpenArray, 0).price == array.get(lastOpenArray, _index).price
         _padding += 1
     // Monthly or yearly overlaps the weekly open
-    if _index > 1 and displayOpen2 and array.get(lastOpenArray, 1) == array.get(lastOpenArray, _index)
+    if _index > 1 and displayOpen2 and array.get(lastOpenArray, 1).price == array.get(lastOpenArray, _index).price
         _padding += 1
     // Yearly overlaps the monthly open
-    if _index > 2 and displayOpen3 and array.get(lastOpenArray, 2) == array.get(lastOpenArray, _index)
+    if _index > 2 and displayOpen3 and array.get(lastOpenArray, 2).price == array.get(lastOpenArray, _index).price
         _padding += 1
     _padding
 
@@ -291,10 +292,6 @@ f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3
 //--------------------------------------------------------------------
 //#region                 Variables declarations
 //--------------------------------------------------------------------
-
-// @variable
-var array<float> lastOpenArray = array.new_float(4)
-
 
 // @variable True if using the open price of the extended session.
 var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.session == session.extended
@@ -326,6 +323,13 @@ var bool displayOpen4 = enableOpenInput4 and openTimeframe4.isVisible()
 [time3, open3] = openTimeframe3.request(useExtendedTradingHours)
 [time4, open4] = openTimeframe4.request(useExtendedTradingHours)
 
+
+var Open o1 = Open.new()
+var Open o2 = Open.new()
+var Open o3 = Open.new()
+var Open o4 = Open.new()
+var openArray = array.from(o1, o2, o3, o4)
+
 //#endregion
 
 
@@ -338,22 +342,30 @@ bool openChange2 = openTimeframe2.change(time2, useExtendedTradingHours)
 bool openChange3 = openTimeframe3.change(time3, useExtendedTradingHours)
 bool openChange4 = openTimeframe4.change(time4, useExtendedTradingHours)
 
+a1 = adjustStartBarIndex(time1)
+a2 = adjustStartBarIndex(time2)
+a3 = adjustStartBarIndex(time3)
+a4 = adjustStartBarIndex(time4)
 
 if displayOpen1 and openChange1
     bool _discovery = discoverPrice(openTimeframe1)
-    lastOpenArray.set(0, _discovery ? open : open1)
+    o1.price    := _discovery ? open : open1
+    o1.barIndex := _discovery ? bar_index : a1 ? bar_index -1 : bar_index
 
 if displayOpen2 and openChange2
     bool _discovery = discoverPrice(openTimeframe2)
-    lastOpenArray.set(1, _discovery ? open : open2)
+    o2.price    := _discovery ? open : open2
+    o2.barIndex := _discovery ? bar_index : a2 ? bar_index -1 : bar_index
 
 if displayOpen3 and openChange3
     bool _discovery = discoverPrice(openTimeframe3)
-    lastOpenArray.set(2, _discovery ? open : open3)
+    o3.price    := _discovery ? open : open3
+    o3.barIndex := _discovery ? bar_index : a3 ? bar_index -1 : bar_index
 
 if displayOpen4 and openChange4
     bool _discovery = discoverPrice(openTimeframe4)
-    lastOpenArray.set(3, _discovery ? open : open4)
+    o4.price    := _discovery ? open : open4
+    o4.barIndex := _discovery ? bar_index : a4 ? bar_index -1 : bar_index
 
 //#endregion
 
@@ -365,49 +377,45 @@ if displayOpen4 and openChange4
 if displayOpen4
     draw(
          openChange4,
-         array.get(lastOpenArray, 3),
+         o4,
          openLookbackInput4,
-         f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput4,
          openTimeframe4.displayString(),
-         lastOpenArray,
-         f_isContainedOnPrevWeekly(time4)
+         na//lastOpenArray
          )
 
 if displayOpen3
     draw(
          openChange3,
-         array.get(lastOpenArray, 2),
+         o3,
          openLookbackInput3,
-         f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput3,
          openTimeframe3.displayString(),
-         lastOpenArray,
-         f_isContainedOnPrevWeekly(time3)
+         na//lastOpenArray
          )
 
 if displayOpen2
     draw(
          openChange2,
-         array.get(lastOpenArray, 1),
+         o2,
          openLookbackInput2,
-         f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput2,
          openTimeframe2.displayString(),
-         lastOpenArray,
-         f_isContainedOnPrevWeekly(time2)
+         na//lastOpenArray
          )
 
 if displayOpen1
     draw(
          openChange1,
-         array.get(lastOpenArray, 0),
+         o1,
          openLookbackInput1,
-         f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
+         f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput1,
          openTimeframe1.displayString(),
-         lastOpenArray,
-         f_isContainedOnPrevWeekly(time1)
+         na//lastOpenArray
          )
 
 
@@ -415,10 +423,10 @@ if displayOpen1
 
 displayControls = display.status_line + display.price_scale + display.data_window
 
-plot(series = lastOpenArray.get(0), title = "#1", color = COLOR_1, editable = false, display = displayControls)
-plot(series = lastOpenArray.get(1), title = "#2", color = COLOR_2, editable = false, display = displayControls)
-plot(series = lastOpenArray.get(2), title = "#3", color = COLOR_3, editable = false, display = displayControls)
-plot(series = lastOpenArray.get(3), title = "#4", color = COLOR_4, editable = false, display = displayControls)
+plot(series = o1.price, title = "#1", color = COLOR_1, editable = false, display = displayControls)
+plot(series = o2.price, title = "#2", color = COLOR_2, editable = false, display = displayControls)
+plot(series = o3.price, title = "#3", color = COLOR_3, editable = false, display = displayControls)
+plot(series = o4.price, title = "#4", color = COLOR_4, editable = false, display = displayControls)
 
 //#endregion
 
