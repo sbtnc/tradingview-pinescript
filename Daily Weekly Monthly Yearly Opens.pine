@@ -74,7 +74,7 @@ string      g3                          = "Preferences"
 string      tailsTooltip                = "Extends last opens on historical bars."
 string      headsTooltip                = "Extends previous opens in the future."
 string      discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames."
-string      extendedHoursTooltip        = "Discovers the opening prices from the extended trading hours if available."
+string      extendedHoursTooltip        = "Display the opening prices on the extended trading hours if visible."
 
 bool        enableOpenInput1            = input.bool        (true,              title = "", group = g1, inline = "#1")
 Timeframes  openTimeframeInput1         = input.enum        (Timeframes.D1,     title = "", group = g1, inline = "#1", display = display.none)
@@ -125,10 +125,20 @@ method change(simple string timeframe, series int regularTime, simple bool enabl
 
 // @function 
 // @returns  
+method request(string timeframe, bool useExtendedTradingHours) =>
+    string tickerId = ticker.new(syminfo.prefix, syminfo.ticker, useExtendedTradingHours ? session.extended : session.regular)
+    request.security(tickerId, timeframe, [time, open], lookahead = barmerge.lookahead_on)
+
+
+// @function 
+// @returns  
 // On the weekly time frame, the monthly/yearly open is drawn from the first candle of the month/year
 // The first weekly candle is not necessarily containing the first day of the month
 // In such case, we visually anchor the open of the previous weekly candle
-f_isContainedOnPrevWeekly(int _time) => timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
+f_isContainedOnPrevWeekly(int _time) =>
+    // timeframe.isweekly and dayofmonth(time) > dayofmonth(_time)
+    time_close[1] > _time
+    //false 
 
 
 // @function 
@@ -220,7 +230,7 @@ draw(bool change, float y, int lookback, int padding, color color, string txt, a
 
     if change
         // Anchor the old open position.
-        _bodyLine.set_x2(bar_index)
+        _bodyLine.set_x2(prevTime ? bar_index - 1 : bar_index)
 
         // Update the last open label position and tooltip.
         _label.set_xy(_endBarIndex, y)
@@ -282,13 +292,19 @@ f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
+// @variable
 var array<float> lastOpenArray = array.new_float(4)
+
 
 // @variable True if using the open price of the extended session.
 var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.session == session.extended
 
+
 // @variable True if the open price is sourced from the chart context.
-var bool discoverPrices = discoverPricesInput or useExtendedTradingHours
+// Discover only if timeframe >= D ?
+discoverPrice(timeframe) =>
+    discoverPricesInput or (useExtendedTradingHours and timeframe.in_seconds(timeframe) >= timeframe.in_seconds("D"))
+
 
 // @variable The `timeframe` parameters produced from the user inputs.
 var string openTimeframe1 = openTimeframeInput1.param()
@@ -296,17 +312,19 @@ var string openTimeframe2 = openTimeframeInput2.param()
 var string openTimeframe3 = openTimeframeInput3.param()
 var string openTimeframe4 = openTimeframeInput4.param()
 
+
 // @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
 var bool displayOpen1 = enableOpenInput1 and openTimeframe1.isVisible()
 var bool displayOpen2 = enableOpenInput2 and openTimeframe2.isVisible()
 var bool displayOpen3 = enableOpenInput3 and openTimeframe3.isVisible()
 var bool displayOpen4 = enableOpenInput4 and openTimeframe4.isVisible()
 
+
 // @variable The opening time and price sourced from the user-selected timeframe context.
-[time1, open1] = request.security("", openTimeframe1, [time, open], lookahead=barmerge.lookahead_on)
-[time2, open2] = request.security("", openTimeframe2, [time, open], lookahead=barmerge.lookahead_on)
-[time3, open3] = request.security("", openTimeframe3, [time, open], lookahead=barmerge.lookahead_on)
-[time4, open4] = request.security("", openTimeframe4, [time, open], lookahead=barmerge.lookahead_on)
+[time1, open1] = openTimeframe1.request(useExtendedTradingHours)
+[time2, open2] = openTimeframe2.request(useExtendedTradingHours)
+[time3, open3] = openTimeframe3.request(useExtendedTradingHours)
+[time4, open4] = openTimeframe4.request(useExtendedTradingHours)
 
 //#endregion
 
@@ -321,17 +339,21 @@ bool openChange3 = openTimeframe3.change(time3, useExtendedTradingHours)
 bool openChange4 = openTimeframe4.change(time4, useExtendedTradingHours)
 
 
-if displayOpen1 and openChange1 
-    lastOpenArray.set(0, discoverPrices ? open : open1)
+if displayOpen1 and openChange1
+    bool _discovery = discoverPrice(openTimeframe1)
+    lastOpenArray.set(0, _discovery ? open : open1)
 
 if displayOpen2 and openChange2
-    lastOpenArray.set(1, discoverPrices ? open : open2)
+    bool _discovery = discoverPrice(openTimeframe2)
+    lastOpenArray.set(1, _discovery ? open : open2)
 
 if displayOpen3 and openChange3
-    lastOpenArray.set(2, discoverPrices ? open : open3)
+    bool _discovery = discoverPrice(openTimeframe3)
+    lastOpenArray.set(2, _discovery ? open : open3)
 
 if displayOpen4 and openChange4
-    lastOpenArray.set(3, discoverPrices ? open : open4)
+    bool _discovery = discoverPrice(openTimeframe4)
+    lastOpenArray.set(3, _discovery ? open : open4)
 
 //#endregion
 
@@ -372,7 +394,8 @@ if displayOpen2
          f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput2,
          openTimeframe2.displayString(),
-         lastOpenArray
+         lastOpenArray,
+         f_isContainedOnPrevWeekly(time2)
          )
 
 if displayOpen1
@@ -383,7 +406,8 @@ if displayOpen1
          f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, lastOpenArray),
          openColorInput1,
          openTimeframe1.displayString(),
-         lastOpenArray
+         lastOpenArray,
+         f_isContainedOnPrevWeekly(time1)
          )
 
 
