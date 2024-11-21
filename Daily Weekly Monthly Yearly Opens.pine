@@ -36,6 +36,7 @@ color   COLOR_4         = color.blue
 type Open 
     float   price 
     int     barIndex
+    string  name
 
 
 // @enum Contains fields with the indicator configurable timeframes as titles.
@@ -215,11 +216,11 @@ method displayString(string this) =>
 
 // @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
 // @returns  void
-draw(bool change, Open o, int lookback, int padding, color color, string txt, array<float> lastOpenArray) =>
+draw(bool change, Open o, int lookback, int padding, color color, array<float> lastOpenArray) =>
     // @variable The reference of the last open line.
     var line _bodyLine = na
     // @variable The reference of the last open label.
-    var label _label = label.new(x = na, y = na, text = txt, style = LABEL_STYLE, textcolor = color, size = LABEL_SIZE)
+    var label _label = label.new(x = na, y = na, text = o.name, style = LABEL_STYLE, textcolor = color, size = LABEL_SIZE)
     // @variable The reference of the last open left extending line.
     var line _tailLine = line.new(x1 = na, y1 = na, x2 = na, y2 = na, color = color, style = TAIL_STYLE, width = LINE_WIDTH, extend = extend.left)
     // @variable The collection of historical open lines.
@@ -243,7 +244,7 @@ draw(bool change, Open o, int lookback, int padding, color color, string txt, ar
 
         // Create the last open right extension.
         if enableHeadsInput
-            _headLineArray.push(line.new(x1 = bar_index, y1 = o.price, x2 = bar_index, y2 = o.price, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
+            _headLineArray.push(line.new(x1 = o.barIndex, y1 = o.price, x2 = o.barIndex, y2 = o.price, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
 
         // Create the last open left extension.
         if enableTailsInput
@@ -324,10 +325,10 @@ var bool displayOpen4 = enableOpenInput4 and openTimeframe4.isVisible()
 [time4, open4] = openTimeframe4.request(useExtendedTradingHours)
 
 
-var Open o1 = Open.new()
-var Open o2 = Open.new()
-var Open o3 = Open.new()
-var Open o4 = Open.new()
+var Open o1 = Open.new(name = openTimeframe1.displayString())
+var Open o2 = Open.new(name = openTimeframe2.displayString())
+var Open o3 = Open.new(name = openTimeframe3.displayString())
+var Open o4 = Open.new(name = openTimeframe4.displayString())
 var openArray = array.from(o1, o2, o3, o4)
 
 //#endregion
@@ -381,7 +382,6 @@ if displayOpen4
          openLookbackInput4,
          f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput4,
-         openTimeframe4.displayString(),
          na//lastOpenArray
          )
 
@@ -392,7 +392,6 @@ if displayOpen3
          openLookbackInput3,
          f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput3,
-         openTimeframe3.displayString(),
          na//lastOpenArray
          )
 
@@ -403,7 +402,6 @@ if displayOpen2
          openLookbackInput2,
          f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput2,
-         openTimeframe2.displayString(),
          na//lastOpenArray
          )
 
@@ -414,7 +412,6 @@ if displayOpen1
          openLookbackInput1,
          f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray),
          openColorInput1,
-         openTimeframe1.displayString(),
          na//lastOpenArray
          )
 
