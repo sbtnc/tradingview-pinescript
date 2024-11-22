@@ -224,21 +224,40 @@ method displayString(string this) =>
         3 => _str + "       "
 
 
-// @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
+// @function Create and update the open level. An open is composed of a label, a "body" line, an optional "tail" and "head" lines extensions.
 // @returns  void
 draw(bool change, Open openData, int lookback, color color, int padding) =>
     // @variable The reference of the last open line.
     var line _bodyLine = na
     // @variable The reference of the last open label.
-    var label _label = label.new(x = na, y = na, text = openData.name, style = LABEL_STYLE, textcolor = color, size = LABEL_SIZE)
+    var label _label = label.new(
+         x         = na,
+         y         = na,
+         text      = openData.name,
+         style     = LABEL_STYLE,
+         textcolor = color,
+         size      = LABEL_SIZE
+         )
     // @variable The reference of the last open left extending line.
-    var line _tailLine = line.new(x1 = na, y1 = na, x2 = na, y2 = na, color = color, style = TAIL_STYLE, width = LINE_WIDTH, extend = extend.left)
+    var line _tailLine = line.new(
+         x1     = na,
+         y1     = na,
+         x2     = na,
+         y2     = na,
+         color  = color,
+         style  = TAIL_STYLE,
+         width  = LINE_WIDTH,
+         extend = extend.left
+         )
     // @variable The collection of historical open lines.
     var array<line> _bodyLineArray  = array.new_line()
     // @variable The collection of historical right extending open lines.
     var array<line> _headLineArray  = array.new_line()
+    // @variable The last open end bar index.
+    int _endBarIndex = f_getRightBarIndex(padding)
 
-    int _endBarIndex    = f_getRightBarIndex(padding)
+
+    // Update the old open and create the new open.
 
     if change
         // Anchor the previous open end position.
@@ -246,14 +265,32 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
 
         // Create the previous open "head".
         if enableHeadsInput
-            _headLineArray.push(line.new(x1 = openData.barIndex, y1 = _bodyLine.get_y1(), x2 = openData.barIndex, y2 = _bodyLine.get_y2(), color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
+            _headLineArray.push(
+                 line.new(
+                     x1    = openData.barIndex,
+                     x2    = openData.barIndex,
+                     y1    = _bodyLine.get_y1(),
+                     y2    = _bodyLine.get_y2(),
+                     color = color.new(color, HEAD_TRANSP),
+                     style = LINE_STYLE,
+                     width = LINE_WIDTH
+                     )
+                 )
 
         // Update the last open label position and tooltip.
         _label.set_xy(_endBarIndex, openData.price)
         _label.set_tooltip(str.tostring(openData.price, format.mintick))
 
-        // Create the last open line.
-        _bodyLine := line.new(x1 = openData.barIndex, y1 = openData.price, x2 = _endBarIndex, y2 = openData.price, color = color, style = LINE_STYLE, width = LINE_WIDTH)
+        // Create and store the last open line.
+        _bodyLine := line.new(
+             x1    = openData.barIndex,
+             x2    = _endBarIndex,
+             y1    = openData.price,
+             y2    = openData.price,
+             color = color,
+             style = LINE_STYLE,
+             width = LINE_WIDTH
+             )
         array.push(_bodyLineArray, _bodyLine)
 
         // Create the last open "tail".
@@ -266,6 +303,9 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
             line.delete(_bodyLineArray.shift())
         if _headLineArray.size() > lookback
             line.delete(_headLineArray.shift())
+
+
+    // Update the right position of the "body" and "heads" lines.
 
     if barstate.islast
         _bodyLine.set_x2(_endBarIndex)
