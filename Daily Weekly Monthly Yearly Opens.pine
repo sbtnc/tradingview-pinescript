@@ -1,8 +1,8 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-21
-// version 6.0
+// Last modified: 2024-11-22
+// version 7.0
 
 // @version=5
 indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_lines_count = 500)
@@ -147,16 +147,16 @@ discoverPrice(string timeframe, bool discovery, bool extendedSession) =>
     higherTimeframeFeed(timeframe) and ((discovery and timeframe.isintraday) or (extendedSession and syminfo.session == session.extended))
 
 
-// @function 
-// @returns  
+// @function Check if the open time belongs to the previous bar.
+// @returns  bool
 adjustStartBarIndex(int _time) =>
     time_close[1] > _time
 
 
-// @function 
-// @returns  
-f_getRightBarIndex(int _padding) =>
-    bar_index + rightOffsetInput + _padding * OFFSET_PADDING
+// @function Calculate the end position of the open.
+// @returns  (int) The bar index. 
+getRightBarIndex(int padding) =>
+    bar_index + rightOffsetInput + padding * OFFSET_PADDING
 
 
 // @function Produce the `timeframe` parameter from the given user input.
@@ -190,11 +190,11 @@ method param(simple Timeframes input) =>
         Timeframes.M12 => "12M"
 
 
-// @function Return the short display string for minutes and hours `timeframe` string
+// @function Return the short display string for the specified `timeframe` string.
 // @returns  string
 method displayString(string this) =>
-    // Format
-    _str = switch this
+    // Get the readable format.
+    string _str = switch this
         "1"     => "m"
         "2"     => "2m"
         "3"     => "3m"
@@ -217,7 +217,7 @@ method displayString(string this) =>
         "12M"   => "Y"
         => this
 
-    // Add spacing
+    // Add spacing.
     switch str.length(_str)
         1 => _str + "   "
         2 => _str + "     "
@@ -254,7 +254,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
     // @variable The collection of historical right extending open lines.
     var array<line> _headLineArray  = array.new_line()
     // @variable The last open end bar index.
-    int _endBarIndex = f_getRightBarIndex(padding)
+    int _endBarIndex = getRightBarIndex(padding)
 
 
     // Update the old open and create the new open.
@@ -313,7 +313,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
 
         if enableHeadsInput
             for _head in _headLineArray
-                _head.set_x2(f_getRightBarIndex(HEAD_PADDING))
+                _head.set_x2(getRightBarIndex(HEAD_PADDING))
 
 
 // @function Get the padding to apply to the open right position for not overlaping the other open labels.
