@@ -304,11 +304,11 @@ method padding(array<Open> this, int idx) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-// @variable Is true if displaying the open on the extended session.
+// @variable Is true if displaying the open on the extended trading hours.
 var bool useExtendedSession = enableExtendedSessionInput and syminfo.session == session.extended
 
 
-// @variable The `timeframe` parameters produced from the enum inputs.
+// @variable The `timeframe` parameters produced from the enum input selections.
 var string timeframe1 = openTimeframeInput1.param()
 var string timeframe2 = openTimeframeInput2.param()
 var string timeframe3 = openTimeframeInput3.param()
@@ -330,21 +330,21 @@ var Open openData4 = Open.new(name = timeframe4.displayString(), display = enabl
 
 
 // @variable The list of `Open`. 
-var openArray = array.from(openData1, openData2, openData3, openData4)
+var array<Open> openArray = array.from(openData1, openData2, openData3, openData4)
 
 
-// @variable Is true when the opens change.
+// @variable Are true when the open change.
 bool openChange1 = timeframe1.change(time1, useExtendedSession)
 bool openChange2 = timeframe2.change(time2, useExtendedSession)
 bool openChange3 = timeframe3.change(time3, useExtendedSession)
 bool openChange4 = timeframe4.change(time4, useExtendedSession)
 
 
-// 
-a1 = adjustStartBarIndex(time1)
-a2 = adjustStartBarIndex(time2)
-a3 = adjustStartBarIndex(time3)
-a4 = adjustStartBarIndex(time4)
+// @variable Are true when pinpointing the open start on the previous bar.
+bool adjust1 = adjustStartBarIndex(time1)
+bool adjust2 = adjustStartBarIndex(time2)
+bool adjust3 = adjustStartBarIndex(time3)
+bool adjust4 = adjustStartBarIndex(time4)
 
 //#endregion
 
@@ -353,29 +353,34 @@ a4 = adjustStartBarIndex(time4)
 //#region                         Logic
 //--------------------------------------------------------------------
 
+// When the opens change, update their price and start properties.
+
 if openData1.display and openChange1
     var bool _discovery = discoverPrice(timeframe1, discoverPricesInput, useExtendedSession)
 
     openData1.price    := _discovery ? open : open1
-    openData1.barIndex := _discovery ? bar_index : a1 ? bar_index -1 : bar_index
+    openData1.barIndex := _discovery ? bar_index : (adjust1 ? bar_index -1 : bar_index)
+
 
 if openData2.display and openChange2
     var bool _discovery = discoverPrice(timeframe2, discoverPricesInput, useExtendedSession)
 
     openData2.price    := _discovery ? open : open2
-    openData2.barIndex := _discovery ? bar_index : a2 ? bar_index -1 : bar_index
+    openData2.barIndex := _discovery ? bar_index : (adjust2 ? bar_index -1 : bar_index)
+
 
 if openData3.display and openChange3
     var bool _discovery = discoverPrice(timeframe3, discoverPricesInput, useExtendedSession)
 
     openData3.price    := _discovery ? open : open3
-    openData3.barIndex := _discovery ? bar_index : a3 ? bar_index -1 : bar_index
+    openData3.barIndex := _discovery ? bar_index : (adjust3 ? bar_index -1 : bar_index)
+
 
 if openData4.display and openChange4
     var bool _discovery = discoverPrice(timeframe4, discoverPricesInput, useExtendedSession)
 
     openData4.price    := _discovery ? open : open4
-    openData4.barIndex := _discovery ? bar_index : a4 ? bar_index -1 : bar_index
+    openData4.barIndex := _discovery ? bar_index : (adjust4 ? bar_index -1 : bar_index)
 
 //#endregion
 
@@ -383,6 +388,8 @@ if openData4.display and openChange4
 //--------------------------------------------------------------------
 //#region                        Visuals
 //--------------------------------------------------------------------
+
+// Plot the open levels on the chart.
 
 if openData4.display
     draw(
