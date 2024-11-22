@@ -241,8 +241,12 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
     int _endBarIndex    = f_getRightBarIndex(padding)
 
     if change
-        // Anchor the old open position.
+        // Anchor the previous open end position.
         _bodyLine.set_x2(openData.barIndex)
+
+        // Create the previous open "head".
+        if enableHeadsInput
+            _headLineArray.push(line.new(x1 = openData.barIndex, y1 = _bodyLine.get_y1(), x2 = openData.barIndex, y2 = _bodyLine.get_y2(), color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
 
         // Update the last open label position and tooltip.
         _label.set_xy(_endBarIndex, openData.price)
@@ -252,11 +256,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
         _bodyLine := line.new(x1 = openData.barIndex, y1 = openData.price, x2 = _endBarIndex, y2 = openData.price, color = color, style = LINE_STYLE, width = LINE_WIDTH)
         array.push(_bodyLineArray, _bodyLine)
 
-        // Create the last open right extension.
-        if enableHeadsInput
-            _headLineArray.push(line.new(x1 = openData.barIndex, y1 = openData.price, x2 = openData.barIndex, y2 = openData.price, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
-
-        // Create the last open left extension.
+        // Create the last open "tail".
         if enableTailsInput
             _tailLine.set_xy1(openData.barIndex -1, openData.price)
             _tailLine.set_xy2(openData.barIndex,    openData.price)
@@ -271,10 +271,9 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
         _bodyLine.set_x2(_endBarIndex)
         _label.set_x(_endBarIndex)
 
-        if enableHeadsInput and _headLineArray.size() > 1
-            // Not updating the last open's projection
-            for i = 0 to _headLineArray.size() - 2
-                _headLineArray.get(i).set_x2(f_getRightBarIndex(HEAD_PADDING))
+        if enableHeadsInput
+            for _head in _headLineArray
+                _head.set_x2(f_getRightBarIndex(HEAD_PADDING))
 
 
 // @function Get the padding to apply to the open right position for not overlaping the other open labels.
