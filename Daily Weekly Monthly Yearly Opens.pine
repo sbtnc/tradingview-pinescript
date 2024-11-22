@@ -32,14 +32,14 @@ color   COLOR_4         = color.blue
 //#region                         Types 
 //--------------------------------------------------------------------
 
-// @type 
+// @type Contains the open data.
 type Open 
-    float   price 
     int     barIndex
+    float   price 
     string  name
 
 
-// @enum Contains fields with the indicator configurable timeframes as titles.
+// @enum Contains fields with the configurable timeframe options as titles.
 enum Timeframes
     s5  = "5 seconds"
     s10 = "10 seconds"
@@ -74,40 +74,37 @@ enum Timeframes
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string      g1                          = "Opens"
-string      g2                          = "Style"
-string      g3                          = "Preferences"
+string      group1                      = "Opens"
+string      group2                      = "Style"
+string      group3                      = "Preferences"
 
-string      tailsTooltip                = "Extends last opens on historical bars."
-string      headsTooltip                = "Extends previous opens in the future."
-string      discoverPricesTooltip       = "Discovers the opening prices from the intraday chart.\n\nYou may use this setting when there are discrepancies between the data from intraday and high time frames datafeeds."
-string      extendedHoursTooltip        = "Display the opening prices on the extended trading hours if visible."
+string      rightOffsetTooltip          = "Extend the current opens to the right of the last bar."
+string      tailsTooltip                = "Extend the current opens to the left of the chart."
+string      headsTooltip                = "Extend the previous opens to the right."
+string      discoverPricesTooltip       = "On the intraday chart, discover the opens on the chart instead of requesting higher-timeframe data.\n\nYou can use this setting when price discrepancies exist between the intraday and end-of-day data feeds."
+string      extendedHoursTooltip        = "If the extended trading hours are visible on the intraday chart, display the opens on the pre/post market session."
 
-bool        enableOpenInput1            = input.bool        (true,              title = "", group = g1, inline = "#1")
-Timeframes  openTimeframeInput1         = input.enum        (Timeframes.D1,     title = "", group = g1, inline = "#1", display = display.none)
-color       openColorInput1             = input.color       (COLOR_1,           title = "", group = g1, inline = "#1")
-int         openLookbackInput1          = input.int         (1,                 title = "", group = g1, inline = "#1", minval = 1, display = display.none)
-
-bool        enableOpenInput2            = input.bool        (true,              title = "", group = g1, inline = "#2")
-Timeframes  openTimeframeInput2         = input.enum        (Timeframes.W1,     title = "", group = g1, inline = "#2", display = display.none)
-color       openColorInput2             = input.color       (COLOR_2,           title = "", group = g1, inline = "#2")
-int         openLookbackInput2          = input.int         (1,                 title = "", group = g1, inline = "#2", minval = 1, display = display.none)
-
-bool        enableOpenInput3            = input.bool        (true,              title = "", group = g1, inline = "#3")
-Timeframes  openTimeframeInput3         = input.enum        (Timeframes.M1,     title = "", group = g1, inline = "#3", display = display.none)
-color       openColorInput3             = input.color       (COLOR_3,           title = "", group = g1, inline = "#3")
-int         openLookbackInput3          = input.int         (1,                 title = "", group = g1, inline = "#3", minval = 1, display = display.none)
-
-bool        enableOpenInput4            = input.bool        (true,              title = "", group = g1, inline = "#4")
-Timeframes  openTimeframeInput4         = input.enum        (Timeframes.M12,    title = "", group = g1, inline = "#4", display = display.none)
-color       openColorInput4             = input.color       (COLOR_4,           title = "", group = g1, inline = "#4")
-int         openLookbackInput4          = input.int         (1,                 title = "", group = g1, inline = "#4", minval = 1, display = display.none)
-
-int         rightOffsetInput            = input.int         (20,                title = "Offset",           group = g2, minval = 1, display = display.none)
-bool        enableTailsInput            = input.bool        (false,             title = "Show Tails",       group = g2, tooltip = tailsTooltip)
-bool        enableHeadsInput            = input.bool        (false,             title = "Show Projections", group = g2, tooltip = headsTooltip)
-bool        discoverPricesInput         = input.bool        (false,             title = "Discover Prices",  group = g3, tooltip = discoverPricesTooltip)
-bool        enableExtendedSessionInput  = input.bool        (false,             title = "Extended Hours",   group = g3, tooltip = extendedHoursTooltip)
+bool        enableOpenInput1            = input.bool  (true,           title = "",                 group = group1, inline = "#1")
+Timeframes  openTimeframeInput1         = input.enum  (Timeframes.D1,  title = "",                 group = group1, inline = "#1", display = display.none)
+color       openColorInput1             = input.color (COLOR_1,        title = "",                 group = group1, inline = "#1")
+int         openLookbackInput1          = input.int   (1,              title = "",                 group = group1, inline = "#1", minval = 1, display = display.none)
+bool        enableOpenInput2            = input.bool  (true,           title = "",                 group = group1, inline = "#2")
+Timeframes  openTimeframeInput2         = input.enum  (Timeframes.W1,  title = "",                 group = group1, inline = "#2", display = display.none)
+color       openColorInput2             = input.color (COLOR_2,        title = "",                 group = group1, inline = "#2")
+int         openLookbackInput2          = input.int   (1,              title = "",                 group = group1, inline = "#2", minval = 1, display = display.none)
+bool        enableOpenInput3            = input.bool  (true,           title = "",                 group = group1, inline = "#3")
+Timeframes  openTimeframeInput3         = input.enum  (Timeframes.M1,  title = "",                 group = group1, inline = "#3", display = display.none)
+color       openColorInput3             = input.color (COLOR_3,        title = "",                 group = group1, inline = "#3")
+int         openLookbackInput3          = input.int   (1,              title = "",                 group = group1, inline = "#3", minval = 1, display = display.none)
+bool        enableOpenInput4            = input.bool  (true,           title = "",                 group = group1, inline = "#4")
+Timeframes  openTimeframeInput4         = input.enum  (Timeframes.M12, title = "",                 group = group1, inline = "#4", display = display.none)
+color       openColorInput4             = input.color (COLOR_4,        title = "",                 group = group1, inline = "#4")
+int         openLookbackInput4          = input.int   (1,              title = "",                 group = group1, inline = "#4", minval = 1, display = display.none)
+int         rightOffsetInput            = input.int   (20,             title = "Offset",           group = group2, inline = "Offset", tooltip = rightOffsetTooltip, minval = 1, display = display.none)
+bool        enableTailsInput            = input.bool  (false,          title = "Show Tails",       group = group2, tooltip = tailsTooltip)
+bool        enableHeadsInput            = input.bool  (false,          title = "Show Projections", group = group2, tooltip = headsTooltip)
+bool        discoverPricesInput         = input.bool  (false,          title = "Discover Prices",  group = group3, tooltip = discoverPricesTooltip)
+bool        enableExtendedSessionInput  = input.bool  (false,          title = "Extended Hours",   group = group3, tooltip = extendedHoursTooltip)
 
 //#endregion
 
