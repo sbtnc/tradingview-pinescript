@@ -276,21 +276,23 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
                 _headLineArray.get(i).set_x2(f_getRightBarIndex(HEAD_PADDING))
 
 
-// @function 
-// @returns 
-// If different opens share the same opening prices, their labels will overlap
-// Instead, we pad the higher time frame ones for achieving a "separator sheet"
-f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3, array<Open> lastOpenArray) =>
-    _padding = 0
-    // Weekly, monthly, or yearly overlaps the daily open
-    if _index > 0 and displayOpen1 and array.get(lastOpenArray, 0).price == array.get(lastOpenArray, _index).price
+// @function Get the padding to apply to the open right position for not overlaping the other open labels.
+// @returns  int
+getPadding(int idx, bool displayOpen1, bool displayOpen2, bool displayOpen3, array<Open> lastOpenArray) =>
+    int _padding = 0
+
+    // Open #2, #3, and #4 can share the same open with #1.
+    if idx > 0 and displayOpen1 and lastOpenArray.get(0).price == lastOpenArray.get(idx).price
         _padding += 1
-    // Monthly or yearly overlaps the weekly open
-    if _index > 1 and displayOpen2 and array.get(lastOpenArray, 1).price == array.get(lastOpenArray, _index).price
+
+    // Open #3 and #4 can share the same open with #2.
+    if idx > 1 and displayOpen2 and lastOpenArray.get(1).price == lastOpenArray.get(idx).price
         _padding += 1
-    // Yearly overlaps the monthly open
-    if _index > 2 and displayOpen3 and array.get(lastOpenArray, 2).price == array.get(lastOpenArray, _index).price
+
+    // Open #4 can share the same open with #3.
+    if idx > 2 and displayOpen3 and lastOpenArray.get(2).price == lastOpenArray.get(idx).price
         _padding += 1
+    
     _padding
 
 //#endregion
@@ -394,7 +396,7 @@ if displayOpen4
          openData4,
          openLookbackInput4,
          openColorInput4,
-         f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray)
+         getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 if displayOpen3
@@ -403,7 +405,7 @@ if displayOpen3
          openData3,
          openLookbackInput3,
          openColorInput3,
-         f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray)
+         getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 if displayOpen2
@@ -412,7 +414,7 @@ if displayOpen2
          openData2,
          openLookbackInput2,
          openColorInput2,
-         f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray)
+         getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 if displayOpen1
@@ -421,7 +423,7 @@ if displayOpen1
          openData1,
          openLookbackInput1,
          openColorInput1,
-         f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray)
+         getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 
