@@ -113,25 +113,37 @@ bool        enableExtendedSessionInput  = input.bool  (false,          title = "
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Check if the specified open `timeframe` can be displayed on the chart context.
+// @function Check if the open for the specified `timeframe` can be displayed on the chart context.
 // @returns  simple bool
 method isVisible(simple string timeframe) =>
     timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
 
-// @function Check if the specified open change.
+// @function Check if the open changes.
 // @returns  series bool
-method change(simple string timeframe, series int regularTime, simple bool enableExtended) =>
-    switch enableExtended
-        true  => timeframe.change(timeframe) // extended and HTF datafeed
+method change(simple string timeframe, series int regularTime, simple bool extendedSession) =>
+    switch extendedSession
+        true  => timeframe.change(timeframe)
         false => ta.change(regularTime) > 0
 
 
-// @function 
-// @returns  
-method request(string timeframe, bool useExtendedTradingHours) =>
-    string tickerId = ticker.modify(syminfo.tickerid, useExtendedTradingHours ? session.extended : session.regular)
+// @function Request the specified timeframe data.
+// @returns  ([int, open]) The opening time and price.
+method request(string timeframe, bool extendedSession) =>
+    string tickerId = ticker.modify(syminfo.tickerid, extendedSession ? session.extended : session.regular)
     request.security(tickerId, timeframe, [time, open], lookahead = barmerge.lookahead_on)
+
+
+// @function Check if the specified `timeframe` returns end-of-day data.
+// @returns  bool
+method higherTimeframeFeed(string timeframe) =>
+    timeframe.in_seconds(timeframe) >= timeframe.in_seconds("D") 
+
+
+// @function Check if the open can be sourced from the chart data.
+// @returns  bool
+discoverPrice(string timeframe, bool discovery, bool extendedSession) =>
+    higherTimeframeFeed(timeframe) and ((discovery and timeframe.isintraday) or (extendedSession and syminfo.session == session.extended))
 
 
 // @function 
@@ -289,48 +301,50 @@ f_getPadding(int _index, bool displayOpen1, bool displayOpen2, bool displayOpen3
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-// @variable True if using the open price of the extended session.
-var bool useExtendedTradingHours = enableExtendedSessionInput and syminfo.session == session.extended
+// @variable Is true if displaying the open on the extended session.
+var bool useExtendedSession = enableExtendedSessionInput and syminfo.session == session.extended
 
 
-// @variable True if the open price is sourced from the chart context.
-// Discover only if timeframe >= D ?
-discoverPrice(timeframe) =>
-    ((discoverPricesInput and timeframe.isintraday) or useExtendedTradingHours) and timeframe.in_seconds(timeframe) >= timeframe.in_seconds("D") 
+// @variable The `timeframe` parameters produced from the enum inputs.
+var string timeframe1 = openTimeframeInput1.param()
+var string timeframe2 = openTimeframeInput2.param()
+var string timeframe3 = openTimeframeInput3.param()
+var string timeframe4 = openTimeframeInput4.param()
 
 
-// @variable The `timeframe` parameters produced from the user inputs.
-var string openTimeframe1 = openTimeframeInput1.param()
-var string openTimeframe2 = openTimeframeInput2.param()
-var string openTimeframe3 = openTimeframeInput3.param()
-var string openTimeframe4 = openTimeframeInput4.param()
+// @variable The `open` and `time` requested from the user-selected timeframe contexts.
+[time1, open1] = timeframe1.request(useExtendedSession)
+[time2, open2] = timeframe2.request(useExtendedSession)
+[time3, open3] = timeframe3.request(useExtendedSession)
+[time4, open4] = timeframe4.request(useExtendedSession)
+
+
+// @variable The `Open` UDTs. 
+var Open o1 = Open.new(name = timeframe1.displayString())
+var Open o2 = Open.new(name = timeframe2.displayString())
+var Open o3 = Open.new(name = timeframe3.displayString())
+var Open o4 = Open.new(name = timeframe4.displayString())
+
+
+// @variable The list of `Open`. 
+var openArray = array.from(o1, o2, o3, o4)
 
 
 // @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
-var bool displayOpen1 = enableOpenInput1 and openTimeframe1.isVisible()
-var bool displayOpen2 = enableOpenInput2 and openTimeframe2.isVisible()
-var bool displayOpen3 = enableOpenInput3 and openTimeframe3.isVisible()
-var bool displayOpen4 = enableOpenInput4 and openTimeframe4.isVisible()
+var bool displayOpen1 = enableOpenInput1 and timeframe1.isVisible()
+var bool displayOpen2 = enableOpenInput2 and timeframe2.isVisible()
+var bool displayOpen3 = enableOpenInput3 and timeframe3.isVisible()
+var bool displayOpen4 = enableOpenInput4 and timeframe4.isVisible()
 
 
-// @variable The opening time and price sourced from the user-selected timeframe context.
-[time1, open1] = openTimeframe1.request(useExtendedTradingHours)
-[time2, open2] = openTimeframe2.request(useExtendedTradingHours)
-[time3, open3] = openTimeframe3.request(useExtendedTradingHours)
-[time4, open4] = openTimeframe4.request(useExtendedTradingHours)
+// @variable Is true when the opens change.
+bool openChange1 = timeframe1.change(time1, useExtendedSession)
+bool openChange2 = timeframe2.change(time2, useExtendedSession)
+bool openChange3 = timeframe3.change(time3, useExtendedSession)
+bool openChange4 = timeframe4.change(time4, useExtendedSession)
 
 
-var Open o1 = Open.new(name = openTimeframe1.displayString())
-var Open o2 = Open.new(name = openTimeframe2.displayString())
-var Open o3 = Open.new(name = openTimeframe3.displayString())
-var Open o4 = Open.new(name = openTimeframe4.displayString())
-var openArray = array.from(o1, o2, o3, o4)
-
-bool openChange1 = openTimeframe1.change(time1, useExtendedTradingHours)
-bool openChange2 = openTimeframe2.change(time2, useExtendedTradingHours)
-bool openChange3 = openTimeframe3.change(time3, useExtendedTradingHours)
-bool openChange4 = openTimeframe4.change(time4, useExtendedTradingHours)
-
+// 
 a1 = adjustStartBarIndex(time1)
 a2 = adjustStartBarIndex(time2)
 a3 = adjustStartBarIndex(time3)
@@ -344,22 +358,26 @@ a4 = adjustStartBarIndex(time4)
 //--------------------------------------------------------------------
 
 if displayOpen1 and openChange1
-    bool _discovery = discoverPrice(openTimeframe1)
+    var bool _discovery = discoverPrice(timeframe1, discoverPricesInput, useExtendedSession)
+
     o1.price    := _discovery ? open : open1
     o1.barIndex := _discovery ? bar_index : a1 ? bar_index -1 : bar_index
 
 if displayOpen2 and openChange2
-    bool _discovery = discoverPrice(openTimeframe2)
+    var bool _discovery = discoverPrice(timeframe2, discoverPricesInput, useExtendedSession)
+
     o2.price    := _discovery ? open : open2
     o2.barIndex := _discovery ? bar_index : a2 ? bar_index -1 : bar_index
 
 if displayOpen3 and openChange3
-    bool _discovery = discoverPrice(openTimeframe3)
+    var bool _discovery = discoverPrice(timeframe3, discoverPricesInput, useExtendedSession)
+
     o3.price    := _discovery ? open : open3
     o3.barIndex := _discovery ? bar_index : a3 ? bar_index -1 : bar_index
 
 if displayOpen4 and openChange4
-    bool _discovery = discoverPrice(openTimeframe4)
+    var bool _discovery = discoverPrice(timeframe4, discoverPricesInput, useExtendedSession)
+
     o4.price    := _discovery ? open : open4
     o4.barIndex := _discovery ? bar_index : a4 ? bar_index -1 : bar_index
 
@@ -423,20 +441,25 @@ plot(series = o4.price, title = "#4", color = COLOR_4, editable = false, display
 //#region                         Debug
 //--------------------------------------------------------------------
 
-var debugDashboard = table.new(position.bottom_right, 2, 5)
+var debugDashboard = table.new(position.bottom_right, 3, 5)
 
 if barstate.isfirst
-    debugDashboard.cell(0, 0, "extended",       text_color = chart.fg_color)
-    debugDashboard.cell(0, 1, "discovery 1",    text_color = chart.fg_color)
-    debugDashboard.cell(0, 2, "discovery 2",    text_color = chart.fg_color)
-    debugDashboard.cell(0, 3, "discovery 3",    text_color = chart.fg_color)
-    debugDashboard.cell(0, 4, "discovery 4",    text_color = chart.fg_color)
+    debugDashboard.cell(0, 1, "#1",         text_color = chart.fg_color)
+    debugDashboard.cell(0, 2, "#2",         text_color = chart.fg_color)
+    debugDashboard.cell(0, 3, "#3",         text_color = chart.fg_color)
+    debugDashboard.cell(0, 4, "#4",         text_color = chart.fg_color)
+    debugDashboard.cell(1, 0, "Discovery",  text_color = chart.fg_color)
+    debugDashboard.cell(2, 0, "Extended",   text_color = chart.fg_color)
 
 if barstate.islast
-    debugDashboard.cell(1, 0, str.tostring(useExtendedTradingHours),        text_color = chart.fg_color)
-    debugDashboard.cell(1, 1, str.tostring(discoverPrice(openTimeframe1)),  text_color = chart.fg_color)
-    debugDashboard.cell(1, 2, str.tostring(discoverPrice(openTimeframe2)),  text_color = chart.fg_color)
-    debugDashboard.cell(1, 3, str.tostring(discoverPrice(openTimeframe3)),  text_color = chart.fg_color)
-    debugDashboard.cell(1, 4, str.tostring(discoverPrice(openTimeframe4)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 1, str.tostring(discoverPrice(timeframe1, discoverPricesInput, useExtendedSession)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 2, str.tostring(discoverPrice(timeframe2, discoverPricesInput, useExtendedSession)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 3, str.tostring(discoverPrice(timeframe3, discoverPricesInput, useExtendedSession)),  text_color = chart.fg_color)
+    debugDashboard.cell(1, 4, str.tostring(discoverPrice(timeframe4, discoverPricesInput, useExtendedSession)),  text_color = chart.fg_color)
+    
+    debugDashboard.cell(2, 1, str.tostring(useExtendedSession), text_color = chart.fg_color)
+    debugDashboard.cell(2, 2, str.tostring(useExtendedSession), text_color = chart.fg_color)
+    debugDashboard.cell(2, 3, str.tostring(useExtendedSession), text_color = chart.fg_color)
+    debugDashboard.cell(2, 4, str.tostring(useExtendedSession), text_color = chart.fg_color)
  
 //#endregion
