@@ -225,11 +225,11 @@ method displayString(string this) =>
 
 // @function Create and update an open level. An open is composed of a label, a "body" line, and optional "tail" and "head" lines extensions.
 // @returns  void
-draw(bool change, Open o, int lookback, int padding, color color) =>
+draw(bool change, Open openData, int lookback, color color, int padding) =>
     // @variable The reference of the last open line.
     var line _bodyLine = na
     // @variable The reference of the last open label.
-    var label _label = label.new(x = na, y = na, text = o.name, style = LABEL_STYLE, textcolor = color, size = LABEL_SIZE)
+    var label _label = label.new(x = na, y = na, text = openData.name, style = LABEL_STYLE, textcolor = color, size = LABEL_SIZE)
     // @variable The reference of the last open left extending line.
     var line _tailLine = line.new(x1 = na, y1 = na, x2 = na, y2 = na, color = color, style = TAIL_STYLE, width = LINE_WIDTH, extend = extend.left)
     // @variable The collection of historical open lines.
@@ -241,24 +241,24 @@ draw(bool change, Open o, int lookback, int padding, color color) =>
 
     if change
         // Anchor the old open position.
-        _bodyLine.set_x2(o.barIndex)
+        _bodyLine.set_x2(openData.barIndex)
 
         // Update the last open label position and tooltip.
-        _label.set_xy(_endBarIndex, o.price)
-        _label.set_tooltip(str.tostring(o.price, format.mintick))
+        _label.set_xy(_endBarIndex, openData.price)
+        _label.set_tooltip(str.tostring(openData.price, format.mintick))
 
         // Create the last open line.
-        _bodyLine := line.new(x1 = o.barIndex, y1 = o.price, x2 = _endBarIndex, y2 = o.price, color = color, style = LINE_STYLE, width = LINE_WIDTH)
+        _bodyLine := line.new(x1 = openData.barIndex, y1 = openData.price, x2 = _endBarIndex, y2 = openData.price, color = color, style = LINE_STYLE, width = LINE_WIDTH)
         array.push(_bodyLineArray, _bodyLine)
 
         // Create the last open right extension.
         if enableHeadsInput
-            _headLineArray.push(line.new(x1 = o.barIndex, y1 = o.price, x2 = o.barIndex, y2 = o.price, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
+            _headLineArray.push(line.new(x1 = openData.barIndex, y1 = openData.price, x2 = openData.barIndex, y2 = openData.price, color = color.new(color, HEAD_TRANSP), style = LINE_STYLE, width = LINE_WIDTH))
 
         // Create the last open left extension.
         if enableTailsInput
-            _tailLine.set_xy1(o.barIndex -1, o.price)
-            _tailLine.set_xy2(o.barIndex,    o.price)
+            _tailLine.set_xy1(openData.barIndex -1, openData.price)
+            _tailLine.set_xy2(openData.barIndex,    openData.price)
 
         // Trim the exceeding number of drawings.
         if _bodyLineArray.size() > lookback
@@ -320,14 +320,14 @@ var string timeframe4 = openTimeframeInput4.param()
 
 
 // @variable The `Open` UDTs. 
-var Open o1 = Open.new(name = timeframe1.displayString())
-var Open o2 = Open.new(name = timeframe2.displayString())
-var Open o3 = Open.new(name = timeframe3.displayString())
-var Open o4 = Open.new(name = timeframe4.displayString())
+var Open openData1 = Open.new(name = timeframe1.displayString())
+var Open openData2 = Open.new(name = timeframe2.displayString())
+var Open openData3 = Open.new(name = timeframe3.displayString())
+var Open openData4 = Open.new(name = timeframe4.displayString())
 
 
 // @variable The list of `Open`. 
-var openArray = array.from(o1, o2, o3, o4)
+var openArray = array.from(openData1, openData2, openData3, openData4)
 
 
 // @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
@@ -360,26 +360,26 @@ a4 = adjustStartBarIndex(time4)
 if displayOpen1 and openChange1
     var bool _discovery = discoverPrice(timeframe1, discoverPricesInput, useExtendedSession)
 
-    o1.price    := _discovery ? open : open1
-    o1.barIndex := _discovery ? bar_index : a1 ? bar_index -1 : bar_index
+    openData1.price    := _discovery ? open : open1
+    openData1.barIndex := _discovery ? bar_index : a1 ? bar_index -1 : bar_index
 
 if displayOpen2 and openChange2
     var bool _discovery = discoverPrice(timeframe2, discoverPricesInput, useExtendedSession)
 
-    o2.price    := _discovery ? open : open2
-    o2.barIndex := _discovery ? bar_index : a2 ? bar_index -1 : bar_index
+    openData2.price    := _discovery ? open : open2
+    openData2.barIndex := _discovery ? bar_index : a2 ? bar_index -1 : bar_index
 
 if displayOpen3 and openChange3
     var bool _discovery = discoverPrice(timeframe3, discoverPricesInput, useExtendedSession)
 
-    o3.price    := _discovery ? open : open3
-    o3.barIndex := _discovery ? bar_index : a3 ? bar_index -1 : bar_index
+    openData3.price    := _discovery ? open : open3
+    openData3.barIndex := _discovery ? bar_index : a3 ? bar_index -1 : bar_index
 
 if displayOpen4 and openChange4
     var bool _discovery = discoverPrice(timeframe4, discoverPricesInput, useExtendedSession)
 
-    o4.price    := _discovery ? open : open4
-    o4.barIndex := _discovery ? bar_index : a4 ? bar_index -1 : bar_index
+    openData4.price    := _discovery ? open : open4
+    openData4.barIndex := _discovery ? bar_index : a4 ? bar_index -1 : bar_index
 
 //#endregion
 
@@ -391,48 +391,48 @@ if displayOpen4 and openChange4
 if displayOpen4
     draw(
          openChange4,
-         o4,
+         openData4,
          openLookbackInput4,
-         f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray),
-         openColorInput4
+         openColorInput4,
+         f_getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 if displayOpen3
     draw(
          openChange3,
-         o3,
+         openData3,
          openLookbackInput3,
-         f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray),
-         openColorInput3
+         openColorInput3,
+         f_getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 if displayOpen2
     draw(
          openChange2,
-         o2,
+         openData2,
          openLookbackInput2,
-         f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray),
-         openColorInput2
+         openColorInput2,
+         f_getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 if displayOpen1
     draw(
          openChange1,
-         o1,
+         openData1,
          openLookbackInput1,
-         f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray),
-         openColorInput1
+         openColorInput1,
+         f_getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray)
          )
 
 
-// Plot the open prices on the `status line`, `scale`, `data window` as well for providing default alert conditions.
+// Plot the open prices on the `status line`, `price scale`, `data window` as well for providing alert conditions.
 
 displayControls = display.status_line + display.price_scale + display.data_window
 
-plot(series = o1.price, title = "#1", color = COLOR_1, editable = false, display = displayControls)
-plot(series = o2.price, title = "#2", color = COLOR_2, editable = false, display = displayControls)
-plot(series = o3.price, title = "#3", color = COLOR_3, editable = false, display = displayControls)
-plot(series = o4.price, title = "#4", color = COLOR_4, editable = false, display = displayControls)
+plot(series = openData1.price, title = "#1", color = COLOR_1, editable = false, display = displayControls)
+plot(series = openData2.price, title = "#2", color = COLOR_2, editable = false, display = displayControls)
+plot(series = openData3.price, title = "#3", color = COLOR_3, editable = false, display = displayControls)
+plot(series = openData4.price, title = "#4", color = COLOR_4, editable = false, display = displayControls)
 
 //#endregion
 
