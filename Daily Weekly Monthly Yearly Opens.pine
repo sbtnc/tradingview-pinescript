@@ -37,6 +37,7 @@ type Open
     int     barIndex
     float   price 
     string  name
+    bool    display
 
 
 // @enum Contains fields with the configurable timeframe options as titles.
@@ -278,19 +279,19 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
 
 // @function Get the padding to apply to the open right position for not overlaping the other open labels.
 // @returns  int
-getPadding(int idx, bool displayOpen1, bool displayOpen2, bool displayOpen3, array<Open> lastOpenArray) =>
+method padding(array<Open> this, int idx) =>
     int _padding = 0
 
     // Open #2, #3, and #4 can share the same open with #1.
-    if idx > 0 and displayOpen1 and lastOpenArray.get(0).price == lastOpenArray.get(idx).price
+    if idx > 0 and this.get(0).display and this.get(0).price == this.get(idx).price
         _padding += 1
 
     // Open #3 and #4 can share the same open with #2.
-    if idx > 1 and displayOpen2 and lastOpenArray.get(1).price == lastOpenArray.get(idx).price
+    if idx > 1 and this.get(1).display and this.get(1).price == this.get(idx).price
         _padding += 1
 
     // Open #4 can share the same open with #3.
-    if idx > 2 and displayOpen3 and lastOpenArray.get(2).price == lastOpenArray.get(idx).price
+    if idx > 2 and this.get(2).display and this.get(2).price == this.get(idx).price
         _padding += 1
     
     _padding
@@ -322,21 +323,14 @@ var string timeframe4 = openTimeframeInput4.param()
 
 
 // @variable The `Open` UDTs. 
-var Open openData1 = Open.new(name = timeframe1.displayString())
-var Open openData2 = Open.new(name = timeframe2.displayString())
-var Open openData3 = Open.new(name = timeframe3.displayString())
-var Open openData4 = Open.new(name = timeframe4.displayString())
+var Open openData1 = Open.new(name = timeframe1.displayString(), display = enableOpenInput1 and timeframe1.isVisible())
+var Open openData2 = Open.new(name = timeframe2.displayString(), display = enableOpenInput2 and timeframe2.isVisible())
+var Open openData3 = Open.new(name = timeframe3.displayString(), display = enableOpenInput3 and timeframe3.isVisible())
+var Open openData4 = Open.new(name = timeframe4.displayString(), display = enableOpenInput4 and timeframe4.isVisible())
 
 
 // @variable The list of `Open`. 
 var openArray = array.from(openData1, openData2, openData3, openData4)
-
-
-// @variable Is true if the display setting is enabled and chart timeframe is lower than the open's one.
-var bool displayOpen1 = enableOpenInput1 and timeframe1.isVisible()
-var bool displayOpen2 = enableOpenInput2 and timeframe2.isVisible()
-var bool displayOpen3 = enableOpenInput3 and timeframe3.isVisible()
-var bool displayOpen4 = enableOpenInput4 and timeframe4.isVisible()
 
 
 // @variable Is true when the opens change.
@@ -359,25 +353,25 @@ a4 = adjustStartBarIndex(time4)
 //#region                         Logic
 //--------------------------------------------------------------------
 
-if displayOpen1 and openChange1
+if openData1.display and openChange1
     var bool _discovery = discoverPrice(timeframe1, discoverPricesInput, useExtendedSession)
 
     openData1.price    := _discovery ? open : open1
     openData1.barIndex := _discovery ? bar_index : a1 ? bar_index -1 : bar_index
 
-if displayOpen2 and openChange2
+if openData2.display and openChange2
     var bool _discovery = discoverPrice(timeframe2, discoverPricesInput, useExtendedSession)
 
     openData2.price    := _discovery ? open : open2
     openData2.barIndex := _discovery ? bar_index : a2 ? bar_index -1 : bar_index
 
-if displayOpen3 and openChange3
+if openData3.display and openChange3
     var bool _discovery = discoverPrice(timeframe3, discoverPricesInput, useExtendedSession)
 
     openData3.price    := _discovery ? open : open3
     openData3.barIndex := _discovery ? bar_index : a3 ? bar_index -1 : bar_index
 
-if displayOpen4 and openChange4
+if openData4.display and openChange4
     var bool _discovery = discoverPrice(timeframe4, discoverPricesInput, useExtendedSession)
 
     openData4.price    := _discovery ? open : open4
@@ -390,40 +384,40 @@ if displayOpen4 and openChange4
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-if displayOpen4
+if openData4.display
     draw(
          openChange4,
          openData4,
          openLookbackInput4,
          openColorInput4,
-         getPadding(3, displayOpen1, displayOpen2, displayOpen3, openArray)
+         openArray.padding(3)
          )
 
-if displayOpen3
+if openData3.display
     draw(
          openChange3,
          openData3,
          openLookbackInput3,
          openColorInput3,
-         getPadding(2, displayOpen1, displayOpen2, displayOpen3, openArray)
+         openArray.padding(2)
          )
 
-if displayOpen2
+if openData2.display
     draw(
          openChange2,
          openData2,
          openLookbackInput2,
          openColorInput2,
-         getPadding(1, displayOpen1, displayOpen2, displayOpen3, openArray)
+         openArray.padding(1)
          )
 
-if displayOpen1
+if openData1.display
     draw(
          openChange1,
          openData1,
          openLookbackInput1,
          openColorInput1,
-         getPadding(0, displayOpen1, displayOpen2, displayOpen3, openArray)
+         openArray.padding(0)
          )
 
 
