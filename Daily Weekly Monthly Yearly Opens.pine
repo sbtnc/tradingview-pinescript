@@ -302,7 +302,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
         // Trim the exceeding number of drawings.
         if _bodyLineArray.size() > lookback
             line.delete(_bodyLineArray.shift())
-        if _headLineArray.size() > lookback
+        if _headLineArray.size() > lookback -1
             line.delete(_headLineArray.shift())
 
 
