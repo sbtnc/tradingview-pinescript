@@ -472,9 +472,9 @@ if openData1.display
 
 displayControls = display.status_line + display.price_scale + display.data_window
 
-plot(series = openData1.price, title = "#1", color = COLOR_1, editable = false, display = displayControls)
-plot(series = openData2.price, title = "#2", color = COLOR_2, editable = false, display = displayControls)
-plot(series = openData3.price, title = "#3", color = COLOR_3, editable = false, display = displayControls)
-plot(series = openData4.price, title = "#4", color = COLOR_4, editable = false, display = displayControls)
+plot(series = openData1.price, title = "#1", color = openColorInput1, editable = false, display = displayControls)
+plot(series = openData2.price, title = "#2", color = openColorInput2, editable = false, display = displayControls)
+plot(series = openData3.price, title = "#3", color = openColorInput3, editable = false, display = displayControls)
+plot(series = openData4.price, title = "#4", color = openColorInput4, editable = false, display = displayControls)
 
 //#endregion
