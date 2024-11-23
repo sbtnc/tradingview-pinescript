@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-22
+// Last modified: 2024-11-23
 // version 7.0
 
 // @version=5
@@ -12,6 +12,10 @@ indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_line
 //#region                      Constants
 //--------------------------------------------------------------------
 
+color   COLOR_1         = color.green
+color   COLOR_2         = color.orange
+color   COLOR_3         = color.red
+color   COLOR_4         = color.blue
 int     HEAD_PADDING    = -2
 int     HEAD_TRANSP     = 60
 string  LABEL_SIZE      = size.small
@@ -20,10 +24,6 @@ string  LINE_STYLE      = line.style_solid
 int     LINE_WIDTH      = 1
 int     OFFSET_PADDING  = 4
 string  TAIL_STYLE      = line.style_dotted
-color   COLOR_1         = color.green
-color   COLOR_2         = color.orange
-color   COLOR_3         = color.red
-color   COLOR_4         = color.blue
 
 //#endregion
 
@@ -32,7 +32,7 @@ color   COLOR_4         = color.blue
 //#region                         Types 
 //--------------------------------------------------------------------
 
-// @type Contains the open data.
+// @type Contains the open's data.
 type Open 
     int     barIndex
     float   price 
@@ -40,7 +40,7 @@ type Open
     bool    display
 
 
-// @enum Contains fields with the configurable timeframe options as titles.
+// @enum Contains fields with configurable timeframe options as titles.
 enum Timeframes
     s5  = "5 seconds"
     s10 = "10 seconds"
@@ -82,7 +82,8 @@ string      group3                      = "Preferences"
 string      rightOffsetTooltip          = "Extend the current opens to the right of the last bar."
 string      tailsTooltip                = "Extend the current opens to the left of the chart."
 string      headsTooltip                = "Extend the previous opens to the right."
-string      discoverPricesTooltip       = "On the intraday chart, discover the opens on the chart instead of requesting higher-timeframe data.\n\nYou can use this setting when price discrepancies exist between the intraday and end-of-day data feeds."
+string      discoverPricesTooltip       = "On the intraday chart, discover the opens on the chart instead of requesting higher-timeframe data." +
+                                          "\n\nYou can use this setting when price discrepancies exist between the intraday and end-of-day data feeds."
 string      extendedHoursTooltip        = "If the extended trading hours are visible on the intraday chart, display the opens on the pre/post market session."
 
 bool        enableOpenInput1            = input.bool  (true,           title = "",                 group = group1, inline = "#1")
@@ -120,7 +121,7 @@ method isVisible(simple string timeframe) =>
     timeframe.in_seconds(timeframe) > timeframe.in_seconds()
 
 
-// @function Check if the open changes.
+// @function Detect changes of opens.
 // @returns  series bool
 method change(simple string timeframe, series int regularTime, simple bool extendedSession) =>
     switch extendedSession
@@ -128,8 +129,8 @@ method change(simple string timeframe, series int regularTime, simple bool exten
         false => ta.change(regularTime) > 0
 
 
-// @function Request the specified timeframe data.
-// @returns  ([int, open]) The opening time and price.
+// @function Request the data on the specified `timeframe` context.
+// @returns  ([int, open]) The open's time and price.
 method request(string timeframe, bool extendedSession) =>
     string tickerId = ticker.modify(syminfo.tickerid, extendedSession ? session.extended : session.regular)
     request.security(tickerId, timeframe, [time, open], lookahead = barmerge.lookahead_on)
@@ -224,7 +225,7 @@ method displayString(string this) =>
         3 => _str + "       "
 
 
-// @function Create and update the open level. An open is composed of a label, a "body" line, an optional "tail" and "head" lines extensions.
+// @function Create and update the open level. An open is composed of a label, a "body" line, and optional "tail" and "head" line extensions.
 // @returns  void
 draw(bool change, Open openData, int lookback, color color, int padding) =>
     // @variable The reference of the last open line.
@@ -316,7 +317,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
                 _head.set_x2(getRightBarIndex(HEAD_PADDING))
 
 
-// @function Get the padding to apply to the open right position for not overlaping the other open labels.
+// @function Get the padding to apply to the open right position for not overlapping the other open labels.
 // @returns  int
 method padding(array<Open> this, int idx) =>
     int _padding = 0
