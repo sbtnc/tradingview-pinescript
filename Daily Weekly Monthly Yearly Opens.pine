@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-23
+// Last modified: 2024-11-24
 // version 7.0
 
 // @version=5
@@ -319,19 +319,19 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
 
 // @function Get the padding to apply to the open right position for not overlapping the other open labels.
 // @returns  int
-method padding(array<Open> this, int idx) =>
+method padding(array<Open> this, int idx, float proximityThreshold) =>
     int _padding = 0
 
     // Open #2, #3, and #4 can share the same open with #1.
-    if idx > 0 and this.get(0).display and this.get(0).price == this.get(idx).price
+    if idx > 0 and this.get(0).display and math.abs(this.get(0).price - this.get(idx).price) <= proximityThreshold
         _padding += 1
 
     // Open #3 and #4 can share the same open with #2.
-    if idx > 1 and this.get(1).display and this.get(1).price == this.get(idx).price
+    if idx > 1 and this.get(1).display and math.abs(this.get(1).price - this.get(idx).price) <= proximityThreshold
         _padding += 1
 
     // Open #4 can share the same open with #3.
-    if idx > 2 and this.get(2).display and this.get(2).price == this.get(idx).price
+    if idx > 2 and this.get(2).display and math.abs(this.get(2).price - this.get(idx).price) <= proximityThreshold
         _padding += 1
     
     _padding
@@ -386,6 +386,10 @@ bool adjust2 = adjustStartBarIndex(time2)
 bool adjust3 = adjustStartBarIndex(time3)
 bool adjust4 = adjustStartBarIndex(time4)
 
+
+// @variable The maximum distance to determine if two levels overlap each other.
+float proximityPaddingThreshold = ta.atr(10)
+
 //#endregion
 
 
@@ -437,7 +441,7 @@ if openData4.display
          openData4,
          openLookbackInput4,
          openColorInput4,
-         openArray.padding(3)
+         openArray.padding(3, proximityPaddingThreshold)
          )
 
 if openData3.display
@@ -446,7 +450,7 @@ if openData3.display
          openData3,
          openLookbackInput3,
          openColorInput3,
-         openArray.padding(2)
+         openArray.padding(2, proximityPaddingThreshold)
          )
 
 if openData2.display
@@ -455,7 +459,7 @@ if openData2.display
          openData2,
          openLookbackInput2,
          openColorInput2,
-         openArray.padding(1)
+         openArray.padding(1, proximityPaddingThreshold)
          )
 
 if openData1.display
