@@ -464,7 +464,7 @@ if openData1.display
          openData1,
          openLookbackInput1,
          openColorInput1,
-         openArray.padding(0)
+         0
          )
 
 
