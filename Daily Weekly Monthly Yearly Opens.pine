@@ -388,7 +388,7 @@ bool adjust4 = adjustStartBarIndex(time4)
 
 
 // @variable The maximum distance to determine if two levels overlap each other.
-float proximityPaddingThreshold = ta.atr(10)
+float proximityPaddingThreshold = ta.atr(10) /2
 
 //#endregion
 
