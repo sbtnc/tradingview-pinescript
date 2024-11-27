@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-24
+// Last modified: 2024-11-27
 // version 7.0
 
 // @version=5
@@ -15,7 +15,8 @@ indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_line
 color   COLOR_1         = color.green
 color   COLOR_2         = color.orange
 color   COLOR_3         = color.red
-color   COLOR_4         = color.blue
+color   COLOR_4         = color.purple
+color   COLOR_5         = color.blue
 int     HEAD_PADDING    = -2
 int     HEAD_TRANSP     = 60
 string  LABEL_SIZE      = size.small
@@ -98,10 +99,14 @@ bool        enableOpenInput3            = input.bool  (true,           title = "
 Timeframes  openTimeframeInput3         = input.enum  (Timeframes.M1,  title = "",                 group = group1, inline = "#3", display = display.none)
 color       openColorInput3             = input.color (COLOR_3,        title = "",                 group = group1, inline = "#3")
 int         openLookbackInput3          = input.int   (1,              title = "",                 group = group1, inline = "#3", minval = 1, display = display.none)
-bool        enableOpenInput4            = input.bool  (true,           title = "",                 group = group1, inline = "#4")
-Timeframes  openTimeframeInput4         = input.enum  (Timeframes.M12, title = "",                 group = group1, inline = "#4", display = display.none)
+bool        enableOpenInput4            = input.bool  (false,          title = "",                 group = group1, inline = "#4")
+Timeframes  openTimeframeInput4         = input.enum  (Timeframes.M3,  title = "",                 group = group1, inline = "#4", display = display.none)
 color       openColorInput4             = input.color (COLOR_4,        title = "",                 group = group1, inline = "#4")
 int         openLookbackInput4          = input.int   (1,              title = "",                 group = group1, inline = "#4", minval = 1, display = display.none)
+bool        enableOpenInput5            = input.bool  (true,           title = "",                 group = group1, inline = "#5")
+Timeframes  openTimeframeInput5         = input.enum  (Timeframes.M12, title = "",                 group = group1, inline = "#5", display = display.none)
+color       openColorInput5             = input.color (COLOR_5,        title = "",                 group = group1, inline = "#5")
+int         openLookbackInput5          = input.int   (1,              title = "",                 group = group1, inline = "#5", minval = 1, display = display.none)
 int         rightOffsetInput            = input.int   (20,             title = "Offset",           group = group2, inline = "Offset", tooltip = rightOffsetTooltip, minval = 1, display = display.none)
 bool        enableTailsInput            = input.bool  (false,          title = "Show Tails",       group = group2, tooltip = tailsTooltip)
 bool        enableHeadsInput            = input.bool  (false,          title = "Show Projections", group = group2, tooltip = headsTooltip)
@@ -322,17 +327,21 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
 method padding(array<Open> this, int idx, float proximityThreshold) =>
     int _padding = 0
 
-    // Open #2, #3, and #4 can share the same open with #1.
+    // Open #2, #3, #4, and #5 can share the same open with #1.
     if idx > 0 and this.get(0).display and math.abs(this.get(0).price - this.get(idx).price) <= proximityThreshold
         _padding += 1
 
-    // Open #3 and #4 can share the same open with #2.
+    // Open #3, #4, and #5 can share the same open with #2.
     if idx > 1 and this.get(1).display and math.abs(this.get(1).price - this.get(idx).price) <= proximityThreshold
         _padding += 1
 
-    // Open #4 can share the same open with #3.
+    // Open #4 and #5 can share the same open with #3.
     if idx > 2 and this.get(2).display and math.abs(this.get(2).price - this.get(idx).price) <= proximityThreshold
         _padding += 1
+
+    // Open #5 can share the same open with #4.
+    if idx > 3 and this.get(3).display and math.abs(this.get(3).price - this.get(idx).price) <= proximityThreshold
+        _padding += 1    
     
     _padding
 
@@ -353,6 +362,7 @@ var string timeframe1 = openTimeframeInput1.param()
 var string timeframe2 = openTimeframeInput2.param()
 var string timeframe3 = openTimeframeInput3.param()
 var string timeframe4 = openTimeframeInput4.param()
+var string timeframe5 = openTimeframeInput5.param()
 
 
 // @variable The `open` and `time` requested from the user-selected timeframe contexts.
@@ -360,6 +370,7 @@ var string timeframe4 = openTimeframeInput4.param()
 [time2, open2] = timeframe2.request(useExtendedSession)
 [time3, open3] = timeframe3.request(useExtendedSession)
 [time4, open4] = timeframe4.request(useExtendedSession)
+[time5, open5] = timeframe5.request(useExtendedSession)
 
 
 // @variable The `Open` UDTs. 
@@ -367,10 +378,11 @@ var Open openData1 = Open.new(name = timeframe1.displayString(), display = enabl
 var Open openData2 = Open.new(name = timeframe2.displayString(), display = enableOpenInput2 and timeframe2.isVisible())
 var Open openData3 = Open.new(name = timeframe3.displayString(), display = enableOpenInput3 and timeframe3.isVisible())
 var Open openData4 = Open.new(name = timeframe4.displayString(), display = enableOpenInput4 and timeframe4.isVisible())
+var Open openData5 = Open.new(name = timeframe5.displayString(), display = enableOpenInput5 and timeframe5.isVisible())
 
 
 // @variable The list of `Open`. 
-var array<Open> openArray = array.from(openData1, openData2, openData3, openData4)
+var array<Open> openArray = array.from(openData1, openData2, openData3, openData4, openData5)
 
 
 // @variable Are true when the open change.
@@ -378,6 +390,7 @@ bool openChange1 = timeframe1.change(time1, useExtendedSession)
 bool openChange2 = timeframe2.change(time2, useExtendedSession)
 bool openChange3 = timeframe3.change(time3, useExtendedSession)
 bool openChange4 = timeframe4.change(time4, useExtendedSession)
+bool openChange5 = timeframe5.change(time5, useExtendedSession)
 
 
 // @variable Are true when pinpointing the open start on the previous bar.
@@ -385,6 +398,7 @@ bool adjust1 = adjustStartBarIndex(time1)
 bool adjust2 = adjustStartBarIndex(time2)
 bool adjust3 = adjustStartBarIndex(time3)
 bool adjust4 = adjustStartBarIndex(time4)
+bool adjust5 = adjustStartBarIndex(time5)
 
 
 // @variable The maximum distance to determine if two levels overlap each other.
@@ -426,6 +440,13 @@ if openData4.display and openChange4
     openData4.price    := _discovery ? open : open4
     openData4.barIndex := _discovery ? bar_index : (adjust4 ? bar_index -1 : bar_index)
 
+
+if openData5.display and openChange5
+    var bool _discovery = discoverPrice(timeframe5, discoverPricesInput, useExtendedSession)
+
+    openData5.price    := _discovery ? open : open5
+    openData5.barIndex := _discovery ? bar_index : (adjust5 ? bar_index -1 : bar_index)
+
 //#endregion
 
 
@@ -434,6 +455,15 @@ if openData4.display and openChange4
 //--------------------------------------------------------------------
 
 // Plot the open levels on the chart.
+
+if openData5.display
+    draw(
+         openChange5,
+         openData5,
+         openLookbackInput5,
+         openColorInput5,
+         openArray.padding(4, proximityPaddingThreshold)
+         )
 
 if openData4.display
     draw(
@@ -480,5 +510,6 @@ plot(series = openData1.price, title = "#1", color = openColorInput1, editable =
 plot(series = openData2.price, title = "#2", color = openColorInput2, editable = false, display = displayControls)
 plot(series = openData3.price, title = "#3", color = openColorInput3, editable = false, display = displayControls)
 plot(series = openData4.price, title = "#4", color = openColorInput4, editable = false, display = displayControls)
+plot(series = openData5.price, title = "#5", color = openColorInput5, editable = false, display = displayControls)
 
 //#endregion
