@@ -267,7 +267,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
 
     if change
         // Anchor the previous open end position.
-        _bodyLine.set_x2(openData.barIndex)
+        _bodyLine.set_x2(openData.barIndex -1)
 
         // Create the previous open "head".
         if enableHeadsInput
