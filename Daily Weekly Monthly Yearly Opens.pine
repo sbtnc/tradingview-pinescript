@@ -273,7 +273,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
         if enableHeadsInput
             _headLineArray.push(
                  line.new(
-                     x1    = openData.barIndex,
+                     x1    = openData.barIndex -1,
                      x2    = openData.barIndex,
                      y1    = _bodyLine.get_y1(),
                      y2    = _bodyLine.get_y2(),
@@ -318,8 +318,9 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
         _label.set_x(_endBarIndex)
 
         if enableHeadsInput
+            int _x2 = getRightBarIndex(HEAD_PADDING)
             for _head in _headLineArray
-                _head.set_x2(getRightBarIndex(HEAD_PADDING))
+                _head.set_x2(_x2)
 
 
 // @function Get the padding to apply to the open right position for not overlapping the other open labels.
