@@ -134,6 +134,8 @@ method change(simple string timeframe, series int tfTime, bool discoverPrice, bo
         discoverPrice         => ta.change(tfTime) > 0 or (barstate.isfirst and time == tfTime)
         =>                       ta.change(tfTime) > 0 or barstate.isfirst
 
+if barstate.isfirst
+    label.new(bar_index, high, syminfo.session)
 
 // @function Request the data on the specified `timeframe` context.
 // @returns  ([int, open]) The open's time and price.
@@ -530,10 +532,44 @@ if openData1.display
 
 displayControls = display.status_line + display.price_scale + display.data_window
 
-plot(series = openData1.price, title = "#1", color = openColorInput1, editable = false, display = displayControls)
-plot(series = openData2.price, title = "#2", color = openColorInput2, editable = false, display = displayControls)
-plot(series = openData3.price, title = "#3", color = openColorInput3, editable = false, display = displayControls)
-plot(series = openData4.price, title = "#4", color = openColorInput4, editable = false, display = displayControls)
-plot(series = openData5.price, title = "#5", color = openColorInput5, editable = false, display = displayControls)
+plot(
+     series   = openData1.price,
+     title    = "#1",
+     color    = openColorInput1,
+     editable = false,
+     display  = enableOpenInput1 ? displayControls : display.none
+     )
+
+plot(
+     series   = openData2.price,
+     title    = "#2",
+     color    = openColorInput2,
+     editable = false,
+     display  = enableOpenInput2 ? displayControls : display.none
+     )
+
+plot(
+     series = openData3.price,
+     title    = "#3",
+     color    = openColorInput3,
+     editable = false,
+     display  = enableOpenInput3 ? displayControls : display.none
+     )
+
+plot(
+     series   = openData4.price,
+     title    = "#4",
+     color    = openColorInput4,
+     editable = false,
+     display  = enableOpenInput4 ? displayControls : display.none
+     )
+     
+plot(
+     series   = openData5.price,
+     title    = "#5",
+     color    = openColorInput5,
+     editable = false,
+     display  = enableOpenInput5 ? displayControls : display.none
+     )
 
 //#endregion
