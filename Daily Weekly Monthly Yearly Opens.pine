@@ -174,7 +174,7 @@ adjustStartBarIndex(int t) =>
 
 // @function Calculate the end position of the open.
 // @returns  (int) The bar index. 
-getRightBarIndex(int padding) =>
+getRightBarIndex(int padding = 0) =>
     bar_index + rightOffsetInput + padding * OFFSET_PADDING
 
 
@@ -272,13 +272,13 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
     var array<line> _bodyLineArray  = array.new_line()
     // @variable The collection of historical right extending open lines.
     var array<line> _headLineArray  = array.new_line()
-    // @variable The last open end bar index.
-    int _endBarIndex = getRightBarIndex(padding)
 
 
     // Update the old open and create the new open.
 
     if change
+        int _x2 = getRightBarIndex()
+
         // Anchor the previous open end position.
         _bodyLine.set_x2(openData.barIndex -1)
 
@@ -297,13 +297,13 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
                  )
 
         // Update the last open label position and tooltip.
-        _label.set_xy(_endBarIndex, openData.price)
+        _label.set_xy(_x2, openData.price)
         _label.set_tooltip(str.tostring(openData.price, format.mintick))
 
         // Create and store the last open line.
         _bodyLine := line.new(
              x1    = openData.barIndex,
-             x2    = _endBarIndex,
+             x2    = _x2,
              y1    = openData.price,
              y2    = openData.price,
              color = color,
@@ -327,13 +327,14 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
     // Update the right position of the "body" and "heads" lines.
 
     if barstate.islast
-        _bodyLine.set_x2(_endBarIndex)
-        _label.set_x(_endBarIndex)
-
         if enableHeadsInput
             int _x2 = getRightBarIndex(HEAD_PADDING)
             for _head in _headLineArray
                 _head.set_x2(_x2)
+
+        int _x2 = getRightBarIndex(padding)
+        _bodyLine.set_x2(_x2)
+        _label.set_x(_x2)
 
 
 // @function Get the padding to apply to the open right position for not overlapping the other open labels.
@@ -492,7 +493,7 @@ if openData5.display
          openData5,
          openLookbackInput5,
          openColorInput5,
-         openArray.padding(4, proximityPaddingThreshold)
+         barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
          )
 
 if openData4.display
@@ -501,7 +502,7 @@ if openData4.display
          openData4,
          openLookbackInput4,
          openColorInput4,
-         openArray.padding(3, proximityPaddingThreshold)
+         barstate.islast ? openArray.padding(3, proximityPaddingThreshold) : 0
          )
 
 if openData3.display
@@ -510,7 +511,7 @@ if openData3.display
          openData3,
          openLookbackInput3,
          openColorInput3,
-         openArray.padding(2, proximityPaddingThreshold)
+         barstate.islast ? openArray.padding(2, proximityPaddingThreshold) : 0
          )
 
 if openData2.display
@@ -519,7 +520,7 @@ if openData2.display
          openData2,
          openLookbackInput2,
          openColorInput2,
-         openArray.padding(1, proximityPaddingThreshold)
+         barstate.islast ? openArray.padding(1, proximityPaddingThreshold) : 0
          )
 
 if openData1.display
