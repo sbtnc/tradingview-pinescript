@@ -128,10 +128,11 @@ method isVisible(simple string timeframe) =>
 
 // @function Detect changes of opens.
 // @returns  series bool
-method change(simple string timeframe, series int regularTime, simple bool extendedSession) =>
-    switch extendedSession
-        true  => timeframe.change(timeframe)
-        false => ta.change(regularTime) > 0
+method change(simple string timeframe, series int tfTime, bool extendedSession, bool discoverPrice) =>
+    switch 
+        extendedSession => timeframe.change(timeframe)
+        discoverPrice   => ta.change(tfTime) > 0 or (barstate.isfirst and time == tfTime)
+        => ta.change(tfTime) > 0 or barstate.isfirst
 
 
 // @function Request the data on the specified `timeframe` context.
@@ -151,6 +152,12 @@ method higherTimeframeFeed(string timeframe) =>
 // @returns  bool
 discoverPrice(string timeframe, bool discovery, bool extendedSession) =>
     higherTimeframeFeed(timeframe) and ((discovery and timeframe.isintraday) or (extendedSession and syminfo.session == session.extended))
+
+discoverPrice(string timeframe, bool discovery) =>
+    discovery and higherTimeframeFeed(timeframe) and timeframe.isintraday
+
+discoverExtendedPrice(simple string timeframe, simple bool extendedSession) => 
+    extendedSession and higherTimeframeFeed(timeframe) and syminfo.session == session.extended
 
 
 // @function Check if the open time belongs to the previous bar.
@@ -355,7 +362,7 @@ method padding(array<Open> this, int idx, float proximityThreshold) =>
 //--------------------------------------------------------------------
 
 // @variable Is true if displaying the open on the extended trading hours.
-var bool useExtendedSession = enableExtendedSessionInput and syminfo.session == session.extended
+var bool extendedSession = enableExtendedSessionInput and syminfo.session == session.extended
 
 
 // @variable The `timeframe` parameters produced from the enum input selections.
@@ -367,11 +374,35 @@ var string timeframe5 = openTimeframeInput5.param()
 
 
 // @variable The `open` and `time` requested from the user-selected timeframe contexts.
-[time1, open1] = timeframe1.request(useExtendedSession)
-[time2, open2] = timeframe2.request(useExtendedSession)
-[time3, open3] = timeframe3.request(useExtendedSession)
-[time4, open4] = timeframe4.request(useExtendedSession)
-[time5, open5] = timeframe5.request(useExtendedSession)
+[time1, open1] = timeframe1.request(extendedSession)
+[time2, open2] = timeframe2.request(extendedSession)
+[time3, open3] = timeframe3.request(extendedSession)
+[time4, open4] = timeframe4.request(extendedSession)
+[time5, open5] = timeframe5.request(extendedSession)
+
+
+// @variable
+var bool discoverPrice1 = discoverPrice(timeframe1, discoverPricesInput)
+var bool discoverPrice2 = discoverPrice(timeframe2, discoverPricesInput)
+var bool discoverPrice3 = discoverPrice(timeframe3, discoverPricesInput)
+var bool discoverPrice4 = discoverPrice(timeframe4, discoverPricesInput)
+var bool discoverPrice5 = discoverPrice(timeframe5, discoverPricesInput)
+
+
+// @variable Are true when the requested data excludes the extended session and requires discovery.
+var bool discoverExtendedPrice1 = discoverExtendedPrice(timeframe1, extendedSession)
+var bool discoverExtendedPrice2 = discoverExtendedPrice(timeframe2, extendedSession)
+var bool discoverExtendedPrice3 = discoverExtendedPrice(timeframe3, extendedSession)
+var bool discoverExtendedPrice4 = discoverExtendedPrice(timeframe4, extendedSession)
+var bool discoverExtendedPrice5 = discoverExtendedPrice(timeframe5, extendedSession)
+
+
+// @variable Are true when the open change.
+bool openChange1 = timeframe1.change(time1, discoverExtendedPrice1, discoverPrice1)
+bool openChange2 = timeframe2.change(time2, discoverExtendedPrice2, discoverPrice2)
+bool openChange3 = timeframe3.change(time3, discoverExtendedPrice3, discoverPrice3)
+bool openChange4 = timeframe4.change(time4, discoverExtendedPrice4, discoverPrice4)
+bool openChange5 = timeframe5.change(time5, discoverExtendedPrice5, discoverPrice5)
 
 
 // @variable The `Open` UDTs. 
@@ -384,14 +415,6 @@ var Open openData5 = Open.new(name = timeframe5.displayString(), display = enabl
 
 // @variable The list of `Open`. 
 var array<Open> openArray = array.from(openData1, openData2, openData3, openData4, openData5)
-
-
-// @variable Are true when the open change.
-bool openChange1 = timeframe1.change(time1, useExtendedSession)
-bool openChange2 = timeframe2.change(time2, useExtendedSession)
-bool openChange3 = timeframe3.change(time3, useExtendedSession)
-bool openChange4 = timeframe4.change(time4, useExtendedSession)
-bool openChange5 = timeframe5.change(time5, useExtendedSession)
 
 
 // @variable Are true when pinpointing the open start on the previous bar.
@@ -415,35 +438,35 @@ float proximityPaddingThreshold = ta.atr(10) /2
 // When the opens change, update their price and start properties.
 
 if openData1.display and openChange1
-    var bool _discovery = discoverPrice(timeframe1, discoverPricesInput, useExtendedSession)
+    var bool _discovery = discoverPrice(timeframe1, discoverPricesInput, extendedSession)
 
     openData1.price    := _discovery ? open : open1
     openData1.barIndex := _discovery ? bar_index : (adjust1 ? bar_index -1 : bar_index)
 
 
 if openData2.display and openChange2
-    var bool _discovery = discoverPrice(timeframe2, discoverPricesInput, useExtendedSession)
+    var bool _discovery = discoverPrice(timeframe2, discoverPricesInput, extendedSession)
 
     openData2.price    := _discovery ? open : open2
     openData2.barIndex := _discovery ? bar_index : (adjust2 ? bar_index -1 : bar_index)
 
 
 if openData3.display and openChange3
-    var bool _discovery = discoverPrice(timeframe3, discoverPricesInput, useExtendedSession)
+    var bool _discovery = discoverPrice(timeframe3, discoverPricesInput, extendedSession)
 
     openData3.price    := _discovery ? open : open3
     openData3.barIndex := _discovery ? bar_index : (adjust3 ? bar_index -1 : bar_index)
 
 
 if openData4.display and openChange4
-    var bool _discovery = discoverPrice(timeframe4, discoverPricesInput, useExtendedSession)
+    var bool _discovery = discoverPrice(timeframe4, discoverPricesInput, extendedSession)
 
     openData4.price    := _discovery ? open : open4
     openData4.barIndex := _discovery ? bar_index : (adjust4 ? bar_index -1 : bar_index)
 
 
 if openData5.display and openChange5
-    var bool _discovery = discoverPrice(timeframe5, discoverPricesInput, useExtendedSession)
+    var bool _discovery = discoverPrice(timeframe5, discoverPricesInput, extendedSession)
 
     openData5.price    := _discovery ? open : open5
     openData5.barIndex := _discovery ? bar_index : (adjust5 ? bar_index -1 : bar_index)
