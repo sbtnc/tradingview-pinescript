@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2020-01-11
-// Last modified: 2024-11-27
+// Last modified: 2024-12-06
 // version 7.0
 
 // @version=5
@@ -128,14 +128,18 @@ method isVisible(simple string timeframe) =>
 
 // @function Detect changes of opens.
 // @returns  series bool
-method change(simple string timeframe, series int tfTime, bool discoverPrice, bool discoverExtendedPrice) =>
+method change(
+     simple string timeframe,
+     series int    tfTime,
+     simple bool   discoverPrice,
+     simple bool   discoverExtendedPrice
+     ) =>
+
     switch 
         discoverExtendedPrice => timeframe.change(timeframe)
         discoverPrice         => ta.change(tfTime) > 0 or (barstate.isfirst and time == tfTime)
         =>                       ta.change(tfTime) > 0 or barstate.isfirst
 
-if barstate.isfirst
-    label.new(bar_index, high, syminfo.session)
 
 // @function Request the data on the specified `timeframe` context.
 // @returns  ([int, open]) The open's time and price.
@@ -146,13 +150,13 @@ method request(string timeframe, bool extendedSession) =>
 
 // @function Check if the specified `timeframe` returns end-of-day data.
 // @returns  bool
-method higherTimeframeFeed(string timeframe) =>
+method higherTimeframeFeed(simple string timeframe) =>
     timeframe.in_seconds(timeframe) >= timeframe.in_seconds("D") 
 
 
 // @function Check if the open can be sourced from the chart data.
 // @returns  bool
-discoverPrice(string timeframe, bool discovery) =>
+discoverPrice(simple string timeframe, simple bool discovery) =>
     discovery and higherTimeframeFeed(timeframe) and timeframe.isintraday
 
 
@@ -164,8 +168,8 @@ discoverExtendedPrice(simple string timeframe, simple bool extendedSession) =>
 
 // @function Check if the open time belongs to the previous bar.
 // @returns  bool
-adjustStartBarIndex(int _time) =>
-    time_close[1] > _time
+adjustStartBarIndex(int t) =>
+    time_close[1] > t
 
 
 // @function Calculate the end position of the open.
