@@ -4,7 +4,7 @@
 // Last modified: 2024-12-06
 // version 7.0
 
-// @version=5
+// @version=6
 indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_lines_count = 500)
 
 
@@ -368,10 +368,6 @@ method padding(array<Open> this, int idx, float proximityThreshold) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-// @variable Is true if displaying the open on the extended trading hours.
-var bool extendedSession = enableExtendedSessionInput and syminfo.session == session.extended
-
-
 // @variable The `timeframe` parameters produced from the enum input selections.
 var string timeframe1 = openTimeframeInput1.param()
 var string timeframe2 = openTimeframeInput2.param()
@@ -380,56 +376,44 @@ var string timeframe4 = openTimeframeInput4.param()
 var string timeframe5 = openTimeframeInput5.param()
 
 
-// @variable The `open` and `time` requested from the user-selected timeframe contexts.
-[time1, open1] = timeframe1.request(extendedSession)
-[time2, open2] = timeframe2.request(extendedSession)
-[time3, open3] = timeframe3.request(extendedSession)
-[time4, open4] = timeframe4.request(extendedSession)
-[time5, open5] = timeframe5.request(extendedSession)
+// @variable Are true if we can display the opens on the chart.
+var simple bool display1 = enableOpenInput1 and timeframe1.isVisible()
+var simple bool display2 = enableOpenInput2 and timeframe2.isVisible()
+var simple bool display3 = enableOpenInput3 and timeframe3.isVisible()
+var simple bool display4 = enableOpenInput4 and timeframe4.isVisible()
+var simple bool display5 = enableOpenInput5 and timeframe5.isVisible()
 
 
-// @variable Are true when sourcing the open price from the chart instead of the request data.
-var bool discoverPrice1 = discoverPrice(timeframe1, discoverPricesInput)
-var bool discoverPrice2 = discoverPrice(timeframe2, discoverPricesInput)
-var bool discoverPrice3 = discoverPrice(timeframe3, discoverPricesInput)
-var bool discoverPrice4 = discoverPrice(timeframe4, discoverPricesInput)
-var bool discoverPrice5 = discoverPrice(timeframe5, discoverPricesInput)
+// @variable Are true when sourcing the open prices from the chart instead of the requested timeframe context.
+var simple bool discoverPrice1 = discoverPrice(timeframe1, discoverPricesInput)
+var simple bool discoverPrice2 = discoverPrice(timeframe2, discoverPricesInput)
+var simple bool discoverPrice3 = discoverPrice(timeframe3, discoverPricesInput)
+var simple bool discoverPrice4 = discoverPrice(timeframe4, discoverPricesInput)
+var simple bool discoverPrice5 = discoverPrice(timeframe5, discoverPricesInput)
 
 
-// @variable Are true when the requested data excludes the extended session and requires discovery.
-var bool discoverExtendedPrice1 = discoverExtendedPrice(timeframe1, extendedSession)
-var bool discoverExtendedPrice2 = discoverExtendedPrice(timeframe2, extendedSession)
-var bool discoverExtendedPrice3 = discoverExtendedPrice(timeframe3, extendedSession)
-var bool discoverExtendedPrice4 = discoverExtendedPrice(timeframe4, extendedSession)
-var bool discoverExtendedPrice5 = discoverExtendedPrice(timeframe5, extendedSession)
+// @variable Is true if we should plot the opens on the extended trading hours.
+var simple bool extendedSession = enableExtendedSessionInput and syminfo.session == session.extended
 
 
-// @variable Are true when the open change.
-bool openChange1 = timeframe1.change(time1, discoverPrice1, discoverExtendedPrice1)
-bool openChange2 = timeframe2.change(time2, discoverPrice2, discoverExtendedPrice2)
-bool openChange3 = timeframe3.change(time3, discoverPrice3, discoverExtendedPrice3)
-bool openChange4 = timeframe4.change(time4, discoverPrice4, discoverExtendedPrice4)
-bool openChange5 = timeframe5.change(time5, discoverPrice5, discoverExtendedPrice5)
+// @variable Are true if we should source the open prices from the chart instead of the requested timeframe context.
+var simple bool discoverExtendedPrice1 = discoverExtendedPrice(timeframe1, extendedSession)
+var simple bool discoverExtendedPrice2 = discoverExtendedPrice(timeframe2, extendedSession)
+var simple bool discoverExtendedPrice3 = discoverExtendedPrice(timeframe3, extendedSession)
+var simple bool discoverExtendedPrice4 = discoverExtendedPrice(timeframe4, extendedSession)
+var simple bool discoverExtendedPrice5 = discoverExtendedPrice(timeframe5, extendedSession)
 
 
 // @variable The `Open` UDTs. 
-var Open openData1 = Open.new(name = timeframe1.displayString(), display = enableOpenInput1 and timeframe1.isVisible())
-var Open openData2 = Open.new(name = timeframe2.displayString(), display = enableOpenInput2 and timeframe2.isVisible())
-var Open openData3 = Open.new(name = timeframe3.displayString(), display = enableOpenInput3 and timeframe3.isVisible())
-var Open openData4 = Open.new(name = timeframe4.displayString(), display = enableOpenInput4 and timeframe4.isVisible())
-var Open openData5 = Open.new(name = timeframe5.displayString(), display = enableOpenInput5 and timeframe5.isVisible())
+var Open open1 = Open.new(name = timeframe1.displayString(), display = display1)
+var Open open2 = Open.new(name = timeframe2.displayString(), display = display2)
+var Open open3 = Open.new(name = timeframe3.displayString(), display = display3)
+var Open open4 = Open.new(name = timeframe4.displayString(), display = display4)
+var Open open5 = Open.new(name = timeframe5.displayString(), display = display5)
 
 
 // @variable The list of `Open`. 
-var array<Open> openArray = array.from(openData1, openData2, openData3, openData4, openData5)
-
-
-// @variable Are true when pinpointing the open start on the previous bar.
-bool adjust1 = adjustStartBarIndex(time1)
-bool adjust2 = adjustStartBarIndex(time2)
-bool adjust3 = adjustStartBarIndex(time3)
-bool adjust4 = adjustStartBarIndex(time4)
-bool adjust5 = adjustStartBarIndex(time5)
+var array<Open> openArray = array.from(open1, open2, open3, open4, open5)
 
 
 // @variable The maximum distance to determine if two levels overlap each other.
@@ -442,41 +426,119 @@ float proximityPaddingThreshold = ta.atr(10) /2
 //#region                         Logic
 //--------------------------------------------------------------------
 
-// When the opens change, update their price and start properties.
-
-if openData1.display and openChange1
-    bool _discovery = discoverPrice1 or discoverExtendedPrice1
-
-    openData1.price    := _discovery ? open : open1
-    openData1.barIndex := _discovery ? bar_index : (adjust1 ? bar_index -1 : bar_index)
-
-
-if openData2.display and openChange2
-    bool _discovery = discoverPrice2 or discoverExtendedPrice2
-
-    openData2.price    := _discovery ? open : open2
-    openData2.barIndex := _discovery ? bar_index : (adjust2 ? bar_index -1 : bar_index)
-
-
-if openData3.display and openChange3
-    bool _discovery = discoverPrice3 or discoverExtendedPrice3
-
-    openData3.price    := _discovery ? open : open3
-    openData3.barIndex := _discovery ? bar_index : (adjust3 ? bar_index -1 : bar_index)
-
-
-if openData4.display and openChange4
-    bool _discovery = discoverPrice4 or discoverExtendedPrice4
-
-    openData4.price    := _discovery ? open : open4
-    openData4.barIndex := _discovery ? bar_index : (adjust4 ? bar_index -1 : bar_index)
-
-
-if openData5.display and openChange5
+if display5
+    // @variable The `open` and `time` requested from the timeframe context.
+    [_time, _open] = timeframe5.request(extendedSession)
+    // @variable Is true when the timeframe changes.
+    bool _change    = timeframe5.change(_time, discoverPrice5, discoverExtendedPrice5)
+    // @variable Is true when pinpointing the open start on the previous bar.
+    bool _adjust    = adjustStartBarIndex(_time)
+    // @variable Is true when sourcing the opening price from the chart context.
     bool _discovery = discoverPrice5 or discoverExtendedPrice5
 
-    openData5.price    := _discovery ? open : open5
-    openData5.barIndex := _discovery ? bar_index : (adjust5 ? bar_index -1 : bar_index)
+    if _change
+        open5.price    := _discovery ? open : _open
+        open5.barIndex := _discovery ? bar_index : (_adjust ? bar_index -1 : bar_index)
+
+    draw(
+         _change,
+         open5,
+         openLookbackInput5,
+         openColorInput5,
+         barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+         )
+
+
+if display4
+    // @variable The `open` and `time` requested from the timeframe context.
+    [_time, _open] = timeframe4.request(extendedSession)
+    // @variable Is true when the timeframe changes.
+    bool _change = timeframe4.change(_time, discoverPrice4, discoverExtendedPrice4)
+    // @variable Is true when pinpointing the open start on the previous bar.
+    bool _adjust = adjustStartBarIndex(_time)
+    // @variable Is true when sourcing the opening price from the chart context.
+    bool _discovery = discoverPrice4 or discoverExtendedPrice4
+
+    if _change
+        open4.price    := _discovery ? open : _open
+        open4.barIndex := _discovery ? bar_index : (_adjust ? bar_index -1 : bar_index)
+
+    draw(
+         _change,
+         open4,
+         openLookbackInput4,
+         openColorInput4,
+         barstate.islast ? openArray.padding(3, proximityPaddingThreshold) : 0
+         )
+
+
+if display3
+    // @variable The `open` and `time` requested from the timeframe context.
+    [_time, _open]  = timeframe3.request(extendedSession)
+    // @variable Is true when the timeframe changes.
+    bool _change    = timeframe3.change(_time, discoverPrice3, discoverExtendedPrice3)
+    // @variable Is true when pinpointing the open start on the previous bar.
+    bool _adjust    = adjustStartBarIndex(_time)
+    // @variable Is true when sourcing the opening price from the chart context.
+    bool _discovery = discoverPrice3 or discoverExtendedPrice3
+
+    if _change
+        open3.price    := _discovery ? open : _open
+        open3.barIndex := _discovery ? bar_index : (_adjust ? bar_index -1 : bar_index)
+
+    draw(
+         _change,
+         open3,
+         openLookbackInput3,
+         openColorInput3,
+         barstate.islast ? openArray.padding(2, proximityPaddingThreshold) : 0
+         )
+
+
+if display2
+    // @variable The `open` and `time` requested from the timeframe context.
+    [_time, _open]  = timeframe2.request(extendedSession)
+    // @variable Is true when the timeframe changes.
+    bool _change    = timeframe2.change(_time, discoverPrice2, discoverExtendedPrice2)
+    // @variable Is true when pinpointing the open start on the previous bar.
+    bool _adjust    = adjustStartBarIndex(_time)
+    // @variable Is true when sourcing the opening price from the chart context.
+    bool _discovery = discoverPrice2 or discoverExtendedPrice2
+
+    if _change
+        open2.price    := _discovery ? open : _open
+        open2.barIndex := _discovery ? bar_index : (_adjust ? bar_index -1 : bar_index)
+
+    draw(
+         _change,
+         open2,
+         openLookbackInput2,
+         openColorInput2,
+         barstate.islast ? openArray.padding(1, proximityPaddingThreshold) : 0
+         )
+
+
+if display1
+    // @variable The `open` and `time` requested from the timeframe context.
+    [_time, _open]  = timeframe1.request(extendedSession)
+    // @variable Is true when the timeframe changes.
+    bool _change    = timeframe1.change(_time, discoverPrice1, discoverExtendedPrice1)
+    // @variable Is true when pinpointing the open start on the previous bar.
+    bool _adjust    = adjustStartBarIndex(_time)
+    // @variable Is true when sourcing the opening price from the chart context.
+    bool _discovery = discoverPrice1 or discoverExtendedPrice1
+
+    if _change
+        open1.price    := _discovery ? open : _open
+        open1.barIndex := _discovery ? bar_index : (_adjust ? bar_index -1 : bar_index)
+
+    draw(
+         _change,
+         open1,
+         openLookbackInput1,
+         openColorInput1,
+         0
+         )
 
 //#endregion
 
@@ -485,60 +547,12 @@ if openData5.display and openChange5
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-// Plot the open levels on the chart.
-
-if openData5.display
-    draw(
-         openChange5,
-         openData5,
-         openLookbackInput5,
-         openColorInput5,
-         barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
-         )
-
-if openData4.display
-    draw(
-         openChange4,
-         openData4,
-         openLookbackInput4,
-         openColorInput4,
-         barstate.islast ? openArray.padding(3, proximityPaddingThreshold) : 0
-         )
-
-if openData3.display
-    draw(
-         openChange3,
-         openData3,
-         openLookbackInput3,
-         openColorInput3,
-         barstate.islast ? openArray.padding(2, proximityPaddingThreshold) : 0
-         )
-
-if openData2.display
-    draw(
-         openChange2,
-         openData2,
-         openLookbackInput2,
-         openColorInput2,
-         barstate.islast ? openArray.padding(1, proximityPaddingThreshold) : 0
-         )
-
-if openData1.display
-    draw(
-         openChange1,
-         openData1,
-         openLookbackInput1,
-         openColorInput1,
-         0
-         )
-
-
 // Plot the open prices on the `status line`, `price scale`, `data window` as well for providing alert conditions.
 
 displayControls = display.status_line + display.price_scale + display.data_window
 
 plot(
-     series   = openData1.price,
+     series   = open1.price,
      title    = "#1",
      color    = openColorInput1,
      editable = false,
@@ -546,7 +560,7 @@ plot(
      )
 
 plot(
-     series   = openData2.price,
+     series   = open2.price,
      title    = "#2",
      color    = openColorInput2,
      editable = false,
@@ -554,7 +568,7 @@ plot(
      )
 
 plot(
-     series = openData3.price,
+     series = open3.price,
      title    = "#3",
      color    = openColorInput3,
      editable = false,
@@ -562,7 +576,7 @@ plot(
      )
 
 plot(
-     series   = openData4.price,
+     series   = open4.price,
      title    = "#4",
      color    = openColorInput4,
      editable = false,
@@ -570,7 +584,7 @@ plot(
      )
      
 plot(
-     series   = openData5.price,
+     series   = open5.price,
      title    = "#5",
      color    = openColorInput5,
      editable = false,
