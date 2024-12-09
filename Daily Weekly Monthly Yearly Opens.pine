@@ -5,7 +5,7 @@
 // version 7.0
 
 // @version=6
-indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_lines_count = 500)
+indicator("Daily Weekly Monthly Yearly Opens", "Opens", overlay = true, max_lines_count = 500, dynamic_requests = true)
 
 
 //--------------------------------------------------------------------
