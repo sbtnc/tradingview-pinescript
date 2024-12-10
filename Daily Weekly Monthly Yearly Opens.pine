@@ -130,19 +130,19 @@ method isVisible(simple string timeframe) =>
 // @returns  series bool
 method change(
      simple string timeframe,
-     series int    tfTime,
+     series int    timeframeTime,
      simple bool   discoverPrice,
      simple bool   discoverExtendedPrice
      ) =>
 
     switch 
         discoverExtendedPrice => timeframe.change(timeframe)
-        discoverPrice         => ta.change(tfTime) > 0 or (barstate.isfirst and time == tfTime)
-        =>                       ta.change(tfTime) > 0 or barstate.isfirst
+        discoverPrice         => ta.change(timeframeTime) > 0 or (barstate.isfirst and time == timeframeTime)
+        =>                       ta.change(timeframeTime) > 0 or barstate.isfirst
 
 
-// @function Request the data on the specified `timeframe` context.
-// @returns  ([int, open]) The open's time and price.
+// @function Request the data in the specified `timeframe` context.
+// @returns  ([int, float]) The open's time and price.
 method request(string timeframe, bool extendedSession) =>
     string tickerId = ticker.modify(syminfo.tickerid, extendedSession ? session.extended : session.regular)
     request.security(tickerId, timeframe, [time, open], lookahead = barmerge.lookahead_on)
@@ -172,7 +172,7 @@ adjustStartBarIndex(int t) =>
     time_close[1] > t
 
 
-// @function Calculate the end position of the open.
+// @function Calculate the right position of the open level.
 // @returns  (int) The bar index. 
 getRightBarIndex(int padding = 0) =>
     bar_index + rightOffsetInput + padding * OFFSET_PADDING
@@ -248,6 +248,7 @@ method displayString(string this) =>
 draw(bool change, Open openData, int lookback, color color, int padding) =>
     // @variable The reference of the last open line.
     var line _bodyLine = na
+
     // @variable The reference of the last open label.
     var label _label = label.new(
          x         = na,
@@ -257,6 +258,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
          textcolor = color,
          size      = LABEL_SIZE
          )
+
     // @variable The reference of the last open left extending line.
     var line _tailLine = line.new(
          x1     = na,
@@ -268,8 +270,10 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
          width  = LINE_WIDTH,
          extend = extend.left
          )
+
     // @variable The collection of historical open lines.
     var array<line> _bodyLineArray  = array.new_line()
+
     // @variable The collection of historical right extending open lines.
     var array<line> _headLineArray  = array.new_line()
 
@@ -413,7 +417,7 @@ var string timeframe4 = openTimeframeInput4.param()
 var string timeframe5 = openTimeframeInput5.param()
 
 
-// @variable Are true if we can display the opens on the chart.
+// @variable Are true when we can display the opens on the chart.
 var simple bool display1 = enableOpenInput1 and timeframe1.isVisible()
 var simple bool display2 = enableOpenInput2 and timeframe2.isVisible()
 var simple bool display3 = enableOpenInput3 and timeframe3.isVisible()
@@ -429,11 +433,11 @@ var simple bool discoverPrice4 = discoverPrice(timeframe4, discoverPricesInput)
 var simple bool discoverPrice5 = discoverPrice(timeframe5, discoverPricesInput)
 
 
-// @variable Is true if we should plot the opens on the extended trading hours.
+// @variable Is true when we should plot the opens on the extended trading hours.
 var simple bool extendedSession = enableExtendedSessionInput and syminfo.session == session.extended
 
 
-// @variable Are true if we should source the open prices from the chart instead of the requested timeframe context.
+// @variable Are true when we should source the open prices from the chart instead of the requested timeframe context.
 var simple bool discoverExtendedPrice1 = discoverExtendedPrice(timeframe1, extendedSession)
 var simple bool discoverExtendedPrice2 = discoverExtendedPrice(timeframe2, extendedSession)
 var simple bool discoverExtendedPrice3 = discoverExtendedPrice(timeframe3, extendedSession)
@@ -449,7 +453,7 @@ var Open open4 = Open.new(name = timeframe4.displayString(), display = display4)
 var Open open5 = Open.new(name = timeframe5.displayString(), display = display5)
 
 
-// @variable The list of `Open`. 
+// @variable The collection of last `Open`. 
 var array<Open> openArray = array.from(open1, open2, open3, open4, open5)
 
 
