@@ -300,6 +300,10 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
                      )
                  )
 
+            // Trim the exceeding number of drawings.
+            if _headLineArray.size() > lookback -1
+                line.delete(_headLineArray.shift())
+
         // Update the last open label position and tooltip.
         _label.set_xy(_x2, openData.price)
         _label.set_tooltip(str.tostring(openData.price, format.mintick))
@@ -316,16 +320,14 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
              )
         array.push(_bodyLineArray, _bodyLine)
 
+        // Trim the exceeding number of drawings.
+        if _bodyLineArray.size() > lookback
+            line.delete(_bodyLineArray.shift())
+
         // Create the last open "tail".
         if enableTailsInput
             _tailLine.set_xy1(openData.barIndex -1, openData.price)
             _tailLine.set_xy2(openData.barIndex,    openData.price)
-
-        // Trim the exceeding number of drawings.
-        if _bodyLineArray.size() > lookback
-            line.delete(_bodyLineArray.shift())
-        if _headLineArray.size() > lookback -1
-            line.delete(_headLineArray.shift())
 
 
     // Update the right position of the "body" and "heads" lines.
