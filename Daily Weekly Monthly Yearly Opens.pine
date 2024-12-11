@@ -366,16 +366,13 @@ method padding(array<Open> this, int idx, float proximityThreshold) =>
 
 
 // @function Update the open levels.
-// @returns  void
+// @returns  (bool) Is true if the open changes.
 update(
      Open           data,
      simple string  tf,
      simple bool    extendedSession,
      simple bool    discoverPrice,
-     simple bool    discoverExtendedPrice,
-     int            lookback,
-     color          color,
-     int            padding
+     simple bool    discoverExtendedPrice
      ) =>
 
     // @variable The `open` and `time` requested from the timeframe context.
@@ -393,14 +390,8 @@ update(
     if _change
         data.price    := _discovery ? open : _tfOpen
         data.barIndex := _discovery ? bar_index : (_adjust ? bar_index -1 : bar_index)
-
-    draw(
-         _change,
-         data,
-         lookback,
-         color,
-         padding
-         )
+        
+    _change
 
 //#endregion
 
@@ -467,13 +458,38 @@ float proximityPaddingThreshold = ta.atr(10) /2
 //#region                         Logic
 //--------------------------------------------------------------------
 
+bool change1 = if display1
+    update(open1, timeframe1, extendedSession, discoverPrice1, discoverExtendedPrice1)
+
+
+bool change2 = if display2
+    update(open2, timeframe2, extendedSession, discoverPrice2, discoverExtendedPrice2)
+
+
+bool change3 = if display3
+    update(open3, timeframe3, extendedSession, discoverPrice3, discoverExtendedPrice3)
+
+
+bool change4 = if display4
+    update(open4, timeframe4, extendedSession, discoverPrice4, discoverExtendedPrice4)
+
+
+bool change5 = if display5
+    update(open5, timeframe5, extendedSession, discoverPrice5, discoverExtendedPrice5)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+//#region - Draw the open levels.
+
 if display5
-    update(
+    draw(
+         change5,
          open5,
-         timeframe5,
-         extendedSession,
-         discoverPrice5,
-         discoverExtendedPrice5,
          openLookbackInput5,
          openColorInput5,
          barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
@@ -481,12 +497,9 @@ if display5
 
 
 if display4
-    update(
+    draw(
+         change4,
          open4,
-         timeframe4,
-         extendedSession,
-         discoverPrice4,
-         discoverExtendedPrice4,
          openLookbackInput4,
          openColorInput4,
          barstate.islast ? openArray.padding(3, proximityPaddingThreshold) : 0
@@ -494,12 +507,9 @@ if display4
 
 
 if display3
-    update(
+    draw(
+         change3,
          open3,
-         timeframe3,
-         extendedSession,
-         discoverPrice3,
-         discoverExtendedPrice3,
          openLookbackInput3,
          openColorInput3,
          barstate.islast ? openArray.padding(2, proximityPaddingThreshold) : 0
@@ -507,12 +517,9 @@ if display3
 
 
 if display2
-    update(
+    draw(
+         change2,
          open2,
-         timeframe2,
-         extendedSession,
-         discoverPrice2,
-         discoverExtendedPrice2,
          openLookbackInput2,
          openColorInput2,
          barstate.islast ? openArray.padding(1, proximityPaddingThreshold) : 0
@@ -520,19 +527,18 @@ if display2
 
 
 if display1
-    update(
+    draw(
+         change1,
          open1,
-         timeframe1,
-         extendedSession,
-         discoverPrice1,
-         discoverExtendedPrice1,
          openLookbackInput1,
          openColorInput1,
          0
          )
 
+//#endregion
 
-// Plot the open prices on the `status line`, `price scale`, `data window` as well for providing alert conditions.
+
+//#region - Plot the open prices on the `status line`, `price scale`, `data window` as well for providing alert conditions.
 
 displayControls = display.status_line + display.price_scale + display.data_window
 
@@ -575,5 +581,7 @@ plot(
      editable = false,
      display  = enableOpenInput5 ? displayControls : display.none
      )
+
+//#endregion
 
 //#endregion-
