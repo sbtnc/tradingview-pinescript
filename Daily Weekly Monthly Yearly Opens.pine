@@ -144,7 +144,7 @@ method change(
 // @function Request the data in the specified `timeframe` context.
 // @returns  ([int, float]) The open's time and price.
 method request(string timeframe, bool extendedSession) =>
-    string tickerId = ticker.modify(syminfo.tickerid, extendedSession ? session.extended : session.regular)
+    string tickerId = ticker.new(syminfo.prefix, syminfo.ticker, extendedSession ? session.extended : session.regular)
     request.security(tickerId, timeframe, [time, open], lookahead = barmerge.lookahead_on)
 
 
