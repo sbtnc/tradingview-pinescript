@@ -22,113 +22,127 @@ color   CAPTION_COLOR       = color.gray
 
 
 //--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+// @enum Contains fields with the complete UI list of timezones as titles.
+enum Timezones
+    utc  = "UTC"
+    exch = "Exchange"
+    cai  = "Africa/Cairo"
+    jnb  = "Africa/Johannesburg"
+    los  = "Africa/Lagos"
+    nbo  = "Africa/Nairobi"
+    tun  = "Africa/Tunis"
+    bue  = "America/Argentina/Buenos_Aires"
+    bog  = "America/Bogota"
+    ccs  = "America/Caracas"
+    chi  = "America/Chicago"
+    den  = "America/Denver"
+    esr  = "America/El_Salvador"
+    jnu  = "America/Juneau"
+    lim  = "America/Lima"
+    lax  = "America/Los_Angeles"
+    nyc  = "America/New_York"
+    mex  = "America/Mexico_City"
+    phx  = "America/Phoenix"
+    scl  = "America/Santiago"
+    sao  = "America/Sao_Paulo"
+    yto  = "America/Toronto"
+    yvr  = "America/Vancouver"
+    ala  = "Asia/Almaty"
+    asb  = "Asia/Ashgabat"
+    bah  = "Asia/Bahrain"
+    bkk  = "Asia/Bangkok"
+    dxb  = "Asia/Dubai"
+    ckg  = "Asia/Chongqing"
+    cmb  = "Asia/Colombo"
+    sgn  = "Asia/Ho_Chi_Minh"
+    hkg  = "Asia/Hong_Kong"
+    ist  = "Asia/Istanbul"
+    jkt  = "Asia/Jakarta"
+    jrs  = "Asia/Jerusalem"
+    khi  = "Asia/Karachi"
+    ktm  = "Asia/Kathmandu"
+    ccu  = "Asia/Kolkata"
+    kwi  = "Asia/Kuwait"
+    mnl  = "Asia/Manila"
+    mct  = "Asia/Muscat"
+    nic  = "Asia/Nicosia"
+    doh  = "Asia/Qatar"
+    ruh  = "Asia/Riyadh"
+    sel  = "Asia/Seoul"
+    sha  = "Asia/Shanghai"
+    sin  = "Asia/Singapore"
+    tpe  = "Asia/Taipei"
+    thr  = "Asia/Tehran"
+    tyo  = "Asia/Tokyo"
+    rgn  = "Asia/Yangon"
+    rek  = "Atlantic/Reykjavik"
+    adl  = "Australia/Adelaide"
+    bne  = "Australia/Brisbane"
+    per  = "Australia/Perth"
+    syd  = "Australia/Sydney"
+    ams  = "Europe/Amsterdam"
+    ath  = "Europe/Athens"
+    beg  = "Europe/Belgrade"
+    ber  = "Europe/Berlin"
+    bts  = "Europe/Bratislava"
+    bru  = "Europe/Brussels"
+    buh  = "Europe/Bucharest"
+    bud  = "Europe/Budapest"
+    cph  = "Europe/Copenhagen"
+    dub  = "Europe/Dublin"
+    hel  = "Europe/Helsinki"
+    mad  = "Europe/Madrid"
+    mla  = "Europe/Malta"
+    mow  = "Europe/Moscow"
+    lis  = "Europe/Lisbon"
+    lon  = "Europe/London"
+    lux  = "Europe/Luxembourg"
+    osl  = "Europe/Oslo"
+    par  = "Europe/Paris"
+    rix  = "Europe/Riga"
+    rom  = "Europe/Rome"
+    sto  = "Europe/Stockholm"
+    tll  = "Europe/Tallinn"
+    vno  = "Europe/Vilnius"
+    waw  = "Europe/Warsaw"
+    zrh  = "Europe/Zurich"
+    akl  = "Pacific/Auckland"
+    cht  = "Pacific/Chatham"
+    fko  = "Pacific/Fakaofo"
+    hnl  = "Pacific/Honolulu"
+    nlk  = "Pacific/Norfolk"
+
+//#endregion
+
+
+//--------------------------------------------------------------------
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string  timezoneTooltip     = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
-string  atrPeriodTooltip    = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
-string  outputTooltip       = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
+// Tooltips.
 
-string  timezoneInput       = input.string  ("Exchange",
-     title = "Timezone",
-     options = [
-     "UTC",
-     "Exchange",
-     "Africa/Cairo",
-     "Africa/Johannesburg",
-     "Africa/Lagos",
-     "Africa/Nairobi",
-     "Africa/Tunis",
-     "America/Argentina/Buenos_Aires",
-     "America/Bogota",
-     "America/Caracas",
-     "America/Chicago",
-     "America/Denver",
-     "America/El_Salvador",
-     "America/Juneau",
-     "America/Lima",
-     "America/Los_Angeles",
-     "America/New_York",
-     "America/Mexico_City",
-     "America/Phoenix",
-     "America/Santiago",
-     "America/Sao_Paulo",
-     "America/Toronto",
-     "America/Vancouver",
-     "Asia/Almaty",
-     "Asia/Ashgabat",
-     "Asia/Bahrain",
-     "Asia/Bangkok",
-     "Asia/Dubai",
-     "Asia/Chongqing",
-     "Asia/Colombo",
-     "Asia/Ho_Chi_Minh",
-     "Asia/Hong_Kong",
-     "Asia/Istanbul",
-     "Asia/Jakarta",
-     "Asia/Jerusalem",
-     "Asia/Karachi",
-     "Asia/Kathmandu",
-     "Asia/Kolkata",
-     "Asia/Kuwait",
-     "Asia/Manila",
-     "Asia/Muscat",
-     "Asia/Nicosia",
-     "Asia/Qatar",
-     "Asia/Riyadh",
-     "Asia/Seoul",
-     "Asia/Shanghai",
-     "Asia/Singapore",
-     "Asia/Taipei",
-     "Asia/Tehran",
-     "Asia/Tokyo",
-     "Asia/Yangon",
-     "Atlantic/Reykjavik",
-     "Australia/Adelaide",
-     "Australia/Brisbane",
-     "Australia/Perth",
-     "Australia/Sydney",
-     "Europe/Amsterdam",
-     "Europe/Athens",
-     "Europe/Belgrade",
-     "Europe/Berlin",
-     "Europe/Bratislava",
-     "Europe/Brussels",
-     "Europe/Bucharest",
-     "Europe/Budapest",
-     "Europe/Copenhagen",
-     "Europe/Dublin",
-     "Europe/Helsinki",
-     "Europe/Madrid",
-     "Europe/Malta",
-     "Europe/Moscow",
-     "Europe/Lisbon",
-     "Europe/London",
-     "Europe/Luxembourg",
-     "Europe/Oslo",
-     "Europe/Paris",
-     "Europe/Riga",
-     "Europe/Rome",
-     "Europe/Stockholm",
-     "Europe/Tallinn",
-     "Europe/Vilnius",
-     "Europe/Warsaw",
-     "Europe/Zurich",
-     "Pacific/Auckland",
-     "Pacific/Chatham",
-     "Pacific/Fakaofo",
-     "Pacific/Honolulu",
-     "Pacific/Norfolk"
-     ],
-     tooltip = timezoneTooltip,
-     display = display.none
- )
-int     atrPeriodInput              = input.int     (20,                        title = "Daily ATR Period", minval = 1, tooltip = atrPeriodTooltip)
-string  outputInput                 = input.string  ("Median",                  title = "Ouput",            options = ["Mean", "Median"], tooltip = outputTooltip)
-color   highVolatilityColorInput    = input.color   (color.red,                 title = "High Volatility")
-color   lowVolatilityColorInput     = input.color   (color.blue,                title = "Low Volatility")
-int     startDateInput              = input.time    (timestamp("01 Jan 1975"),  title = "From")
-int     endDateInput                = input.time    (timestamp("31 Dec 2050"),  title = "To")
+string  timezoneTooltip   = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
+string  atrPeriodTooltip  = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
+string  outputTooltip     = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
+
+
+// Inputs by groups.
+
+string      group1 = "Report"
+
+Timezones   timezoneInput             = input.enum    (Timezones.exch,              title = "Timezone", group = group1, tooltip = timezoneTooltip)
+int         atrPeriodInput            = input.int     (20,                          title = "Daily ATR Period", group = group1, minval = 1, tooltip = atrPeriodTooltip)
+string      outputInput               = input.string  ("Median",                    title = "Ouput", group = group1, options = ["Mean", "Median"], tooltip = outputTooltip)
+int         startDateInput            = input.time    (timestamp("01 Jan 1975"),    title = "From", group = group1)
+int         endDateInput              = input.time    (timestamp("31 Dec 2050"),    title = "To", group = group1)
+
+string      group2 = "Style"
+
+color       highVolatilityColorInput  = input.color   (color.red,                 title = "High Volatility", group = group2)
+color       lowVolatilityColorInput   = input.color   (color.blue,                title = "Low Volatility", group = group2)
 
 //#endregion
 
@@ -175,9 +189,9 @@ var array<float> datasetArray23 = array.new_float()
 // @returns  (string) Timezone
 getTimezone() =>
     switch timezoneInput
-        "UTC"       => "UTC+0"
-        "Exchange"  => syminfo.timezone  
-        => timezoneInput
+        Timezones.utc  => "UTC+0"
+        Timezones.exch => syminfo.timezone
+        =>                str.tostring(timezoneInput)
 
 
 // @function Check if the current bar time is in the user inputs range.
