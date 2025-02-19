@@ -6,17 +6,17 @@
 
 
 //@version=6
-indicator("Time of Day - Volatility Report", format=format.percent)
+indicator("Time of Day - Volatility Report", format = format.percent)
 
 
 //--------------------------------------------------------------------
 //                             Constants
 //--------------------------------------------------------------------
 
-var DEFAULT_COLUMN_BORDERCOLOR  = chart.bg_color
-var DEFAULT_COLUMN_WIDTH        = 2
-var DEFAULT_COLUMN_GAP          = 2
-var DEFAULT_CAPTION_COLOR       = color.gray
+color   COLUMN_BORDERCOLOR  = chart.bg_color
+int     COLUMN_WIDTH        = 2
+int     COLUMN_GAP          = 2
+color   CAPTION_COLOR       = color.gray
 
 
 //--------------------------------------------------------------------
@@ -196,17 +196,17 @@ f_getData(array<float> data) =>
 // @function Draw a chart column
 // @return void
 f_drawColumn(int _index) =>
-    var box _col            = box.new(na, na, na, na, DEFAULT_COLUMN_BORDERCOLOR)
+    var box _col            = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
     var label _legend       = label.new(na, na, color=color(na), style=label.style_label_up)
     var label _value        = label.new(na, na, color=color(na), style=label.style_label_down)
-    var _gridMultiplier     = DEFAULT_COLUMN_WIDTH + DEFAULT_COLUMN_GAP 
+    var _gridMultiplier     = COLUMN_WIDTH + COLUMN_GAP 
     
     if barstate.islast
         _hasValue           = not na(array.get(a_results, _index))
         _y                  = _hasValue ? array.get(a_results, _index) : 0.0
         _x1                 = bar_index + (_index - 24) * _gridMultiplier
-        _x2                 = _x1 + DEFAULT_COLUMN_WIDTH
-        _center             = _x1 + DEFAULT_COLUMN_WIDTH / 2       
+        _x2                 = _x1 + COLUMN_WIDTH
+        _center             = _x1 + COLUMN_WIDTH / 2       
         _min                = array.min(a_results)
         _max                = array.max(a_results)
         _color              = color.from_gradient(_y, _min, _max, i_lowVolatilityColor, i_highVolatilityColor)
