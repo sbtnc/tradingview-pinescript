@@ -23,12 +23,13 @@ color   CAPTION_COLOR       = color.gray
 //                               Inputs
 //--------------------------------------------------------------------
 
-t_timezone              = "Exchange and geographical time zones may observe Daylight Saving Time (DST)."
-t_atrPeriod             = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
-t_output                = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
+string  timezoneTooltip     = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
+string  atrPeriodTooltip    = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
+string  outputTooltip       = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
 
-i_timezone              = input.string  ("Exchange", "Time Zone",
-     [
+string  timezoneInput       = input.string  ("Exchange",
+     title = "Timezone",
+     options = [
      "UTC",
      "Exchange",
      "Africa/Cairo",
@@ -117,14 +118,14 @@ i_timezone              = input.string  ("Exchange", "Time Zone",
      "Pacific/Honolulu",
      "Pacific/Norfolk"
      ],
-     t_timezone
+     tooltip = timezoneTooltip
  )
-i_atrPeriod             = input.int     (20,            "Daily ATR Period", minval=1,           tooltip=t_atrPeriod)
-i_output                = input.string  ("Median",      "Ouput",            ["Mean", "Median"], t_output)
-i_highVolatilityColor   = input.color   (color.red,     "High Volatility")
-i_lowVolatilityColor    = input.color   (color.blue,    "Low Volatility")
-startDateInput          = input.time    (timestamp("01 Jan 1975"), "From")
-endDateInput            = input.time    (timestamp("31 Dec 2050"), "To")
+int     atrPeriodInput              = input.int     (20,                        title = "Daily ATR Period", minval = 1, tooltip = atrPeriodTooltip)
+string  outputInput                 = input.string  ("Median",                  title = "Ouput",            options = ["Mean", "Median"], tooltip = outputTooltip)
+color   highVolatilityColorInput    = input.color   (color.red,                 title = "High Volatility")
+color   lowVolatilityColorInput     = input.color   (color.blue,                title = "Low Volatility")
+int     startDateInput              = input.time    (timestamp("01 Jan 1975"),  title = "From")
+int     endDateInput                = input.time    (timestamp("31 Dec 2050"),  title = "To")
 
 
 //--------------------------------------------------------------------
@@ -166,10 +167,10 @@ var a_dataset23 = array.new_float()
 // @function Get the time zone from the input settings
 // @return string
 f_getTimezone() => 
-    switch i_timezone
+    switch timezoneInput
         "UTC"       => "UTC+0"
         "Exchange"  => syminfo.timezone  
-        => i_timezone
+        => timezoneInput
 
 
 // @function Check if the current bar time is in the user-selected time range filter.
@@ -188,7 +189,7 @@ f_checkTime(int _hour) =>
 // @function Get the output data based on the input settings
 // @return float
 f_getData(array<float> data) =>
-    switch i_output
+    switch outputInput
         "Mean"                  => array.avg(data)
         "Median"                => array.median(data)
 
@@ -209,7 +210,7 @@ f_drawColumn(int _index) =>
         _center             = _x1 + COLUMN_WIDTH / 2       
         _min                = array.min(a_results)
         _max                = array.max(a_results)
-        _color              = color.from_gradient(_y, _min, _max, i_lowVolatilityColor, i_highVolatilityColor)
+        _color              = color.from_gradient(_y, _min, _max, lowVolatilityColorInput, highVolatilityColorInput)
         _samples            = array.get(a_sizes, _index)
 
 
@@ -248,7 +249,7 @@ if not (timeframe.isminutes and timeframe.multiplier == 60)
 //@variable Is true when the current bar is inside the time range filter.
 isInRange = isInTimeRange()
 
-dailyAtr        = request.security(syminfo.tickerid, "D", ta.atr(i_atrPeriod))
+dailyAtr        = request.security(syminfo.tickerid, "D", ta.atr(atrPeriodInput))
 relativeToAtr   = ta.tr * 100 / dailyAtr
 
 
