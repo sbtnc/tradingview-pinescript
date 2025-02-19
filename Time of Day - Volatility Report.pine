@@ -1,11 +1,11 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-02-23
-// Last modified: 2023-02-23
-// Version 1.0
+// Last modified: 2025-02-19
+// Version 2.0
 
 
-//@version=5
+//@version=6
 indicator("Time of Day - Volatility Report", format=format.percent)
 
 
