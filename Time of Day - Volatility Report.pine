@@ -10,7 +10,7 @@ indicator("Time of Day - Volatility Report", format = format.percent)
 
 
 //--------------------------------------------------------------------
-//                             Constants
+//#region                      Constants
 //--------------------------------------------------------------------
 
 color   COLUMN_BORDERCOLOR  = chart.bg_color
@@ -18,9 +18,11 @@ int     COLUMN_WIDTH        = 2
 int     COLUMN_GAP          = 2
 color   CAPTION_COLOR       = color.gray
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                               Inputs
+//#region                        Inputs
 //--------------------------------------------------------------------
 
 string  timezoneTooltip     = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
@@ -128,9 +130,11 @@ color   lowVolatilityColorInput     = input.color   (color.blue,                
 int     startDateInput              = input.time    (timestamp("01 Jan 1975"),  title = "From")
 int     endDateInput                = input.time    (timestamp("31 Dec 2050"),  title = "To")
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                        Variables declarations
+//#region                 Variables declarations
 //--------------------------------------------------------------------
 
 var array<float> resultArray    = array.new_float(24)
@@ -160,9 +164,11 @@ var array<float> datasetArray21 = array.new_float()
 var array<float> datasetArray22 = array.new_float()
 var array<float> datasetArray23 = array.new_float()
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                              Functions 
+//#region                   Functions & methods
 //--------------------------------------------------------------------
 
 // @function Produce the `timezone` parameter from the user input.
@@ -238,9 +244,11 @@ drawColumn(int _index) =>
             label.set_textcolor (_value, _color)
             label.set_tooltip   (_value, str.format("{0} based on {1} samples", str.tostring(_y, format.percent), _samples))
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                                Logic
+//#region                         Logic
 //--------------------------------------------------------------------
 
 if not (timeframe.isminutes and timeframe.multiplier == 60)
@@ -345,9 +353,11 @@ if barstate.islast
     sizeArray.set(22, datasetArray22.size())
     sizeArray.set(23, datasetArray23.size())
 
+//#endregion
+
 
 //--------------------------------------------------------------------
-//                          Plotting & styling
+//#region                        Visuals
 //--------------------------------------------------------------------
 
 // Draw the column chart.
@@ -376,3 +386,5 @@ drawColumn(20)
 drawColumn(21)
 drawColumn(22)
 drawColumn(23)
+
+//#endregion
