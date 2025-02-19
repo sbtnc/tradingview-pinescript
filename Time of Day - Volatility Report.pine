@@ -123,6 +123,8 @@ i_atrPeriod             = input.int     (20,            "Daily ATR Period", minv
 i_output                = input.string  ("Median",      "Ouput",            ["Mean", "Median"], t_output)
 i_highVolatilityColor   = input.color   (color.red,     "High Volatility")
 i_lowVolatilityColor    = input.color   (color.blue,    "Low Volatility")
+startDateInput          = input.time    (timestamp("01 Jan 1975"), "From")
+endDateInput            = input.time    (timestamp("31 Dec 2050"), "To")
 
 
 //--------------------------------------------------------------------
@@ -168,6 +170,12 @@ f_getTimezone() =>
         "UTC"       => "UTC+0"
         "Exchange"  => syminfo.timezone  
         => i_timezone
+
+
+// @function Check if the current bar time is in the user-selected time range filter.
+// @returns  bool
+isInTimeRange() =>
+    time >= startDateInput and time <= endDateInput
 
 
 // @function Check if current bar's time is at a given hour
@@ -237,6 +245,8 @@ f_drawColumn(int _index) =>
 if not (timeframe.isminutes and timeframe.multiplier == 60)
     runtime.error("The report need to compute data from the hourly timeframe. Please change to 60 or 1H timeframe.")
 
+//@variable Is true when the current bar is inside the time range filter.
+isInRange = isInTimeRange()
 
 dailyAtr        = request.security(syminfo.tickerid, "D", ta.atr(i_atrPeriod))
 relativeToAtr   = ta.tr * 100 / dailyAtr
@@ -244,31 +254,32 @@ relativeToAtr   = ta.tr * 100 / dailyAtr
 
 // Collect the volatility data
 
-switch
-    f_checkTime(0)  => array.push(a_dataset0,   relativeToAtr)
-    f_checkTime(1)  => array.push(a_dataset1,   relativeToAtr)
-    f_checkTime(2)  => array.push(a_dataset2,   relativeToAtr)
-    f_checkTime(3)  => array.push(a_dataset3,   relativeToAtr)
-    f_checkTime(4)  => array.push(a_dataset4,   relativeToAtr)
-    f_checkTime(5)  => array.push(a_dataset5,   relativeToAtr)
-    f_checkTime(6)  => array.push(a_dataset6,   relativeToAtr)
-    f_checkTime(7)  => array.push(a_dataset7,   relativeToAtr)
-    f_checkTime(8)  => array.push(a_dataset8,   relativeToAtr)
-    f_checkTime(9)  => array.push(a_dataset9,   relativeToAtr)
-    f_checkTime(10) => array.push(a_dataset10,  relativeToAtr)
-    f_checkTime(11) => array.push(a_dataset11,  relativeToAtr)
-    f_checkTime(12) => array.push(a_dataset12,  relativeToAtr)
-    f_checkTime(13) => array.push(a_dataset13,  relativeToAtr)
-    f_checkTime(14) => array.push(a_dataset14,  relativeToAtr)
-    f_checkTime(15) => array.push(a_dataset15,  relativeToAtr)
-    f_checkTime(16) => array.push(a_dataset16,  relativeToAtr)
-    f_checkTime(17) => array.push(a_dataset17,  relativeToAtr)
-    f_checkTime(18) => array.push(a_dataset18,  relativeToAtr)
-    f_checkTime(19) => array.push(a_dataset19,  relativeToAtr)
-    f_checkTime(20) => array.push(a_dataset20,  relativeToAtr)
-    f_checkTime(21) => array.push(a_dataset21,  relativeToAtr)
-    f_checkTime(22) => array.push(a_dataset22,  relativeToAtr)
-    f_checkTime(23) => array.push(a_dataset23,  relativeToAtr)
+if isInRange
+    switch
+        f_checkTime(0)  => array.push(a_dataset0,   relativeToAtr)
+        f_checkTime(1)  => array.push(a_dataset1,   relativeToAtr)
+        f_checkTime(2)  => array.push(a_dataset2,   relativeToAtr)
+        f_checkTime(3)  => array.push(a_dataset3,   relativeToAtr)
+        f_checkTime(4)  => array.push(a_dataset4,   relativeToAtr)
+        f_checkTime(5)  => array.push(a_dataset5,   relativeToAtr)
+        f_checkTime(6)  => array.push(a_dataset6,   relativeToAtr)
+        f_checkTime(7)  => array.push(a_dataset7,   relativeToAtr)
+        f_checkTime(8)  => array.push(a_dataset8,   relativeToAtr)
+        f_checkTime(9)  => array.push(a_dataset9,   relativeToAtr)
+        f_checkTime(10) => array.push(a_dataset10,  relativeToAtr)
+        f_checkTime(11) => array.push(a_dataset11,  relativeToAtr)
+        f_checkTime(12) => array.push(a_dataset12,  relativeToAtr)
+        f_checkTime(13) => array.push(a_dataset13,  relativeToAtr)
+        f_checkTime(14) => array.push(a_dataset14,  relativeToAtr)
+        f_checkTime(15) => array.push(a_dataset15,  relativeToAtr)
+        f_checkTime(16) => array.push(a_dataset16,  relativeToAtr)
+        f_checkTime(17) => array.push(a_dataset17,  relativeToAtr)
+        f_checkTime(18) => array.push(a_dataset18,  relativeToAtr)
+        f_checkTime(19) => array.push(a_dataset19,  relativeToAtr)
+        f_checkTime(20) => array.push(a_dataset20,  relativeToAtr)
+        f_checkTime(21) => array.push(a_dataset21,  relativeToAtr)
+        f_checkTime(22) => array.push(a_dataset22,  relativeToAtr)
+        f_checkTime(23) => array.push(a_dataset23,  relativeToAtr)
 
 
 // Compute on last bar for optimizing performances
