@@ -251,6 +251,7 @@ drawColumn(int _index) =>
 //#region                         Logic
 //--------------------------------------------------------------------
 
+// Throw an error when the script is not on a suitable timeframe.
 if not (timeframe.isminutes and timeframe.multiplier == 60)
     runtime.error("The report need to compute data from the hourly timeframe. Please change to 60 or 1H timeframe.")
 
@@ -294,11 +295,11 @@ if isInRange
         checkTime(23) => datasetArray23.push(relativeToAtr)
 
 
-// Compute on last bar for optimal performances.
+// Runs on the last bar for optimal performances.
 
 if barstate.islast
 
-    // Store the results.
+    // Compute and store the results.
 
     resultArray.set(0,  getData(datasetArray0))
     resultArray.set(1,  getData(datasetArray1))
