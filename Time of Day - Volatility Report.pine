@@ -118,7 +118,8 @@ string  timezoneInput       = input.string  ("Exchange",
      "Pacific/Honolulu",
      "Pacific/Norfolk"
      ],
-     tooltip = timezoneTooltip
+     tooltip = timezoneTooltip,
+     display = display.none
  )
 int     atrPeriodInput              = input.int     (20,                        title = "Daily ATR Period", minval = 1, tooltip = atrPeriodTooltip)
 string  outputInput                 = input.string  ("Median",                  title = "Ouput",            options = ["Mean", "Median"], tooltip = outputTooltip)
@@ -164,39 +165,39 @@ var array<float> datasetArray23 = array.new_float()
 //                              Functions 
 //--------------------------------------------------------------------
 
-// @function Get the time zone from the input settings
-// @return string
-f_getTimezone() => 
+// @function Produce the `timezone` parameter from the user input.
+// @returns  (string) Timezone
+getTimezone() =>
     switch timezoneInput
         "UTC"       => "UTC+0"
         "Exchange"  => syminfo.timezone  
         => timezoneInput
 
 
-// @function Check if the current bar time is in the user-selected time range filter.
+// @function Check if the current bar time is in the user inputs range.
 // @returns  bool
 isInTimeRange() =>
     time >= startDateInput and time <= endDateInput
 
 
-// @function Check if current bar's time is at a given hour
-// @return bool
-f_checkTime(int _hour) =>
-    var _tz = f_getTimezone()
-    hour(time, _tz) == _hour
+// @function Check if current bar time is at a given hour.
+// @returns  bool
+checkTime(int h) =>
+    var string _tz = getTimezone()
+    hour(time, _tz) == h
 
 
 // @function Get the output data based on the input settings
-// @return float
-f_getData(array<float> data) =>
+// @returns  float
+getData(array<float> data) =>
     switch outputInput
-        "Mean"                  => array.avg(data)
-        "Median"                => array.median(data)
+        "Mean"      => data.avg()
+        "Median"    => data.median()
 
 
 // @function Draw a chart column
-// @return void
-f_drawColumn(int _index) =>
+// @returns  void
+drawColumn(int _index) =>
     var box _col            = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
     var label _legend       = label.new(na, na, color=color(na), style=label.style_label_up)
     var label _value        = label.new(na, na, color=color(na), style=label.style_label_down)
@@ -226,7 +227,7 @@ f_drawColumn(int _index) =>
         label.set_xy        (_legend, _center, 0)
         label.set_text      (_legend, str.tostring(_index))
         label.set_textcolor (_legend, _color)
-        label.set_tooltip   (_legend, str.format("{0}:00 to {0}:59 ({1})", _index, f_getTimezone()))
+        label.set_tooltip   (_legend, str.format("{0}:00 to {0}:59 ({1})", _index, getTimezone()))
 
 
         // Value
@@ -242,134 +243,136 @@ f_drawColumn(int _index) =>
 //                                Logic
 //--------------------------------------------------------------------
 
-
 if not (timeframe.isminutes and timeframe.multiplier == 60)
     runtime.error("The report need to compute data from the hourly timeframe. Please change to 60 or 1H timeframe.")
 
-//@variable Is true when the current bar is inside the time range filter.
-isInRange = isInTimeRange()
+// @variable Is true when the current bar is inside the time range filter.
+bool isInRange = isInTimeRange()
 
-dailyAtr        = request.security(syminfo.tickerid, "D", ta.atr(atrPeriodInput))
-relativeToAtr   = ta.tr * 100 / dailyAtr
+// @variable The daily volatility.
+float dailyAtr = request.security("", "D", ta.atr(atrPeriodInput))
+
+// @variable The bar volatility.
+float relativeToAtr = ta.tr * 100 / dailyAtr
 
 
-// Collect the volatility data
+// Collect the volatility data.
 
 if isInRange
     switch
-        f_checkTime(0)  => array.push(datasetArray0,   relativeToAtr)
-        f_checkTime(1)  => array.push(datasetArray1,   relativeToAtr)
-        f_checkTime(2)  => array.push(datasetArray2,   relativeToAtr)
-        f_checkTime(3)  => array.push(datasetArray3,   relativeToAtr)
-        f_checkTime(4)  => array.push(datasetArray4,   relativeToAtr)
-        f_checkTime(5)  => array.push(datasetArray5,   relativeToAtr)
-        f_checkTime(6)  => array.push(datasetArray6,   relativeToAtr)
-        f_checkTime(7)  => array.push(datasetArray7,   relativeToAtr)
-        f_checkTime(8)  => array.push(datasetArray8,   relativeToAtr)
-        f_checkTime(9)  => array.push(datasetArray9,   relativeToAtr)
-        f_checkTime(10) => array.push(datasetArray10,  relativeToAtr)
-        f_checkTime(11) => array.push(datasetArray11,  relativeToAtr)
-        f_checkTime(12) => array.push(datasetArray12,  relativeToAtr)
-        f_checkTime(13) => array.push(datasetArray13,  relativeToAtr)
-        f_checkTime(14) => array.push(datasetArray14,  relativeToAtr)
-        f_checkTime(15) => array.push(datasetArray15,  relativeToAtr)
-        f_checkTime(16) => array.push(datasetArray16,  relativeToAtr)
-        f_checkTime(17) => array.push(datasetArray17,  relativeToAtr)
-        f_checkTime(18) => array.push(datasetArray18,  relativeToAtr)
-        f_checkTime(19) => array.push(datasetArray19,  relativeToAtr)
-        f_checkTime(20) => array.push(datasetArray20,  relativeToAtr)
-        f_checkTime(21) => array.push(datasetArray21,  relativeToAtr)
-        f_checkTime(22) => array.push(datasetArray22,  relativeToAtr)
-        f_checkTime(23) => array.push(datasetArray23,  relativeToAtr)
+        checkTime(0)  => datasetArray0.push(relativeToAtr)
+        checkTime(1)  => datasetArray1.push(relativeToAtr)
+        checkTime(2)  => datasetArray2.push(relativeToAtr)
+        checkTime(3)  => datasetArray3.push(relativeToAtr)
+        checkTime(4)  => datasetArray4.push(relativeToAtr)
+        checkTime(5)  => datasetArray5.push(relativeToAtr)
+        checkTime(6)  => datasetArray6.push(relativeToAtr)
+        checkTime(7)  => datasetArray7.push(relativeToAtr)
+        checkTime(8)  => datasetArray8.push(relativeToAtr)
+        checkTime(9)  => datasetArray9.push(relativeToAtr)
+        checkTime(10) => datasetArray10.push(relativeToAtr)
+        checkTime(11) => datasetArray11.push(relativeToAtr)
+        checkTime(12) => datasetArray12.push(relativeToAtr)
+        checkTime(13) => datasetArray13.push(relativeToAtr)
+        checkTime(14) => datasetArray14.push(relativeToAtr)
+        checkTime(15) => datasetArray15.push(relativeToAtr)
+        checkTime(16) => datasetArray16.push(relativeToAtr)
+        checkTime(17) => datasetArray17.push(relativeToAtr)
+        checkTime(18) => datasetArray18.push(relativeToAtr)
+        checkTime(19) => datasetArray19.push(relativeToAtr)
+        checkTime(20) => datasetArray20.push(relativeToAtr)
+        checkTime(21) => datasetArray21.push(relativeToAtr)
+        checkTime(22) => datasetArray22.push(relativeToAtr)
+        checkTime(23) => datasetArray23.push(relativeToAtr)
 
 
-// Compute on last bar for optimizing performances
+// Compute on last bar for optimal performances.
 
 if barstate.islast
 
-    // The results
+    // Store the results.
 
-    array.set(resultArray, 0,  f_getData(datasetArray0))
-    array.set(resultArray, 1,  f_getData(datasetArray1))
-    array.set(resultArray, 2,  f_getData(datasetArray2))
-    array.set(resultArray, 3,  f_getData(datasetArray3))
-    array.set(resultArray, 4,  f_getData(datasetArray4))
-    array.set(resultArray, 5,  f_getData(datasetArray5))
-    array.set(resultArray, 6,  f_getData(datasetArray6))
-    array.set(resultArray, 7,  f_getData(datasetArray7))
-    array.set(resultArray, 8,  f_getData(datasetArray8))
-    array.set(resultArray, 9,  f_getData(datasetArray9))
-    array.set(resultArray, 10, f_getData(datasetArray10))
-    array.set(resultArray, 11, f_getData(datasetArray11))
-    array.set(resultArray, 12, f_getData(datasetArray12))
-    array.set(resultArray, 13, f_getData(datasetArray13))
-    array.set(resultArray, 14, f_getData(datasetArray14))
-    array.set(resultArray, 15, f_getData(datasetArray15))
-    array.set(resultArray, 16, f_getData(datasetArray16))
-    array.set(resultArray, 17, f_getData(datasetArray17))
-    array.set(resultArray, 18, f_getData(datasetArray18))
-    array.set(resultArray, 19, f_getData(datasetArray19))
-    array.set(resultArray, 20, f_getData(datasetArray20))
-    array.set(resultArray, 21, f_getData(datasetArray21))
-    array.set(resultArray, 22, f_getData(datasetArray22))
-    array.set(resultArray, 23, f_getData(datasetArray23))
+    resultArray.set(0,  getData(datasetArray0))
+    resultArray.set(1,  getData(datasetArray1))
+    resultArray.set(2,  getData(datasetArray2))
+    resultArray.set(3,  getData(datasetArray3))
+    resultArray.set(4,  getData(datasetArray4))
+    resultArray.set(5,  getData(datasetArray5))
+    resultArray.set(6,  getData(datasetArray6))
+    resultArray.set(7,  getData(datasetArray7))
+    resultArray.set(8,  getData(datasetArray8))
+    resultArray.set(9,  getData(datasetArray9))
+    resultArray.set(10, getData(datasetArray10))
+    resultArray.set(11, getData(datasetArray11))
+    resultArray.set(12, getData(datasetArray12))
+    resultArray.set(13, getData(datasetArray13))
+    resultArray.set(14, getData(datasetArray14))
+    resultArray.set(15, getData(datasetArray15))
+    resultArray.set(16, getData(datasetArray16))
+    resultArray.set(17, getData(datasetArray17))
+    resultArray.set(18, getData(datasetArray18))
+    resultArray.set(19, getData(datasetArray19))
+    resultArray.set(20, getData(datasetArray20))
+    resultArray.set(21, getData(datasetArray21))
+    resultArray.set(22, getData(datasetArray22))
+    resultArray.set(23, getData(datasetArray23))
 
 
-    // The sample sizes
+    // Store the sample sizes.
 
-    array.set(sizeArray, 0,  array.size(datasetArray0))
-    array.set(sizeArray, 1,  array.size(datasetArray1))
-    array.set(sizeArray, 2,  array.size(datasetArray2))
-    array.set(sizeArray, 3,  array.size(datasetArray3))
-    array.set(sizeArray, 4,  array.size(datasetArray4))
-    array.set(sizeArray, 5,  array.size(datasetArray5))
-    array.set(sizeArray, 6,  array.size(datasetArray6))
-    array.set(sizeArray, 7,  array.size(datasetArray7))
-    array.set(sizeArray, 8,  array.size(datasetArray8))
-    array.set(sizeArray, 9,  array.size(datasetArray9))
-    array.set(sizeArray, 10, array.size(datasetArray10))
-    array.set(sizeArray, 11, array.size(datasetArray11))
-    array.set(sizeArray, 12, array.size(datasetArray12))
-    array.set(sizeArray, 13, array.size(datasetArray13))
-    array.set(sizeArray, 14, array.size(datasetArray14))
-    array.set(sizeArray, 15, array.size(datasetArray15))
-    array.set(sizeArray, 16, array.size(datasetArray16))
-    array.set(sizeArray, 17, array.size(datasetArray17))
-    array.set(sizeArray, 18, array.size(datasetArray18))
-    array.set(sizeArray, 19, array.size(datasetArray19))
-    array.set(sizeArray, 20, array.size(datasetArray20))
-    array.set(sizeArray, 21, array.size(datasetArray21))
-    array.set(sizeArray, 22, array.size(datasetArray22))
-    array.set(sizeArray, 23, array.size(datasetArray23))
+    sizeArray.set(0,  datasetArray0.size())
+    sizeArray.set(1,  datasetArray1.size())
+    sizeArray.set(2,  datasetArray2.size())
+    sizeArray.set(3,  datasetArray3.size())
+    sizeArray.set(4,  datasetArray4.size())
+    sizeArray.set(5,  datasetArray5.size())
+    sizeArray.set(6,  datasetArray6.size())
+    sizeArray.set(7,  datasetArray7.size())
+    sizeArray.set(8,  datasetArray8.size())
+    sizeArray.set(9,  datasetArray9.size())
+    sizeArray.set(10, datasetArray10.size())
+    sizeArray.set(11, datasetArray11.size())
+    sizeArray.set(12, datasetArray12.size())
+    sizeArray.set(13, datasetArray13.size())
+    sizeArray.set(14, datasetArray14.size())
+    sizeArray.set(15, datasetArray15.size())
+    sizeArray.set(16, datasetArray16.size())
+    sizeArray.set(17, datasetArray17.size())
+    sizeArray.set(18, datasetArray18.size())
+    sizeArray.set(19, datasetArray19.size())
+    sizeArray.set(20, datasetArray20.size())
+    sizeArray.set(21, datasetArray21.size())
+    sizeArray.set(22, datasetArray22.size())
+    sizeArray.set(23, datasetArray23.size())
 
 
 //--------------------------------------------------------------------
 //                          Plotting & styling
 //--------------------------------------------------------------------
 
-// Draw the column chart
+// Draw the column chart.
 
-f_drawColumn(0)
-f_drawColumn(1)
-f_drawColumn(2)
-f_drawColumn(3)
-f_drawColumn(4)
-f_drawColumn(5)
-f_drawColumn(6)
-f_drawColumn(7)
-f_drawColumn(8)
-f_drawColumn(9)
-f_drawColumn(10)
-f_drawColumn(11)
-f_drawColumn(12)
-f_drawColumn(13)
-f_drawColumn(14)
-f_drawColumn(15)
-f_drawColumn(16)
-f_drawColumn(17)
-f_drawColumn(18)
-f_drawColumn(19)
-f_drawColumn(20)
-f_drawColumn(21)
-f_drawColumn(22)
-f_drawColumn(23)
+drawColumn(0)
+drawColumn(1)
+drawColumn(2)
+drawColumn(3)
+drawColumn(4)
+drawColumn(5)
+drawColumn(6)
+drawColumn(7)
+drawColumn(8)
+drawColumn(9)
+drawColumn(10)
+drawColumn(11)
+drawColumn(12)
+drawColumn(13)
+drawColumn(14)
+drawColumn(15)
+drawColumn(16)
+drawColumn(17)
+drawColumn(18)
+drawColumn(19)
+drawColumn(20)
+drawColumn(21)
+drawColumn(22)
+drawColumn(23)
