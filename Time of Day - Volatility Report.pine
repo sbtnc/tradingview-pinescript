@@ -124,25 +124,26 @@ enum Timezones
 
 // Tooltips.
 
-string  timezoneTooltip   = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
-string  atrPeriodTooltip  = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
-string  outputTooltip     = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
-
+string  timezoneTooltip     = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
+string  atrPeriodTooltip    = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
+string  outputTooltip       = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
+string  noticeTitle         = "Navigate to the 1-hour timeframe (30-minute timeframe if the market starts at 𝑥:30 AM or " +
+                              "15-minute timeframe if 𝑥:15 AM) for the indicator to analyze the bars and collect the volatility."
 
 // Inputs by groups.
 
 string      group1 = "Report"
+string      group2 = "Style"
+string      group3 = "How To Use?"
 
 Timezones   timezoneInput             = input.enum    (Timezones.exch,              title = "Timezone", group = group1, tooltip = timezoneTooltip)
 int         atrPeriodInput            = input.int     (20,                          title = "Daily ATR Period", group = group1, minval = 1, tooltip = atrPeriodTooltip)
 string      outputInput               = input.string  ("Median",                    title = "Ouput", group = group1, options = ["Mean", "Median"], tooltip = outputTooltip)
 int         startDateInput            = input.time    (timestamp("01 Jan 1975"),    title = "From", group = group1)
 int         endDateInput              = input.time    (timestamp("31 Dec 2050"),    title = "To", group = group1)
-
-string      group2 = "Style"
-
-color       highVolatilityColorInput  = input.color   (color.red,                 title = "High Volatility", group = group2)
-color       lowVolatilityColorInput   = input.color   (color.blue,                title = "Low Volatility", group = group2)
+color       highVolatilityColorInput  = input.color   (color.red,                   title = "High Volatility", group = group2)
+color       lowVolatilityColorInput   = input.color   (color.blue,                  title = "Low Volatility", group = group2)
+bool        noticeInput               = input.bool    (true,                        title = noticeTitle, group = group3, confirm = true, display = display.none)
 
 //#endregion
 
