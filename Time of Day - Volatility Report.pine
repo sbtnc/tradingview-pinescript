@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-02-23
-// Last modified: 2025-02-19
+// Last modified: 2025-02-20
 // Version 2.0
 
 
@@ -13,10 +13,11 @@ indicator("Time of Day - Volatility Report", format = format.percent)
 //#region                      Constants
 //--------------------------------------------------------------------
 
-color   COLUMN_BORDERCOLOR  = chart.bg_color
-int     COLUMN_WIDTH        = 2
-int     COLUMN_GAP          = 2
-color   CAPTION_COLOR       = color.gray
+color       COLUMN_BORDERCOLOR  = chart.bg_color
+int         COLUMN_WIDTH        = 2
+int         COLUMN_GAP          = 2
+color       CAPTION_COLOR       = color.gray
+string[]    TIMEFRAMES          = array.from("15", "30", "60")
 
 //#endregion
 
@@ -115,6 +116,13 @@ enum Timezones
     hnl  = "Pacific/Honolulu"
     nlk  = "Pacific/Norfolk"
 
+
+// @type Contains the hourly data.
+type Hour
+    float high 
+    float low 
+    float prevClose
+
 //#endregion
 
 
@@ -201,6 +209,19 @@ isInTimeRange() =>
     time >= startDateInput and time <= endDateInput
 
 
+// @function Check if the hour changed between two times.
+// @returns  bool
+hourChange(int t1, int t2) =>
+    simple int hourInMs = timeframe.in_seconds("60") * 1000
+    hour(t1) != hour(t2) or math.abs(t1 - t2) > hourInMs
+    
+
+// @function Calculate the hourly true range.
+// @returns  float
+method tr(Hour h) => 
+    math.max(h.high - h.low, math.abs(h.high - h.prevClose), math.abs(h.low - h.prevClose))
+
+
 // @function Check if current bar time is at a given hour.
 // @returns  bool
 checkTime(int h) =>
@@ -267,8 +288,8 @@ drawColumn(int _index) =>
 //--------------------------------------------------------------------
 
 // Throw an error when the script is not on a suitable timeframe.
-if not (timeframe.isminutes and timeframe.multiplier == 60)
-    runtime.error("The report need to compute data from the hourly timeframe. Please change to 60 or 1H timeframe.")
+if TIMEFRAMES.indexof(timeframe.period) == -1
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframe.")
 
 // @variable Is true when the current bar is inside the time range filter.
 bool isInRange = isInTimeRange()
@@ -276,13 +297,33 @@ bool isInRange = isInTimeRange()
 // @variable The daily volatility.
 float dailyAtr = request.security("", "D", ta.atr(atrPeriodInput))
 
-// @variable The bar volatility.
-float relativeToAtr = ta.tr * 100 / dailyAtr
+// @variable The hourly data for calculating the true range.
+var Hour hourlyData = na
+
+// @variable Is true when the hour change on the current bar.
+bool isFirstBarOfHour = hourChange(time[1], time)
+
+// @variable Is true when the hour change on the next bar.
+bool isLastBarOfHour = hourChange(time, time("", bars_back = -1))
+
+
+// Track the hourly data.
+
+if isFirstBarOfHour
+    hourlyData := Hour.new(high, low, close[1])
+
+else if not na(hourlyData)
+    hourlyData.high := math.max(hourlyData.high, high)
+    hourlyData.low  := math.min(hourlyData.low, low)
 
 
 // Collect the volatility data.
 
-if isInRange
+if isInRange and isLastBarOfHour and not na(hourlyData)
+
+    // @variable The bar volatility.
+    float relativeToAtr = hourlyData.tr() / dailyAtr * 100
+
     switch
         checkTime(0)  => datasetArray0.push(relativeToAtr)
         checkTime(1)  => datasetArray1.push(relativeToAtr)
