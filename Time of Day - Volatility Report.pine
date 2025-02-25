@@ -1,12 +1,12 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2023-02-23
-// Last modified: 2025-02-20
+// Last modified: 2025-02-25
 // Version 2.0
 
 
 //@version=6
-indicator("Time of Day - Volatility Report", format = format.percent)
+indicator("Volatility - Time of Day Report", format = format.percent)
 
 
 //--------------------------------------------------------------------
@@ -144,8 +144,8 @@ string      group1 = "Report"
 string      group2 = "Style"
 string      group3 = "How To Use?"
 
-Timezones   timezoneInput             = input.enum    (Timezones.exch,              title = "Timezone", group = group1, tooltip = timezoneTooltip)
-int         atrPeriodInput            = input.int     (20,                          title = "Daily ATR Period", group = group1, minval = 1, tooltip = atrPeriodTooltip)
+Timezones   timezoneInput             = input.enum    (Timezones.exch,              title = "Timezone", group = group1, tooltip = timezoneTooltip, display = display.none)
+int         atrPeriodInput            = input.int     (20,                          title = "Daily ATR Period", group = group1, minval = 1, tooltip = atrPeriodTooltip, display = display.none)
 string      outputInput               = input.string  ("Median",                    title = "Ouput", group = group1, options = ["Mean", "Median"], tooltip = outputTooltip)
 int         startDateInput            = input.time    (timestamp("01 Jan 1975"),    title = "From", group = group1)
 int         endDateInput              = input.time    (timestamp("31 Dec 2050"),    title = "To", group = group1)
