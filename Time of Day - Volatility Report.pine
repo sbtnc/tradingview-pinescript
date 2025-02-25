@@ -133,10 +133,10 @@ type Hour
 // Tooltips.
 
 string  timezoneTooltip     = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
-string  atrPeriodTooltip    = "By default, compares the hourly volatility relatively to the average daily volatility of the past 20 days."
+string  atrPeriodTooltip    = "By default, the indicator compares the hourly volatility relative to the average daily volatility of the past 20 days."
 string  outputTooltip       = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
 string  noticeTitle         = "Navigate to the 1-hour timeframe (30-minute timeframe if the market starts at 𝑥:30 AM or " +
-                              "15-minute timeframe if 𝑥:15 AM) for the indicator to analyze the bars and collect the volatility."
+                              "15-minute timeframe if 𝑥:15 AM) for the indicator to collect the hourly volatility."
 
 // Inputs by groups.
 
@@ -161,7 +161,7 @@ bool        noticeInput               = input.bool    (true,                    
 //--------------------------------------------------------------------
 
 var array<float> resultArray    = array.new_float(24)
-var array<float> sizeArray      = array.new_float(24)
+var array<int>   sizeArray      = array.new_int(24)
 var array<float> datasetArray0  = array.new_float()
 var array<float> datasetArray1  = array.new_float()
 var array<float> datasetArray2  = array.new_float()
@@ -194,7 +194,7 @@ var array<float> datasetArray23 = array.new_float()
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Produce the `timezone` parameter from the user input.
+// @function Produces the `timezone` parameter from the user input.
 // @returns  (string) Timezone
 getTimezone() =>
     switch timezoneInput
@@ -203,82 +203,73 @@ getTimezone() =>
         =>                str.tostring(timezoneInput)
 
 
-// @function Check if the current bar time is in the user inputs range.
+// @function Checks if the current bar time is in the user inputs range.
 // @returns  bool
 isInTimeRange() =>
     time >= startDateInput and time <= endDateInput
 
 
-// @function Check if the hour changed between two times.
+// @function Checks if the hour changed between two times.
 // @returns  bool
 hourChange(int t1, int t2) =>
     simple int hourInMs = timeframe.in_seconds("60") * 1000
     hour(t1) != hour(t2) or math.abs(t1 - t2) > hourInMs
-    
-
-// @function Calculate the hourly true range.
-// @returns  float
-method tr(Hour h) => 
-    math.max(h.high - h.low, math.abs(h.high - h.prevClose), math.abs(h.low - h.prevClose))
 
 
-// @function Check if current bar time is at a given hour.
+// @function Checks if current bar time is at a given hour.
 // @returns  bool
 checkTime(int h) =>
     var string _tz = getTimezone()
     hour(time, _tz) == h
+    
+
+// @function Calculates the hourly true range.
+// @returns  (float) True range
+method tr(Hour h) => 
+    math.max(h.high - h.low, math.abs(h.high - h.prevClose), math.abs(h.low - h.prevClose))
 
 
-// @function Get the output data based on the input settings
+// @function Calculates the output data based on the input settings.
 // @returns  float
-getData(array<float> data) =>
+method calculate(array<float> dataset) =>
     switch outputInput
-        "Mean"      => data.avg()
-        "Median"    => data.median()
+        "Mean"      => dataset.avg()
+        "Median"    => dataset.median()
 
 
-// @function Draw a chart column
+// @function Draws a chart column.
 // @returns  void
-drawColumn(int _index) =>
-    var box _col            = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
-    var label _legend       = label.new(na, na, color=color(na), style=label.style_label_up)
-    var label _value        = label.new(na, na, color=color(na), style=label.style_label_down)
-    var _gridMultiplier     = COLUMN_WIDTH + COLUMN_GAP 
+drawColumn(int index) =>
+    var box   _column           = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
+    var label _legend           = label.new(na, na, color = color(na), style = label.style_label_up)
+    var label _value            = label.new(na, na, color = color(na), style = label.style_label_down)
+    const int _gridMultiplier   = COLUMN_WIDTH + COLUMN_GAP 
     
     if barstate.islast
-        _hasValue           = not na(array.get(resultArray, _index))
-        _y                  = _hasValue ? array.get(resultArray, _index) : 0.0
-        _x1                 = bar_index + (_index - 24) * _gridMultiplier
-        _x2                 = _x1 + COLUMN_WIDTH
-        _center             = _x1 + COLUMN_WIDTH / 2       
-        _min                = array.min(resultArray)
-        _max                = array.max(resultArray)
-        _color              = color.from_gradient(_y, _min, _max, lowVolatilityColorInput, highVolatilityColorInput)
-        _samples            = array.get(sizeArray, _index)
+        bool  _hasValue = not na(resultArray.get(index))
+        float _y        = _hasValue ? resultArray.get(index) : 0.0
+        int   _x1       = bar_index + (index - 24) * _gridMultiplier
+        int   _x2       = _x1 + COLUMN_WIDTH
+        int   _center   = _x1 + COLUMN_WIDTH / 2       
+        float _min      = resultArray.min()
+        float _max      = resultArray.max()
+        color _color    = color.from_gradient(_y, _min, _max, lowVolatilityColorInput, highVolatilityColorInput)
+        int   _samples  = sizeArray.get(index)
 
+        _column.set_lefttop     (_x1, _y)
+        _column.set_rightbottom (_x2, 0)
+        _column.set_bgcolor     (_color)
 
-        // Column
-
-        box.set_lefttop     (_col, _x1, _y)
-        box.set_rightbottom (_col, _x2, 0)
-        box.set_bgcolor     (_col, _color)
-
-
-        // Legend
-
-        label.set_xy        (_legend, _center, 0)
-        label.set_text      (_legend, str.tostring(_index))
-        label.set_textcolor (_legend, _color)
-        label.set_tooltip   (_legend, str.format("{0}:00 to {0}:59 ({1})", _index, getTimezone()))
-
-
-        // Value
+        _legend.set_xy          (_center, 0)
+        _legend.set_text        (str.tostring(index))
+        _legend.set_textcolor   (_color)
+        _legend.set_tooltip     (str.format("{0}:00 to {0}:59 ({1})", index, getTimezone()))
 
         if _hasValue
-            label.set_xy        (_value, _center, _y)
-            label.set_text      (_value, str.tostring(math.round(_y)))
-            label.set_textcolor (_value, _color)
-            label.set_tooltip   (_value, str.format("{0} based on {1} samples", str.tostring(_y, format.percent), _samples))
+            _value.set_xy        (_center, _y)
+            _value.set_text      (str.tostring(math.round(_y)))
+            _value.set_textcolor (_color)
+            _value.set_tooltip   (str.format("{0} based on {1} samples", str.tostring(_y, format.percent), _samples))
 
 //#endregion
 
@@ -321,7 +312,7 @@ else if not na(hourlyData)
 
 if isInRange and isLastBarOfHour and not na(hourlyData)
 
-    // @variable The bar volatility.
+    // @variable The relative volatility.
     float relativeToAtr = hourlyData.tr() / dailyAtr * 100
 
     switch
@@ -357,30 +348,30 @@ if barstate.islast
 
     // Compute and store the results.
 
-    resultArray.set(0,  getData(datasetArray0))
-    resultArray.set(1,  getData(datasetArray1))
-    resultArray.set(2,  getData(datasetArray2))
-    resultArray.set(3,  getData(datasetArray3))
-    resultArray.set(4,  getData(datasetArray4))
-    resultArray.set(5,  getData(datasetArray5))
-    resultArray.set(6,  getData(datasetArray6))
-    resultArray.set(7,  getData(datasetArray7))
-    resultArray.set(8,  getData(datasetArray8))
-    resultArray.set(9,  getData(datasetArray9))
-    resultArray.set(10, getData(datasetArray10))
-    resultArray.set(11, getData(datasetArray11))
-    resultArray.set(12, getData(datasetArray12))
-    resultArray.set(13, getData(datasetArray13))
-    resultArray.set(14, getData(datasetArray14))
-    resultArray.set(15, getData(datasetArray15))
-    resultArray.set(16, getData(datasetArray16))
-    resultArray.set(17, getData(datasetArray17))
-    resultArray.set(18, getData(datasetArray18))
-    resultArray.set(19, getData(datasetArray19))
-    resultArray.set(20, getData(datasetArray20))
-    resultArray.set(21, getData(datasetArray21))
-    resultArray.set(22, getData(datasetArray22))
-    resultArray.set(23, getData(datasetArray23))
+    resultArray.set(0,  datasetArray0.getData())
+    resultArray.set(1,  datasetArray1.getData())
+    resultArray.set(2,  datasetArray2.getData())
+    resultArray.set(3,  datasetArray3.getData())
+    resultArray.set(4,  datasetArray4.getData())
+    resultArray.set(5,  datasetArray5.getData())
+    resultArray.set(6,  datasetArray6.getData())
+    resultArray.set(7,  datasetArray7.getData())
+    resultArray.set(8,  datasetArray8.getData())
+    resultArray.set(9,  datasetArray9.getData())
+    resultArray.set(10, datasetArray10.getData())
+    resultArray.set(11, datasetArray11.getData())
+    resultArray.set(12, datasetArray12.getData())
+    resultArray.set(13, datasetArray13.getData())
+    resultArray.set(14, datasetArray14.getData())
+    resultArray.set(15, datasetArray15.getData())
+    resultArray.set(16, datasetArray16.getData())
+    resultArray.set(17, datasetArray17.getData())
+    resultArray.set(18, datasetArray18.getData())
+    resultArray.set(19, datasetArray19.getData())
+    resultArray.set(20, datasetArray20.getData())
+    resultArray.set(21, datasetArray21.getData())
+    resultArray.set(22, datasetArray22.getData())
+    resultArray.set(23, datasetArray23.getData())
 
 
     // Store the sample sizes.
