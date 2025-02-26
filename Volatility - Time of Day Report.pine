@@ -1,0 +1,438 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
+// Created: 2023-02-23
+// Last modified: 2025-02-25
+// Version 2.0
+
+
+//@version=6
+indicator("Volatility - Time of Day Report", format = format.percent)
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+color       COLUMN_BORDERCOLOR  = chart.bg_color
+int         COLUMN_WIDTH        = 2
+int         COLUMN_GAP          = 2
+color       CAPTION_COLOR       = color.gray
+string[]    TIMEFRAMES          = array.from("15", "30", "60")
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+// @enum Contains fields with the complete UI list of timezones as titles.
+enum Timezones
+    utc  = "UTC"
+    exch = "Exchange"
+    cai  = "Africa/Cairo"
+    jnb  = "Africa/Johannesburg"
+    los  = "Africa/Lagos"
+    nbo  = "Africa/Nairobi"
+    tun  = "Africa/Tunis"
+    bue  = "America/Argentina/Buenos_Aires"
+    bog  = "America/Bogota"
+    ccs  = "America/Caracas"
+    chi  = "America/Chicago"
+    den  = "America/Denver"
+    esr  = "America/El_Salvador"
+    jnu  = "America/Juneau"
+    lim  = "America/Lima"
+    lax  = "America/Los_Angeles"
+    nyc  = "America/New_York"
+    mex  = "America/Mexico_City"
+    phx  = "America/Phoenix"
+    scl  = "America/Santiago"
+    sao  = "America/Sao_Paulo"
+    yto  = "America/Toronto"
+    yvr  = "America/Vancouver"
+    ala  = "Asia/Almaty"
+    asb  = "Asia/Ashgabat"
+    bah  = "Asia/Bahrain"
+    bkk  = "Asia/Bangkok"
+    dxb  = "Asia/Dubai"
+    ckg  = "Asia/Chongqing"
+    cmb  = "Asia/Colombo"
+    sgn  = "Asia/Ho_Chi_Minh"
+    hkg  = "Asia/Hong_Kong"
+    ist  = "Asia/Istanbul"
+    jkt  = "Asia/Jakarta"
+    jrs  = "Asia/Jerusalem"
+    khi  = "Asia/Karachi"
+    ktm  = "Asia/Kathmandu"
+    ccu  = "Asia/Kolkata"
+    kwi  = "Asia/Kuwait"
+    mnl  = "Asia/Manila"
+    mct  = "Asia/Muscat"
+    nic  = "Asia/Nicosia"
+    doh  = "Asia/Qatar"
+    ruh  = "Asia/Riyadh"
+    sel  = "Asia/Seoul"
+    sha  = "Asia/Shanghai"
+    sin  = "Asia/Singapore"
+    tpe  = "Asia/Taipei"
+    thr  = "Asia/Tehran"
+    tyo  = "Asia/Tokyo"
+    rgn  = "Asia/Yangon"
+    rek  = "Atlantic/Reykjavik"
+    adl  = "Australia/Adelaide"
+    bne  = "Australia/Brisbane"
+    per  = "Australia/Perth"
+    syd  = "Australia/Sydney"
+    ams  = "Europe/Amsterdam"
+    ath  = "Europe/Athens"
+    beg  = "Europe/Belgrade"
+    ber  = "Europe/Berlin"
+    bts  = "Europe/Bratislava"
+    bru  = "Europe/Brussels"
+    buh  = "Europe/Bucharest"
+    bud  = "Europe/Budapest"
+    cph  = "Europe/Copenhagen"
+    dub  = "Europe/Dublin"
+    hel  = "Europe/Helsinki"
+    mad  = "Europe/Madrid"
+    mla  = "Europe/Malta"
+    mow  = "Europe/Moscow"
+    lis  = "Europe/Lisbon"
+    lon  = "Europe/London"
+    lux  = "Europe/Luxembourg"
+    osl  = "Europe/Oslo"
+    par  = "Europe/Paris"
+    rix  = "Europe/Riga"
+    rom  = "Europe/Rome"
+    sto  = "Europe/Stockholm"
+    tll  = "Europe/Tallinn"
+    vno  = "Europe/Vilnius"
+    waw  = "Europe/Warsaw"
+    zrh  = "Europe/Zurich"
+    akl  = "Pacific/Auckland"
+    cht  = "Pacific/Chatham"
+    fko  = "Pacific/Fakaofo"
+    hnl  = "Pacific/Honolulu"
+    nlk  = "Pacific/Norfolk"
+
+
+// @type Contains the hourly data.
+type Hour
+    float high 
+    float low 
+    float prevClose
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
+
+// Tooltips.
+
+string  timezoneTooltip     = "Exchange and geographical time zones can observe Daylight Saving Time (DST)."
+string  atrPeriodTooltip    = "By default, the indicator compares the hourly volatility relative to the average daily volatility of the past 20 days."
+string  outputTooltip       = "Mean: the average of all values in the dataset.\nMedian: the middle value in the ordered dataset."
+string  noticeTitle         = "Navigate to the 1-hour timeframe (30-minute timeframe if the market starts at 𝑥:30 AM or " +
+                              "15-minute timeframe if 𝑥:15 AM) for the indicator to collect the hourly volatility."
+
+// Inputs by groups.
+
+string      group1 = "Report"
+string      group2 = "Style"
+string      group3 = "How To Use?"
+
+Timezones   timezoneInput             = input.enum    (Timezones.exch,              title = "Timezone", group = group1, tooltip = timezoneTooltip, display = display.none)
+int         atrPeriodInput            = input.int     (20,                          title = "Daily ATR Period", group = group1, minval = 1, tooltip = atrPeriodTooltip, display = display.none)
+string      outputInput               = input.string  ("Median",                    title = "Ouput", group = group1, options = ["Mean", "Median"], tooltip = outputTooltip)
+int         startDateInput            = input.time    (timestamp("01 Jan 1975"),    title = "From", group = group1)
+int         endDateInput              = input.time    (timestamp("31 Dec 2050"),    title = "To", group = group1)
+color       highVolatilityColorInput  = input.color   (color.red,                   title = "High Volatility", group = group2)
+color       lowVolatilityColorInput   = input.color   (color.blue,                  title = "Low Volatility", group = group2)
+bool        noticeInput               = input.bool    (true,                        title = noticeTitle, group = group3, confirm = true, display = display.none)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+var array<float> resultArray    = array.new_float(24)
+var array<int>   sizeArray      = array.new_int(24)
+var array<float> datasetArray0  = array.new_float()
+var array<float> datasetArray1  = array.new_float()
+var array<float> datasetArray2  = array.new_float()
+var array<float> datasetArray3  = array.new_float()
+var array<float> datasetArray4  = array.new_float()
+var array<float> datasetArray5  = array.new_float()
+var array<float> datasetArray6  = array.new_float()
+var array<float> datasetArray7  = array.new_float()
+var array<float> datasetArray8  = array.new_float()
+var array<float> datasetArray9  = array.new_float()
+var array<float> datasetArray10 = array.new_float()
+var array<float> datasetArray11 = array.new_float()
+var array<float> datasetArray12 = array.new_float()
+var array<float> datasetArray13 = array.new_float()
+var array<float> datasetArray14 = array.new_float()
+var array<float> datasetArray15 = array.new_float()
+var array<float> datasetArray16 = array.new_float()
+var array<float> datasetArray17 = array.new_float()
+var array<float> datasetArray18 = array.new_float()
+var array<float> datasetArray19 = array.new_float()
+var array<float> datasetArray20 = array.new_float()
+var array<float> datasetArray21 = array.new_float()
+var array<float> datasetArray22 = array.new_float()
+var array<float> datasetArray23 = array.new_float()
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+// @function Produces the `timezone` parameter from the user input.
+// @returns  (string) Timezone
+getTimezone() =>
+    switch timezoneInput
+        Timezones.utc  => "UTC+0"
+        Timezones.exch => syminfo.timezone
+        =>                str.tostring(timezoneInput)
+
+
+// @function Checks if the current bar time is in the user inputs range.
+// @returns  bool
+isInTimeRange() =>
+    time >= startDateInput and time <= endDateInput
+
+
+// @function Checks if the hour changed between two times.
+// @returns  bool
+hourChange(int t1, int t2) =>
+    simple int hourInMs = timeframe.in_seconds("60") * 1000
+    hour(t1) != hour(t2) or math.abs(t1 - t2) > hourInMs
+
+
+// @function Checks if current bar time is at a given hour.
+// @returns  bool
+checkTime(int h) =>
+    var string _tz = getTimezone()
+    hour(time, _tz) == h
+    
+
+// @function Calculates the hourly true range.
+// @returns  (float) True range
+method tr(Hour h) => 
+    math.max(h.high - h.low, math.abs(h.high - h.prevClose), math.abs(h.low - h.prevClose))
+
+
+// @function Calculates the output data based on the input settings.
+// @returns  float
+method calculate(array<float> dataset) =>
+    switch outputInput
+        "Mean"      => dataset.avg()
+        "Median"    => dataset.median()
+
+
+// @function Draws a chart column.
+// @returns  void
+drawColumn(int index) =>
+    var box   _column           = box.new(na, na, na, na, COLUMN_BORDERCOLOR)
+    var label _legend           = label.new(na, na, color = color(na), style = label.style_label_up)
+    var label _value            = label.new(na, na, color = color(na), style = label.style_label_down)
+    const int _gridMultiplier   = COLUMN_WIDTH + COLUMN_GAP 
+    
+    if barstate.islast
+        bool  _hasValue = not na(resultArray.get(index))
+        float _y        = _hasValue ? resultArray.get(index) : 0.0
+        int   _x1       = bar_index + (index - 24) * _gridMultiplier
+        int   _x2       = _x1 + COLUMN_WIDTH
+        int   _center   = _x1 + COLUMN_WIDTH / 2       
+        float _min      = resultArray.min()
+        float _max      = resultArray.max()
+        color _color    = color.from_gradient(_y, _min, _max, lowVolatilityColorInput, highVolatilityColorInput)
+        int   _samples  = sizeArray.get(index)
+
+        _column.set_lefttop     (_x1, _y)
+        _column.set_rightbottom (_x2, 0)
+        _column.set_bgcolor     (_color)
+
+        _legend.set_xy          (_center, 0)
+        _legend.set_text        (str.tostring(index))
+        _legend.set_textcolor   (_color)
+        _legend.set_tooltip     (str.format("{0}:00 to {0}:59 ({1})", index, getTimezone()))
+
+        if _hasValue
+            _value.set_xy        (_center, _y)
+            _value.set_text      (str.tostring(math.round(_y)))
+            _value.set_textcolor (_color)
+            _value.set_tooltip   (str.format("{0} based on {1} samples", str.tostring(_y, format.percent), _samples))
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+// Throw an error when the script is not on a suitable timeframe.
+if TIMEFRAMES.indexof(timeframe.period) == -1
+    runtime.error("The report can not compute data on the chart's timeframe. Please navigate to the 1-hour, 30-minute, or 15-minute timeframe.")
+
+// @variable Is true when the current bar is inside the time range filter.
+bool isInRange = isInTimeRange()
+
+// @variable The daily volatility.
+float dailyAtr = request.security("", "D", ta.atr(atrPeriodInput))
+
+// @variable The hourly data for calculating the true range.
+var Hour hourlyData = na
+
+// @variable Is true when the hour change on the current bar.
+bool isFirstBarOfHour = hourChange(time[1], time)
+
+// @variable Is true when the hour change on the next bar.
+bool isLastBarOfHour = hourChange(time, time("", bars_back = -1))
+
+
+// Track the hourly data.
+
+if isFirstBarOfHour
+    hourlyData := Hour.new(high, low, close[1])
+
+else if not na(hourlyData)
+    hourlyData.high := math.max(hourlyData.high, high)
+    hourlyData.low  := math.min(hourlyData.low, low)
+
+
+// Collect the volatility data.
+
+if isInRange and isLastBarOfHour and not na(hourlyData)
+
+    // @variable The relative volatility.
+    float relativeToAtr = hourlyData.tr() / dailyAtr * 100
+
+    switch
+        checkTime(0)  => datasetArray0.push(relativeToAtr)
+        checkTime(1)  => datasetArray1.push(relativeToAtr)
+        checkTime(2)  => datasetArray2.push(relativeToAtr)
+        checkTime(3)  => datasetArray3.push(relativeToAtr)
+        checkTime(4)  => datasetArray4.push(relativeToAtr)
+        checkTime(5)  => datasetArray5.push(relativeToAtr)
+        checkTime(6)  => datasetArray6.push(relativeToAtr)
+        checkTime(7)  => datasetArray7.push(relativeToAtr)
+        checkTime(8)  => datasetArray8.push(relativeToAtr)
+        checkTime(9)  => datasetArray9.push(relativeToAtr)
+        checkTime(10) => datasetArray10.push(relativeToAtr)
+        checkTime(11) => datasetArray11.push(relativeToAtr)
+        checkTime(12) => datasetArray12.push(relativeToAtr)
+        checkTime(13) => datasetArray13.push(relativeToAtr)
+        checkTime(14) => datasetArray14.push(relativeToAtr)
+        checkTime(15) => datasetArray15.push(relativeToAtr)
+        checkTime(16) => datasetArray16.push(relativeToAtr)
+        checkTime(17) => datasetArray17.push(relativeToAtr)
+        checkTime(18) => datasetArray18.push(relativeToAtr)
+        checkTime(19) => datasetArray19.push(relativeToAtr)
+        checkTime(20) => datasetArray20.push(relativeToAtr)
+        checkTime(21) => datasetArray21.push(relativeToAtr)
+        checkTime(22) => datasetArray22.push(relativeToAtr)
+        checkTime(23) => datasetArray23.push(relativeToAtr)
+
+
+// Runs on the last bar for optimal performances.
+
+if barstate.islast
+
+    // Compute and store the results.
+
+    resultArray.set(0,  datasetArray0.calculate())
+    resultArray.set(1,  datasetArray1.calculate())
+    resultArray.set(2,  datasetArray2.calculate())
+    resultArray.set(3,  datasetArray3.calculate())
+    resultArray.set(4,  datasetArray4.calculate())
+    resultArray.set(5,  datasetArray5.calculate())
+    resultArray.set(6,  datasetArray6.calculate())
+    resultArray.set(7,  datasetArray7.calculate())
+    resultArray.set(8,  datasetArray8.calculate())
+    resultArray.set(9,  datasetArray9.calculate())
+    resultArray.set(10, datasetArray10.calculate())
+    resultArray.set(11, datasetArray11.calculate())
+    resultArray.set(12, datasetArray12.calculate())
+    resultArray.set(13, datasetArray13.calculate())
+    resultArray.set(14, datasetArray14.calculate())
+    resultArray.set(15, datasetArray15.calculate())
+    resultArray.set(16, datasetArray16.calculate())
+    resultArray.set(17, datasetArray17.calculate())
+    resultArray.set(18, datasetArray18.calculate())
+    resultArray.set(19, datasetArray19.calculate())
+    resultArray.set(20, datasetArray20.calculate())
+    resultArray.set(21, datasetArray21.calculate())
+    resultArray.set(22, datasetArray22.calculate())
+    resultArray.set(23, datasetArray23.calculate())
+
+
+    // Store the sample sizes.
+
+    sizeArray.set(0,  datasetArray0.size())
+    sizeArray.set(1,  datasetArray1.size())
+    sizeArray.set(2,  datasetArray2.size())
+    sizeArray.set(3,  datasetArray3.size())
+    sizeArray.set(4,  datasetArray4.size())
+    sizeArray.set(5,  datasetArray5.size())
+    sizeArray.set(6,  datasetArray6.size())
+    sizeArray.set(7,  datasetArray7.size())
+    sizeArray.set(8,  datasetArray8.size())
+    sizeArray.set(9,  datasetArray9.size())
+    sizeArray.set(10, datasetArray10.size())
+    sizeArray.set(11, datasetArray11.size())
+    sizeArray.set(12, datasetArray12.size())
+    sizeArray.set(13, datasetArray13.size())
+    sizeArray.set(14, datasetArray14.size())
+    sizeArray.set(15, datasetArray15.size())
+    sizeArray.set(16, datasetArray16.size())
+    sizeArray.set(17, datasetArray17.size())
+    sizeArray.set(18, datasetArray18.size())
+    sizeArray.set(19, datasetArray19.size())
+    sizeArray.set(20, datasetArray20.size())
+    sizeArray.set(21, datasetArray21.size())
+    sizeArray.set(22, datasetArray22.size())
+    sizeArray.set(23, datasetArray23.size())
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+// Draw the column chart.
+
+drawColumn(0)
+drawColumn(1)
+drawColumn(2)
+drawColumn(3)
+drawColumn(4)
+drawColumn(5)
+drawColumn(6)
+drawColumn(7)
+drawColumn(8)
+drawColumn(9)
+drawColumn(10)
+drawColumn(11)
+drawColumn(12)
+drawColumn(13)
+drawColumn(14)
+drawColumn(15)
+drawColumn(16)
+drawColumn(17)
+drawColumn(18)
+drawColumn(19)
+drawColumn(20)
+drawColumn(21)
+drawColumn(22)
+drawColumn(23)
+
+//#endregion
