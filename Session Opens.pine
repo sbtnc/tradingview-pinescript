@@ -43,10 +43,13 @@ string sessionInput1 = input.session("0800-1200", title = "")
 //--------------------------------------------------------------------
 
 int time1 = time("D", sessionInput1)
+bool isStart1 = ta.change(nz(time1)) > 0
 
-bool openChange1 = ta.change(nz(time1)) > 0
 
-bgcolor(openChange1 ? color.yellow : color(na))
+array<bool> isStartArray1 = request.security_lower_tf("", "15", isStart1)
+bool isIntrabarStart1 = isStartArray1.some()
+
+bgcolor(isIntrabarStart1 ? color.yellow : color(na))
 
 //#endregion
 
