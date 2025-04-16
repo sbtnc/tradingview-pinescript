@@ -1,0 +1,67 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © sbtnc
+// Created: 2025-04-16
+// Last modified: 2025-04-16
+// version 1.0
+
+// @version=6
+indicator("Intraday Opens", "Opens", overlay = true, max_lines_count = 500, dynamic_requests = true)
+
+
+//--------------------------------------------------------------------
+//#region                      Constants
+//--------------------------------------------------------------------
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Inputs
+//--------------------------------------------------------------------
+
+string sessionInput1 = input.session("0800-1200", title = "")
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                   Functions & methods
+//--------------------------------------------------------------------
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+int time1 = time("D", sessionInput1)
+
+bool openChange1 = ta.change(nz(time1)) > 0
+
+bgcolor(openChange1 ? color.yellow : color(na))
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                         Logic
+//--------------------------------------------------------------------
+
+//#endregion
+
+
+//--------------------------------------------------------------------
+//#region                        Visuals
+//--------------------------------------------------------------------
+
+//#endregion
+
+plot(time1, "time1", editable = false, display = display.status_line)
