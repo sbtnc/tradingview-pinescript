@@ -150,15 +150,16 @@ getOpen(string session) =>
 bool change1 = if open1.display
     string targetTimeframe = "15"
 
-    string timeframe = timeframe.in_seconds() < timeframe.in_seconds(targetTimeframe) ? "" : targetTimeframe
+    // @variable The lower timeframe on a higher chart context, otherwise the chart context timeframe.
+    string _timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimeframe) ? targetTimeframe : ""
 
-    [startArray1, openArray1] = request.security_lower_tf("", timeframe, getOpen(sessionInput1))
+    [_sessionChangeIntrabarArray, _openIntrabarArray] = request.security_lower_tf("", _timeframe, getOpen(sessionInput1))
 
-    int changeIndex = startArray1.lastindexof(true)
+    int changeIndex = _sessionChangeIntrabarArray.lastindexof(true)
 
     bool changed = changeIndex != -1
 
-    open1.price := changed ? openArray1.get(changeIndex) : na
+    open1.price := changed ? _openIntrabarArray.get(changeIndex) : na
     
     changed
 
