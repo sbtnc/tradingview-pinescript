@@ -39,8 +39,9 @@ type Open
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string labelTextInput1  = input.string  ("New York",    title = "", inline = "Session #1")
-string sessionInput1    = input.session ("0800-1200",   title = "", inline = "Session #1")
+bool    enableLevel1    = input.bool    (true,          title = "", inline = "Session #1")
+string  labelTextInput1 = input.string  ("New York",    title = "", inline = "Session #1")
+string  sessionInput1   = input.session ("0800-1200",   title = "", inline = "Session #1")
 
 rightOffsetInput = 20
 
@@ -137,7 +138,7 @@ float open1 = changeIndex != -1 ? openArray1.get(changeIndex) : na
 bgcolor(not na(open1) ? color.yellow : color(na))
 
 // @variable The `Open` UDTs. 
-Open Open1 = Open.new(price = open1, name = labelTextInput1, display = true)
+Open Open1 = Open.new(price = open1, name = labelTextInput1, display = enableLevel1)
 
 //#endregion
 
@@ -153,13 +154,14 @@ Open Open1 = Open.new(price = open1, name = labelTextInput1, display = true)
 //#region                        Visuals
 //--------------------------------------------------------------------
 
-draw(
-     start1,
-     Open1,
-     10,
-     color.green,
-     0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
-     )
+if Open1.display
+    draw(
+         start1,
+         Open1,
+         10,
+         color.green,
+         0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+         )
 
 
 //#endregion
