@@ -12,6 +12,7 @@ indicator("Intraday Opens", "Opens", overlay = true, max_lines_count = 500, dyna
 //#region                      Constants
 //--------------------------------------------------------------------
 
+color   COLOR_1         = color.green
 string  LABEL_SIZE      = size.small
 string  LABEL_STYLE     = label.style_none
 string  LINE_STYLE      = line.style_solid
@@ -30,6 +31,7 @@ type Open
     int     barIndex
     float   price 
     string  name
+    color   color
     bool    display
 
 //#endregion
@@ -39,11 +41,17 @@ type Open
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-bool    enableLevel1    = input.bool    (true,          title = "", inline = "Session #1")
-string  labelTextInput1 = input.string  ("New York",    title = "", inline = "Session #1")
-string  sessionInput1   = input.session ("0800-1200",   title = "", inline = "Session #1")
+string  group1              = "Opens"
 
-rightOffsetInput = 20
+bool    enableLevel1        = input.bool    (true,          title = "", inline = "Session #1", group = group1)
+string  labelTextInput1     = input.string  ("New York",    title = "", inline = "Session #1", group = group1)
+string  sessionInput1       = input.session ("0800-1200",   title = "", inline = "Session #1", group = group1)
+color   openColorInput1     = input.color   (COLOR_1,       title = "", inline = "Session #1", group = group1)
+
+string  group2              = "Styling" 
+string  rightOffsetTooltip  = "Extend the current opens to the right of the last bar."
+
+int     rightOffsetInput    = input.int     (20,            title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1, display = display.none)
 
 //#endregion
 
@@ -60,7 +68,7 @@ getRightBarIndex(int padding = 0) =>
 
 // @function Create and update the open level. An open is composed of a line and a label.
 // @returns  void
-draw(bool change, Open openData, int lookback, color color, int padding) =>
+draw(bool change, Open openData, int lookback, int padding) =>
     // @variable The reference of the last open line.
     var line _line = na
 
@@ -70,7 +78,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
          y         = na,
          text      = openData.name,
          style     = LABEL_STYLE,
-         textcolor = color,
+         textcolor = openData.color,
          size      = LABEL_SIZE
          )
 
@@ -96,7 +104,7 @@ draw(bool change, Open openData, int lookback, color color, int padding) =>
              x2    = _x2,
              y1    = openData.price,
              y2    = openData.price,
-             color = color,
+             color = openData.color,
              style = LINE_STYLE,
              width = LINE_WIDTH
              )
@@ -135,10 +143,10 @@ int changeIndex = startArray1.lastindexof(true)
 
 float open1 = changeIndex != -1 ? openArray1.get(changeIndex) : na
 
-bgcolor(not na(open1) ? color.yellow : color(na))
+bgcolor(not na(open1) ? openColorInput1 : color(na))
 
 // @variable The `Open` UDTs. 
-Open Open1 = Open.new(price = open1, name = labelTextInput1, display = enableLevel1)
+Open Open1 = Open.new(price = open1, name = labelTextInput1, color = openColorInput1, display = enableLevel1)
 
 //#endregion
 
@@ -159,7 +167,6 @@ if Open1.display
          start1,
          Open1,
          10,
-         color.green,
          0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
          )
 
@@ -168,7 +175,7 @@ displayControls = display.status_line + display.price_scale + display.data_windo
 plot(
      series   = Open1.price,
      title    = "#1",
-     color    = color.green,
+     color    = Open1.color,
      editable = false,
      display  = enableLevel1 ? displayControls : display.none
      )
