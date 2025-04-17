@@ -163,6 +163,15 @@ if Open1.display
          0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
          )
 
+displayControls = display.status_line + display.price_scale + display.data_window
+
+plot(
+     series   = Open1.price,
+     title    = "#1",
+     color    = color.green,
+     editable = false,
+     display  = enableLevel1 ? displayControls : display.none
+     )
 
 //#endregion
 
