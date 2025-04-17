@@ -147,8 +147,12 @@ getOpen(string session) =>
     [_change, open]
 
 
-bool start1 = if open1.display
-    [startArray1, openArray1] = request.security_lower_tf("", "15", getOpen(sessionInput1))
+bool change1 = if open1.display
+    string targetTimeframe = "15"
+
+    string timeframe = timeframe.in_seconds() < timeframe.in_seconds(targetTimeframe) ? "" : targetTimeframe
+
+    [startArray1, openArray1] = request.security_lower_tf("", timeframe, getOpen(sessionInput1))
 
     int changeIndex = startArray1.lastindexof(true)
 
@@ -167,7 +171,7 @@ bool start1 = if open1.display
 
 if open1.display
     draw(
-         start1,
+         change1,
          open1,
          10,
          0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
@@ -190,7 +194,7 @@ plot(
 //#region                         Debug
 //--------------------------------------------------------------------
 
-bgcolor(start1 ? color.new(openColorInput1, 80) : color(na))
+bgcolor(change1 ? color.new(openColorInput1, 80) : color(na))
 //plot(changeIndex, "changeIndex", editable = false, display = display.status_line)
 //plot(open1, "time1", editable = false, display = display.status_line)
 
