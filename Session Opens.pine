@@ -12,12 +12,25 @@ indicator("Intraday Opens", "Opens", overlay = true, max_lines_count = 500, dyna
 //#region                      Constants
 //--------------------------------------------------------------------
 
+string  LABEL_SIZE      = size.small
+string  LABEL_STYLE     = label.style_none
+string  LINE_STYLE      = line.style_solid
+int     LINE_WIDTH      = 1
+int     OFFSET_PADDING  = 4
+
 //#endregion
 
 
 //--------------------------------------------------------------------
 //#region                         Types 
 //--------------------------------------------------------------------
+
+// @type Contains the open's data.
+type Open 
+    int     barIndex
+    float   price 
+    string  name
+    bool    display
 
 //#endregion
 
@@ -26,7 +39,10 @@ indicator("Intraday Opens", "Opens", overlay = true, max_lines_count = 500, dyna
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string sessionInput1 = input.session("0800-1200", title = "")
+string labelTextInput1  = input.string  ("New York",    title = "", inline = "Session #1")
+string sessionInput1    = input.session ("0800-1200",   title = "", inline = "Session #1")
+
+rightOffsetInput = 20
 
 //#endregion
 
@@ -35,6 +51,68 @@ string sessionInput1 = input.session("0800-1200", title = "")
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
+// @function Calculate the right position of the open level.
+// @returns  (int) The bar index. 
+getRightBarIndex(int padding = 0) =>
+    bar_index + rightOffsetInput + padding * OFFSET_PADDING
+
+
+// @function Create and update the open level. An open is composed of a line and a label.
+// @returns  void
+draw(bool change, Open openData, int lookback, color color, int padding) =>
+    // @variable The reference of the last open line.
+    var line _line = na
+
+    // @variable The reference of the last open label.
+    var label _label = label.new(
+         x         = na,
+         y         = na,
+         text      = openData.name,
+         style     = LABEL_STYLE,
+         textcolor = color,
+         size      = LABEL_SIZE
+         )
+
+    // @variable The collection of historical open lines.
+    var array<line> _lineArray  = array.new_line()
+
+
+    // Update the old open and create the new open.
+
+    if change
+        int _x2 = getRightBarIndex()
+
+        // Anchor the previous open end position.
+        _line.set_x2(bar_index -1)//openData.barIndex -1)
+
+        // Update the last open label position and tooltip.
+        _label.set_xy(_x2, openData.price)
+        _label.set_tooltip(str.tostring(openData.price, format.mintick))
+
+        // Create and store the last open line.
+        _line := line.new(
+             x1    = bar_index, //openData.barIndex,
+             x2    = _x2,
+             y1    = openData.price,
+             y2    = openData.price,
+             color = color,
+             style = LINE_STYLE,
+             width = LINE_WIDTH
+             )
+        array.push(_lineArray, _line)
+
+        // Trim the exceeding number of drawings.
+        if _lineArray.size() > lookback
+            line.delete(_lineArray.shift())
+
+
+    // Update the right position of the line.
+
+    if barstate.islast
+        int _x2 = getRightBarIndex(padding)
+        _line.set_x2(_x2)
+        _label.set_x(_x2)
+
 //#endregion
 
 
@@ -42,14 +120,24 @@ string sessionInput1 = input.session("0800-1200", title = "")
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-int time1 = time("D", sessionInput1)
-bool isStart1 = ta.change(nz(time1)) > 0
+getOpen() =>
+    int time1 = time("D", sessionInput1)
+    bool isStart1 = ta.change(nz(time1)) > 0
+    [isStart1, open]
 
 
-array<bool> isStartArray1 = request.security_lower_tf("", "15", isStart1)
-bool isIntrabarStart1 = isStartArray1.some()
+[startArray1, openArray1] = request.security_lower_tf("", "15", getOpen())
 
-bgcolor(isIntrabarStart1 ? color.yellow : color(na))
+bool start1 = startArray1.some()
+
+int changeIndex = startArray1.lastindexof(true)
+
+float open1 = changeIndex != -1 ? openArray1.get(changeIndex) : na
+
+bgcolor(not na(open1) ? color.yellow : color(na))
+
+// @variable The `Open` UDTs. 
+Open Open1 = Open.new(price = open1, name = labelTextInput1, display = true)
 
 //#endregion
 
@@ -65,6 +153,16 @@ bgcolor(isIntrabarStart1 ? color.yellow : color(na))
 //#region                        Visuals
 //--------------------------------------------------------------------
 
+draw(
+     start1,
+     Open1,
+     10,
+     color.green,
+     0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+     )
+
+
 //#endregion
 
-plot(time1, "time1", editable = false, display = display.status_line)
+//plot(changeIndex, "changeIndex", editable = false, display = display.status_line)
+//plot(Open1, "time1", editable = false, display = display.status_line)
