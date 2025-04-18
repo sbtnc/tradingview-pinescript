@@ -34,6 +34,97 @@ type Open
     color   color
     bool    display
 
+
+// @enum Contains fields with the complete UI list of timezones as titles.
+enum Timezones
+    utc  = "UTC"
+    exch = "Exchange"
+    cai  = "Africa/Cairo"
+    jnb  = "Africa/Johannesburg"
+    los  = "Africa/Lagos"
+    nbo  = "Africa/Nairobi"
+    tun  = "Africa/Tunis"
+    bue  = "America/Argentina/Buenos_Aires"
+    bog  = "America/Bogota"
+    ccs  = "America/Caracas"
+    chi  = "America/Chicago"
+    den  = "America/Denver"
+    esr  = "America/El_Salvador"
+    jnu  = "America/Juneau"
+    lim  = "America/Lima"
+    lax  = "America/Los_Angeles"
+    nyc  = "America/New_York"
+    mex  = "America/Mexico_City"
+    phx  = "America/Phoenix"
+    scl  = "America/Santiago"
+    sao  = "America/Sao_Paulo"
+    yto  = "America/Toronto"
+    yvr  = "America/Vancouver"
+    ala  = "Asia/Almaty"
+    asb  = "Asia/Ashgabat"
+    bah  = "Asia/Bahrain"
+    bkk  = "Asia/Bangkok"
+    dxb  = "Asia/Dubai"
+    ckg  = "Asia/Chongqing"
+    cmb  = "Asia/Colombo"
+    sgn  = "Asia/Ho_Chi_Minh"
+    hkg  = "Asia/Hong_Kong"
+    ist  = "Asia/Istanbul"
+    jkt  = "Asia/Jakarta"
+    jrs  = "Asia/Jerusalem"
+    khi  = "Asia/Karachi"
+    ktm  = "Asia/Kathmandu"
+    ccu  = "Asia/Kolkata"
+    kwi  = "Asia/Kuwait"
+    mnl  = "Asia/Manila"
+    mct  = "Asia/Muscat"
+    nic  = "Asia/Nicosia"
+    doh  = "Asia/Qatar"
+    ruh  = "Asia/Riyadh"
+    sel  = "Asia/Seoul"
+    sha  = "Asia/Shanghai"
+    sin  = "Asia/Singapore"
+    tpe  = "Asia/Taipei"
+    thr  = "Asia/Tehran"
+    tyo  = "Asia/Tokyo"
+    rgn  = "Asia/Yangon"
+    rek  = "Atlantic/Reykjavik"
+    adl  = "Australia/Adelaide"
+    bne  = "Australia/Brisbane"
+    per  = "Australia/Perth"
+    syd  = "Australia/Sydney"
+    ams  = "Europe/Amsterdam"
+    ath  = "Europe/Athens"
+    beg  = "Europe/Belgrade"
+    ber  = "Europe/Berlin"
+    bts  = "Europe/Bratislava"
+    bru  = "Europe/Brussels"
+    buh  = "Europe/Bucharest"
+    bud  = "Europe/Budapest"
+    cph  = "Europe/Copenhagen"
+    dub  = "Europe/Dublin"
+    hel  = "Europe/Helsinki"
+    mad  = "Europe/Madrid"
+    mla  = "Europe/Malta"
+    mow  = "Europe/Moscow"
+    lis  = "Europe/Lisbon"
+    lon  = "Europe/London"
+    lux  = "Europe/Luxembourg"
+    osl  = "Europe/Oslo"
+    par  = "Europe/Paris"
+    rix  = "Europe/Riga"
+    rom  = "Europe/Rome"
+    sto  = "Europe/Stockholm"
+    tll  = "Europe/Tallinn"
+    vno  = "Europe/Vilnius"
+    waw  = "Europe/Warsaw"
+    zrh  = "Europe/Zurich"
+    akl  = "Pacific/Auckland"
+    cht  = "Pacific/Chatham"
+    fko  = "Pacific/Fakaofo"
+    hnl  = "Pacific/Honolulu"
+    nlk  = "Pacific/Norfolk"
+
 //#endregion
 
 
@@ -41,17 +132,18 @@ type Open
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-string  group1              = "Opens"
+string      group1              = "Opens"
 
-bool    enableLevel1        = input.bool    (true,          title = "", inline = "Session #1", group = group1)
-string  labelTextInput1     = input.string  ("New York",    title = "", inline = "Session #1", group = group1)
-string  sessionInput1       = input.session ("0800-1200",   title = "", inline = "Session #1", group = group1)
-color   openColorInput1     = input.color   (COLOR_1,       title = "", inline = "Session #1", group = group1)
+bool        enableLevel1        = input.bool    (true,          title = "", inline = "Session #1", group = group1)
+string      labelTextInput1     = input.string  ("New York",    title = "", inline = "Session #1", group = group1)
+string      sessionInput1       = input.session ("0800-1200",   title = "", inline = "Session #1", group = group1)
+Timezones   timezoneInput1      = input.enum    (Timezones.nyc, title = "", inline = "Session #1", group = group1, display = display.none)
+color       openColorInput1     = input.color   (COLOR_1,       title = "", inline = "Session #1", group = group1)
 
-string  group2              = "Styling" 
-string  rightOffsetTooltip  = "Extend the current opens to the right of the last bar."
+string      group2              = "Styling" 
+string      rightOffsetTooltip  = "Extend the current opens to the right of the last bar."
 
-int     rightOffsetInput    = input.int     (20,            title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1, display = display.none)
+int         rightOffsetInput    = input.int     (20,            title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1, display = display.none)
 
 //#endregion
 
@@ -125,9 +217,9 @@ draw(bool change, Open openData, int lookback, int padding) =>
 
 // @function Update the `Open` UDT price.
 // @returns  (bool) True on update.
-method update(Open this, string timeframe, string session) =>
+method update(Open this, string timeframe, string session, string timezone) =>
     // @variable The time point in the session.  
-    int _time = time("D", session)
+    int _time = time("D", session, timezone = timezone)
 
     // @variable True if the session starts.
     bool _sessionChange = ta.change(nz(_time)) > 0
@@ -169,7 +261,7 @@ string _timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimefram
 //--------------------------------------------------------------------
 
 bool change1 = if open1.display
-    open1.update(_timeframe, sessionInput1)  
+    open1.update(_timeframe, sessionInput1, str.tostring(timezoneInput1))  
 
 //#endregion
 
@@ -203,7 +295,7 @@ plot(
 //#region                         Debug
 //--------------------------------------------------------------------
 
-bgcolor(change1 ? color.new(openColorInput1, 80) : color(na))
+//bgcolor(change1 ? color.new(openColorInput1, 80) : color(na))
 //plot(changeIndex, "changeIndex", editable = false, display = display.status_line)
 //plot(open1, "time1", editable = false, display = display.status_line)
 
