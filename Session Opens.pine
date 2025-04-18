@@ -122,6 +122,30 @@ draw(bool change, Open openData, int lookback, int padding) =>
         _line.set_x2(_x2)
         _label.set_x(_x2)
 
+
+// @function Update the `Open` UDT price.
+// @returns  (bool) True on update.
+method update(Open this, string timeframe, string session) =>
+    // @variable The time point in the session.  
+    int _time = time("D", session)
+
+    // @variable True if the session starts.
+    bool _sessionChange = ta.change(nz(_time)) > 0
+
+    // Get the session change and opening price within the chart bar.
+    [_sessionChangeIntrabarArray, _openIntrabarArray] = request.security_lower_tf("", timeframe, [_sessionChange, open])
+
+    // @variable The lower-timeframe bar index of the last session change occurence.
+    int changeIndex = _sessionChangeIntrabarArray.lastindexof(true)
+
+    // @variable True if the session change was found.
+    bool hasChanged = changeIndex != -1
+
+    // Update the open's price.
+    this.price := hasChanged ? _openIntrabarArray.get(changeIndex) : this.price
+
+    hasChanged
+
 //#endregion
 
 
@@ -132,6 +156,11 @@ draw(bool change, Open openData, int lookback, int padding) =>
 // @variable The `Open` UDTs. 
 var Open open1 = Open.new(name = labelTextInput1, color = openColorInput1, display = enableLevel1)
 
+string targetTimeframe = "15"
+
+// @variable The lower timeframe on a higher chart context, otherwise the chart context timeframe.
+string _timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimeframe) ? targetTimeframe : ""
+
 //#endregion
 
 
@@ -139,29 +168,8 @@ var Open open1 = Open.new(name = labelTextInput1, color = openColorInput1, displ
 //#region                         Logic
 //--------------------------------------------------------------------
 
-// @function
-// @returns 
-getOpen(string session) =>
-    int  _time      = time("D", session)
-    bool _change    = ta.change(nz(_time)) > 0
-    [_change, open]
-
-
 bool change1 = if open1.display
-    string targetTimeframe = "15"
-
-    // @variable The lower timeframe on a higher chart context, otherwise the chart context timeframe.
-    string _timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimeframe) ? targetTimeframe : ""
-
-    [_sessionChangeIntrabarArray, _openIntrabarArray] = request.security_lower_tf("", _timeframe, getOpen(sessionInput1))
-
-    int changeIndex = _sessionChangeIntrabarArray.lastindexof(true)
-
-    bool changed = changeIndex != -1
-
-    open1.price := changed ? _openIntrabarArray.get(changeIndex) : na
-    
-    changed
+    open1.update(_timeframe, sessionInput1)  
 
 //#endregion
 
