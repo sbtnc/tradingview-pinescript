@@ -147,22 +147,22 @@ enum LineStyles
 string      group1              = "Opens"
 
 bool        enableLevel1        = input.bool    (true,          title = "", inline = "Session #1", group = group1)
-string      labelTextInput1     = input.string  ("NY",          title = "", inline = "Session #1", group = group1)
+string      nameInput1          = input.string  ("NY",          title = "", inline = "Session #1", group = group1)
 string      sessionInput1       = input.session ("0800-1200",   title = "", inline = "Session #1", group = group1)
 Timezones   timezoneInput1      = input.enum    (Timezones.nyc, title = "", inline = "Session #1", group = group1)
 
 bool        enableLevel2        = input.bool    (true,          title = "", inline = "Session #2", group = group1)
-string      labelTextInput2     = input.string  ("London",      title = "", inline = "Session #2", group = group1)
+string      nameInput2          = input.string  ("London",      title = "", inline = "Session #2", group = group1)
 string      sessionInput2       = input.session ("0800-1200",   title = "", inline = "Session #2", group = group1)
 Timezones   timezoneInput2      = input.enum    (Timezones.lon, title = "", inline = "Session #2", group = group1)
 
 bool        enableLevel3        = input.bool    (true,          title = "", inline = "Session #3", group = group1)
-string      labelTextInput3     = input.string  ("Asia",        title = "", inline = "Session #3", group = group1)
+string      nameInput3          = input.string  ("Asia",        title = "", inline = "Session #3", group = group1)
 string      sessionInput3       = input.session ("0800-1200",   title = "", inline = "Session #3", group = group1)
 Timezones   timezoneInput3      = input.enum    (Timezones.tyo, title = "", inline = "Session #3", group = group1)
 
 bool        enableLevel4        = input.bool    (true,          title = "", inline = "Session #4", group = group1)
-string      labelTextInput4     = input.string  ("Midnight",    title = "", inline = "Session #4", group = group1)
+string      nameInput4          = input.string  ("Midnight",    title = "", inline = "Session #4", group = group1)
 string      sessionInput4       = input.session ("0000-0100",   title = "", inline = "Session #4", group = group1)
 Timezones   timezoneInput4      = input.enum    (Timezones.nyc, title = "", inline = "Session #4", group = group1)
 
@@ -205,6 +205,12 @@ method param(simple LineStyles input) =>
         LineStyles.dotted => line.style_dotted
         LineStyles.dashed => line.style_dashed
 
+
+// @function 
+// @returns  
+getLabelText(string baseString) =>
+    baseString + str.repeat("  ", str.length(baseString))
+    
 
 // @function Create and update the open level. An open is composed of a line and a label.
 // @returns  void
@@ -296,28 +302,28 @@ method update(Open this, string timeframe, string session, string timezone) =>
 
 // @variable The `Open` UDTs. 
 var Open open1 = Open.new(
-     name    = labelTextInput1,
+     name    = getLabelText(nameInput1),
      style   = styleInput1.param(),
      color   = openColorInput1,
      width   = widthInput1,
      display = enableLevel1
      )
 var Open open2 = Open.new(
-     name    = labelTextInput2,
+     name    = getLabelText(nameInput2),
      style   = styleInput2.param(),
      color   = openColorInput2,
      width   = widthInput2,
      display = enableLevel2
      )
 var Open open3 = Open.new(
-     name    = labelTextInput3,
+     name    = getLabelText(nameInput3),
      style   = styleInput3.param(),
      color   = openColorInput3,
      width   = widthInput3,
      display = enableLevel3
      )
 var Open open4 = Open.new(
-     name    = labelTextInput4,
+     name    = getLabelText(nameInput4),
      style   = styleInput4.param(),
      color   = openColorInput4,
      width   = widthInput4,
