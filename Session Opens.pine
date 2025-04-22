@@ -35,6 +35,7 @@ type Open
     string  name
     color   color
     string  style
+    int     width
     bool    display
 
 
@@ -171,6 +172,10 @@ color       openColorInput1     = input.color   (COLOR_1,           title = "", 
 color       openColorInput2     = input.color   (COLOR_2,           title = "", inline = "Session #2", group = group2)
 color       openColorInput3     = input.color   (COLOR_3,           title = "", inline = "Session #3", group = group2)
 color       openColorInput4     = input.color   (COLOR_4,           title = "", inline = "Session #4", group = group2)
+int         widthInput1         = input.int     (LINE_WIDTH,        title = "", inline = "Session #1", group = group2, minval = 1)
+int         widthInput2         = input.int     (LINE_WIDTH,        title = "", inline = "Session #2", group = group2, minval = 1)
+int         widthInput3         = input.int     (LINE_WIDTH,        title = "", inline = "Session #3", group = group2, minval = 1)
+int         widthInput4         = input.int     (LINE_WIDTH,        title = "", inline = "Session #4", group = group2, minval = 1)
 LineStyles  styleInput1         = input.enum    (LineStyles.solid,  title = "", inline = "Session #1", group = group2)
 LineStyles  styleInput2         = input.enum    (LineStyles.solid,  title = "", inline = "Session #2", group = group2)
 LineStyles  styleInput3         = input.enum    (LineStyles.solid,  title = "", inline = "Session #3", group = group2)
@@ -240,7 +245,7 @@ draw(bool change, Open openData, int lookback, int padding) =>
              y2    = openData.price,
              color = openData.color,
              style = openData.style,
-             width = LINE_WIDTH
+             width = openData.width
              )
         array.push(_lineArray, _line)
 
@@ -292,24 +297,28 @@ var Open open1 = Open.new(
      name    = labelTextInput1,
      style   = styleInput1.param(),
      color   = openColorInput1,
+     width   = widthInput1,
      display = enableLevel1
      )
 var Open open2 = Open.new(
      name    = labelTextInput2,
      style   = styleInput2.param(),
      color   = openColorInput2,
+     width   = widthInput2,
      display = enableLevel2
      )
 var Open open3 = Open.new(
      name    = labelTextInput3,
      style   = styleInput3.param(),
      color   = openColorInput3,
+     width   = widthInput3,
      display = enableLevel3
      )
 var Open open4 = Open.new(
      name    = labelTextInput4,
      style   = styleInput4.param(),
      color   = openColorInput4,
+     width   = widthInput4,
      display = enableLevel4
      )
 
