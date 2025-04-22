@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2025-04-16
-// Last modified: 2025-04-18
+// Last modified: 2025-04-22
 // version 1.0
 
 // @version=6
@@ -18,7 +18,6 @@ color   COLOR_3         = #4d7b93
 color   COLOR_4         = #b45dbb
 string  LABEL_SIZE      = size.small
 string  LABEL_STYLE     = label.style_none
-string  LINE_STYLE      = line.style_solid
 int     LINE_WIDTH      = 1
 int     OFFSET_PADDING  = 4
 
@@ -35,6 +34,7 @@ type Open
     float   price 
     string  name
     color   color
+    string  style
     bool    display
 
 
@@ -128,6 +128,13 @@ enum Timezones
     hnl  = "Pacific/Honolulu"
     nlk  = "Pacific/Norfolk"
 
+
+// @enum 
+enum LineStyles 
+    solid  = "Solid" 
+    dashed = "Dashed"
+    dotted = "Dotted"
+
 //#endregion
 
 
@@ -160,11 +167,16 @@ Timezones   timezoneInput4      = input.enum    (Timezones.nyc, title = "", inli
 string      group2              = "Style"
 string      rightOffsetTooltip  = "Extend the current opens to the right of the last bar."
 
-color       openColorInput1     = input.color   (COLOR_1,       title = "", inline = "Session #1", group = group2)
-color       openColorInput2     = input.color   (COLOR_2,       title = "", inline = "Session #2", group = group2)
-color       openColorInput3     = input.color   (COLOR_3,       title = "", inline = "Session #3", group = group2)
-color       openColorInput4     = input.color   (COLOR_4,       title = "", inline = "Session #4", group = group2)
-int         rightOffsetInput    = input.int     (20,            title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1)
+color       openColorInput1     = input.color   (COLOR_1,           title = "", inline = "Session #1", group = group2)
+color       openColorInput2     = input.color   (COLOR_2,           title = "", inline = "Session #2", group = group2)
+color       openColorInput3     = input.color   (COLOR_3,           title = "", inline = "Session #3", group = group2)
+color       openColorInput4     = input.color   (COLOR_4,           title = "", inline = "Session #4", group = group2)
+LineStyles  styleInput1         = input.enum    (LineStyles.solid,  title = "", inline = "Session #1", group = group2)
+LineStyles  styleInput2         = input.enum    (LineStyles.solid,  title = "", inline = "Session #2", group = group2)
+LineStyles  styleInput3         = input.enum    (LineStyles.solid,  title = "", inline = "Session #3", group = group2)
+LineStyles  styleInput4         = input.enum    (LineStyles.dashed, title = "", inline = "Session #4", group = group2)
+int         rightOffsetInput    = input.int     (20,                title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1)
+
 
 //#endregion
 
@@ -177,6 +189,15 @@ int         rightOffsetInput    = input.int     (20,            title = "Offset"
 // @returns  (int) The bar index. 
 getRightBarIndex(int padding = 0) =>
     bar_index + rightOffsetInput + padding * OFFSET_PADDING
+
+
+// @function Produce the line `style` parameter from the given user input.
+// @returns  string
+method param(simple LineStyles input) =>
+    switch input
+        LineStyles.solid  => line.style_solid
+        LineStyles.dotted => line.style_dotted
+        LineStyles.dashed => line.style_dashed
 
 
 // @function Create and update the open level. An open is composed of a line and a label.
@@ -218,7 +239,7 @@ draw(bool change, Open openData, int lookback, int padding) =>
              y1    = openData.price,
              y2    = openData.price,
              color = openData.color,
-             style = LINE_STYLE,
+             style = openData.style,
              width = LINE_WIDTH
              )
         array.push(_lineArray, _line)
@@ -267,10 +288,30 @@ method update(Open this, string timeframe, string session, string timezone) =>
 //--------------------------------------------------------------------
 
 // @variable The `Open` UDTs. 
-var Open open1 = Open.new(name = labelTextInput1, color = openColorInput1, display = enableLevel1)
-var Open open2 = Open.new(name = labelTextInput2, color = openColorInput2, display = enableLevel2)
-var Open open3 = Open.new(name = labelTextInput3, color = openColorInput3, display = enableLevel3)
-var Open open4 = Open.new(name = labelTextInput4, color = openColorInput4, display = enableLevel4)
+var Open open1 = Open.new(
+     name    = labelTextInput1,
+     style   = styleInput1.param(),
+     color   = openColorInput1,
+     display = enableLevel1
+     )
+var Open open2 = Open.new(
+     name    = labelTextInput2,
+     style   = styleInput2.param(),
+     color   = openColorInput2,
+     display = enableLevel2
+     )
+var Open open3 = Open.new(
+     name    = labelTextInput3,
+     style   = styleInput3.param(),
+     color   = openColorInput3,
+     display = enableLevel3
+     )
+var Open open4 = Open.new(
+     name    = labelTextInput4,
+     style   = styleInput4.param(),
+     color   = openColorInput4,
+     display = enableLevel4
+     )
 
 string targetTimeframe = "15"
 
