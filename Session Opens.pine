@@ -12,10 +12,10 @@ indicator("Intraday Opens", "Opens", overlay = true, max_lines_count = 500, dyna
 //#region                      Constants
 //--------------------------------------------------------------------
 
-color   COLOR_1         = color.green
-color   COLOR_2         = color.orange
-color   COLOR_3         = color.red
-color   COLOR_4         = color.purple
+color   COLOR_1         = #1a2c54
+color   COLOR_2         = #8351a8
+color   COLOR_3         = #4d7b93
+color   COLOR_4         = #b45dbb
 string  LABEL_SIZE      = size.small
 string  LABEL_STYLE     = label.style_none
 string  LINE_STYLE      = line.style_solid
