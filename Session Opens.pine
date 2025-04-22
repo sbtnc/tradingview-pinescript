@@ -12,14 +12,15 @@ indicator("Intraday Opens", "Opens", overlay = true, max_lines_count = 500, dyna
 //#region                      Constants
 //--------------------------------------------------------------------
 
-color   COLOR_1         = #1a2c54
-color   COLOR_2         = #8351a8
-color   COLOR_3         = #4d7b93
-color   COLOR_4         = #b45dbb
-string  LABEL_SIZE      = size.small
-string  LABEL_STYLE     = label.style_none
-int     LINE_WIDTH      = 1
-int     OFFSET_PADDING  = 4
+color   COLOR_1             = #1a2c54
+color   COLOR_2             = #8351a8
+color   COLOR_3             = #4d7b93
+color   COLOR_4             = #b45dbb
+string  LABEL_SIZE          = size.small
+string  LABEL_STYLE         = label.style_none
+string  LABEL_FONT_FAMILY   = font.family_default
+int     LINE_WIDTH          = 1
+int     OFFSET_PADDING      = 4
 
 //#endregion
 
@@ -213,12 +214,13 @@ draw(bool change, Open openData, int lookback, int padding) =>
 
     // @variable The reference of the last open label.
     var label _label = label.new(
-         x         = na,
-         y         = na,
-         text      = openData.name,
-         style     = LABEL_STYLE,
-         textcolor = openData.color,
-         size      = LABEL_SIZE
+         x                = na,
+         y                = na,
+         text             = openData.name,
+         style            = LABEL_STYLE,
+         size             = LABEL_SIZE,
+         textcolor        = openData.color,
+         text_font_family = LABEL_FONT_FAMILY
          )
 
     // @variable The collection of historical open lines.
