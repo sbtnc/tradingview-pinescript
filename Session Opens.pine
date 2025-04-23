@@ -190,12 +190,6 @@ int         rightOffsetInput    = input.int     (20,                title = "Off
 //#region                   Functions & methods
 //--------------------------------------------------------------------
 
-// @function Calculate the right position of the open level.
-// @returns  (int) The bar index. 
-getRightBarIndex(int padding = 0) =>
-    bar_index + rightOffsetInput + padding * OFFSET_PADDING
-
-
 // @function Produce the line `style` parameter from the given user input.
 // @returns  string
 method param(simple LineStyles input) =>
@@ -203,57 +197,29 @@ method param(simple LineStyles input) =>
         LineStyles.solid  => line.style_solid
         LineStyles.dotted => line.style_dotted
         LineStyles.dashed => line.style_dashed
-    
 
-// @function Get the padding to apply to the open right position for not overlapping the other open labels.
-// @returns  int
-//method pad(array<Level> this) =>
-//    // @variable The maximum distance to determine if two levels overlap each other.
-//    float _proximityThreshold = ta.atr(10) /2
-//
-//    if barstate.islast
-//        for i = 0 to this.size() -1
-//            _line = this.get(i).line
-//            
-//            if not na(_line)
-//                int _padding = 0
-//
-//                if i > 0
-//                    for j = i -1 to 0
-//                        __line = this.get(j).line
-//
-//                        if not na(__line)
-//                            if math.abs(_line.get_y2() - __line.get_y2()) <= _proximityThreshold
-//                                _padding += 1
-//
-//                int _projectionBarIndex = getRightBarIndex(_padding)
-//                _line.set_x2(_projectionBarIndex)
-//                this.get(i).label.set_x(_projectionBarIndex)
 
-log.error('--')
-// @function Get the padding to apply to the open right position for not overlapping the other open labels.
+// @function Calculate the bar index of the second point of the level.
+// @returns  (int) The bar index. 
+getRightBarIndex(int padding = 0) =>
+    bar_index + rightOffsetInput + padding * OFFSET_PADDING
+
+
+// @function Calculate the padding of the second point of the level for not overlapping the other proximate levels.
 // @returns  int
 method padding(array<Open> this, int idx, float proximityThreshold) =>
-    int   _padding = 0
-    float _price   = this.get(idx).price
-    
-    // Compare [1, 2, 3] against 0.
-    if idx >= 1 and this.get(0).display and math.abs(this.get(0).price - _price) <= proximityThreshold
-        _padding += 1
+    int _padding = 0
 
-    // Compare [2, 3] against 1.
-    if idx >= 2 and this.get(1).display and math.abs(this.get(1).price - _price) <= proximityThreshold
-        _padding += 1
+    if barstate.islast
+        if this.size() >= 2 and idx > 0
+            for i = idx -1 to 0
+                if this.get(i).display and math.abs(this.get(i).price - this.get(idx).price) <= proximityThreshold
+                    _padding += 1
 
-    // Compare 3 against 2.
-    if idx >= 3 and this.get(2).display and math.abs(this.get(2).price - _price) <= proximityThreshold
-        _padding += 1 
-    
-    log.info("{0}", _padding)
     _padding
 
 
-// @function Create and update the open level. An open is composed of a line and a label.
+// @function Create and update the open level. The open is composed of a line and a label.
 // @returns  void
 draw(bool change, Open openData, int lookback, int padding) =>
     // @variable The reference of the last open line.
@@ -418,7 +384,7 @@ if open1.display
          change1,
          open1,
          10,
-         0//barstate.islast ? openArray.padding(0, proximityPaddingThreshold) : 0
+         0
          )
 
 if open2.display
@@ -426,7 +392,7 @@ if open2.display
          change2,
          open2,
          10,
-         barstate.islast ? openArray.padding(1, proximityPaddingThreshold) : 0
+         openArray.padding(1, proximityPaddingThreshold)
          )
 
 if open3.display
@@ -434,7 +400,7 @@ if open3.display
          change3,
          open3,
          10,
-         barstate.islast ? openArray.padding(2, proximityPaddingThreshold) : 0
+         openArray.padding(2, proximityPaddingThreshold)
          )
 
 if open4.display
@@ -442,7 +408,7 @@ if open4.display
          change4,
          open4,
          10,
-         barstate.islast ? openArray.padding(3, proximityPaddingThreshold) : 0
+         openArray.padding(3, proximityPaddingThreshold)
          )
 
 //#endregion
