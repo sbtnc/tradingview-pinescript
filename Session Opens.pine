@@ -173,15 +173,15 @@ color       openColorInput1     = input.color   (COLOR_1,           title = "", 
 color       openColorInput2     = input.color   (COLOR_2,           title = "", inline = "Session #2", group = group2)
 color       openColorInput3     = input.color   (COLOR_3,           title = "", inline = "Session #3", group = group2)
 color       openColorInput4     = input.color   (COLOR_4,           title = "", inline = "Session #4", group = group2)
-int         widthInput1         = input.int     (LINE_WIDTH,        title = "", inline = "Session #1", group = group2, minval = 1, display = display.none)
-int         widthInput2         = input.int     (LINE_WIDTH,        title = "", inline = "Session #2", group = group2, minval = 1, display = display.none)
-int         widthInput3         = input.int     (LINE_WIDTH,        title = "", inline = "Session #3", group = group2, minval = 1, display = display.none)
-int         widthInput4         = input.int     (LINE_WIDTH,        title = "", inline = "Session #4", group = group2, minval = 1, display = display.none)
+int         widthInput1         = input.int     (LINE_WIDTH,        title = "", inline = "Session #1", group = group2, minval = 1, maxval = 20, display = display.none)
+int         widthInput2         = input.int     (LINE_WIDTH,        title = "", inline = "Session #2", group = group2, minval = 1, maxval = 20, display = display.none)
+int         widthInput3         = input.int     (LINE_WIDTH,        title = "", inline = "Session #3", group = group2, minval = 1, maxval = 20, display = display.none)
+int         widthInput4         = input.int     (LINE_WIDTH,        title = "", inline = "Session #4", group = group2, minval = 1, maxval = 20, display = display.none)
 LineStyles  styleInput1         = input.enum    (LineStyles.solid,  title = "", inline = "Session #1", group = group2, display = display.none)
 LineStyles  styleInput2         = input.enum    (LineStyles.solid,  title = "", inline = "Session #2", group = group2, display = display.none)
 LineStyles  styleInput3         = input.enum    (LineStyles.solid,  title = "", inline = "Session #3", group = group2, display = display.none)
 LineStyles  styleInput4         = input.enum    (LineStyles.dashed, title = "", inline = "Session #4", group = group2, display = display.none)
-int         rightOffsetInput    = input.int     (20,                title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1, display = display.none)
+int         rightOffsetInput    = input.int     (20,                title = "Offset", group = group2, tooltip = rightOffsetTooltip, minval = 1, maxval = 500, display = display.none)
 
 //#endregion
 
