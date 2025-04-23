@@ -150,17 +150,14 @@ bool        enableLevel1        = input.bool    (true,          title = "", inli
 string      nameInput1          = input.string  ("NY",          title = "", inline = "Session #1", group = group1)
 string      sessionInput1       = input.session ("0800-1200",   title = "", inline = "Session #1", group = group1)
 Timezones   timezoneInput1      = input.enum    (Timezones.nyc, title = "", inline = "Session #1", group = group1)
-
 bool        enableLevel2        = input.bool    (true,          title = "", inline = "Session #2", group = group1)
 string      nameInput2          = input.string  ("London",      title = "", inline = "Session #2", group = group1)
 string      sessionInput2       = input.session ("0800-1200",   title = "", inline = "Session #2", group = group1)
 Timezones   timezoneInput2      = input.enum    (Timezones.lon, title = "", inline = "Session #2", group = group1)
-
 bool        enableLevel3        = input.bool    (true,          title = "", inline = "Session #3", group = group1)
 string      nameInput3          = input.string  ("Asia",        title = "", inline = "Session #3", group = group1)
 string      sessionInput3       = input.session ("0800-1200",   title = "", inline = "Session #3", group = group1)
 Timezones   timezoneInput3      = input.enum    (Timezones.tyo, title = "", inline = "Session #3", group = group1)
-
 bool        enableLevel4        = input.bool    (true,          title = "", inline = "Session #4", group = group1)
 string      nameInput4          = input.string  ("Midnight",    title = "", inline = "Session #4", group = group1)
 string      sessionInput4       = input.session ("0000-0100",   title = "", inline = "Session #4", group = group1)
@@ -201,7 +198,7 @@ method param(simple LineStyles input) =>
 
 // @function Calculate the bar index of the second point of the level.
 // @returns  (int) The bar index. 
-getRightBarIndex(int padding = 0) =>
+getEndingBarIndex(int padding = 0) =>
     bar_index + rightOffsetInput + padding * OFFSET_PADDING
 
 
@@ -221,61 +218,56 @@ method padding(array<Open> this, int idx, float proximityThreshold) =>
 
 // @function Create and update the open level. The open is composed of a line and a label.
 // @returns  void
-draw(bool change, Open openData, int lookback, int padding) =>
-    // @variable The reference of the last open line.
+method draw(Open this, bool change, int lookback, int padding) =>
+    // @variable The reference of the current open line.
     var line _line = na
 
-    // @variable The reference of the last open label.
+    // @variable The reference of the current open label.
     var label _label = label.new(
          x                = na,
          y                = na,
-         text             = openData.name,
+         text             = this.name,
          color            = LABEL_COLOR,
          style            = LABEL_STYLE,
          size             = LABEL_SIZE,
-         textcolor        = openData.color,
+         textcolor        = this.color,
          text_font_family = LABEL_FONT_FAMILY
          )
 
     // @variable The collection of historical open lines.
     var array<line> _lineArray  = array.new_line()
 
-
-    // Update the old open and create the new open.
-
+    // Finalize the last open and create the new open.
     if change
-        int _x2 = getRightBarIndex()
-
-        // Anchor the previous open end position.
+        // Anchor the ending bar index of the last open line.
         _line.set_x2(bar_index -1)
 
-        // Update the last open label position and tooltip.
-        _label.set_xy(_x2, openData.price)
-        _label.set_tooltip(str.tostring(openData.price, format.mintick))
-
-        // Create and store the last open line.
+        // Create and store the new open line.
         _line := line.new(
              x1    = bar_index,
-             x2    = _x2,
-             y1    = openData.price,
-             y2    = openData.price,
-             color = openData.color,
-             style = openData.style,
-             width = openData.width
+             x2    = na,
+             y1    = this.price,
+             y2    = this.price,
+             color = this.color,
+             style = this.style,
+             width = this.width
              )
         array.push(_lineArray, _line)
 
-        // Trim the exceeding number of drawings.
+        // Maintain the number of historical open lines.
         if _lineArray.size() > lookback
-            line.delete(_lineArray.shift())
+            _lineArray.shift().delete()
 
+        // Update the current open label.
+        _label.set_y(this.price)
+        _label.set_tooltip(str.tostring(this.price, format.mintick))
 
-    // Update the right position of the line.
-
+    // Update the ending bar index of the current open level.
     if barstate.islast
-        int _x2 = getRightBarIndex(padding)
-        _line.set_x2(_x2)
-        _label.set_x(_x2)
+        int _x = getEndingBarIndex(padding)
+
+        _line.set_x2(_x)
+        _label.set_x(_x)
 
 
 // @function Update the `Open` UDT price.
@@ -316,6 +308,7 @@ var Open open1 = Open.new(
      width   = widthInput1,
      display = enableLevel1
      )
+
 var Open open2 = Open.new(
      name    = nameInput2,
      style   = styleInput2.param(),
@@ -323,6 +316,7 @@ var Open open2 = Open.new(
      width   = widthInput2,
      display = enableLevel2
      )
+
 var Open open3 = Open.new(
      name    = nameInput3,
      style   = styleInput3.param(),
@@ -330,6 +324,7 @@ var Open open3 = Open.new(
      width   = widthInput3,
      display = enableLevel3
      )
+
 var Open open4 = Open.new(
      name    = nameInput4,
      style   = styleInput4.param(),
@@ -338,16 +333,16 @@ var Open open4 = Open.new(
      display = enableLevel4
      )
 
-// @variable
+// @variable The array of current opens. 
 var array<Open> openArray = array.from(open1, open2, open3, open4)
 
-// @variable The maximum distance to determine if two levels overlap each other.
+// @variable The maximum distance to determine if two levels are too proximate.
 float proximityPaddingThreshold = ta.atr(10) /2
 
 string targetTimeframe = "15"
 
 // @variable The lower timeframe on a higher chart context, otherwise the chart context timeframe.
-string _timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimeframe) ? targetTimeframe : ""
+string timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimeframe) ? targetTimeframe : ""
 
 //#endregion
 
@@ -357,16 +352,16 @@ string _timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimefram
 //--------------------------------------------------------------------
 
 bool change1 = if open1.display
-    open1.update(_timeframe, sessionInput1, str.tostring(timezoneInput1))  
+    open1.update(timeframe, sessionInput1, str.tostring(timezoneInput1))  
 
 bool change2 = if open2.display
-    open2.update(_timeframe, sessionInput2, str.tostring(timezoneInput2))  
+    open2.update(timeframe, sessionInput2, str.tostring(timezoneInput2))  
 
 bool change3 = if open3.display
-    open3.update(_timeframe, sessionInput3, str.tostring(timezoneInput3)) 
+    open3.update(timeframe, sessionInput3, str.tostring(timezoneInput3)) 
 
 bool change4 = if open4.display
-    open4.update(_timeframe, sessionInput4, str.tostring(timezoneInput4)) 
+    open4.update(timeframe, sessionInput4, str.tostring(timezoneInput4)) 
 
 //levelArray.pad()
 
@@ -380,33 +375,29 @@ bool change4 = if open4.display
 //#region - Draw the open levels.
 
 if open1.display
-    draw(
+    open1.draw(
          change1,
-         open1,
          10,
          0
          )
 
 if open2.display
-    draw(
+    open2.draw(
          change2,
-         open2,
          10,
          openArray.padding(1, proximityPaddingThreshold)
          )
 
 if open3.display
-    draw(
+    open3.draw(
          change3,
-         open3,
          10,
          openArray.padding(2, proximityPaddingThreshold)
          )
 
 if open4.display
-    draw(
+    open4.draw(
          change4,
-         open4,
          10,
          openArray.padding(3, proximityPaddingThreshold)
          )
