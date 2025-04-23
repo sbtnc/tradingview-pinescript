@@ -16,8 +16,9 @@ color   COLOR_1             = #1a2c54
 color   COLOR_2             = #8351a8
 color   COLOR_3             = #4d7b93
 color   COLOR_4             = #b45dbb
+color   LABEL_COLOR         = color(na)
 string  LABEL_SIZE          = size.small
-string  LABEL_STYLE         = label.style_none
+string  LABEL_STYLE         = label.style_label_left
 string  LABEL_FONT_FAMILY   = font.family_default
 int     LINE_WIDTH          = 1
 int     OFFSET_PADDING      = 4
@@ -204,12 +205,6 @@ method param(simple LineStyles input) =>
         LineStyles.solid  => line.style_solid
         LineStyles.dotted => line.style_dotted
         LineStyles.dashed => line.style_dashed
-
-
-// @function 
-// @returns  
-getLabelText(string baseString) =>
-    baseString + str.repeat("  ", str.length(baseString))
     
 
 // @function Get the padding to apply to the open right position for not overlapping the other open labels.
@@ -271,6 +266,7 @@ draw(bool change, Open openData, int lookback, int padding) =>
          x                = na,
          y                = na,
          text             = openData.name,
+         color            = LABEL_COLOR,
          style            = LABEL_STYLE,
          size             = LABEL_SIZE,
          textcolor        = openData.color,
@@ -350,28 +346,28 @@ method update(Open this, string timeframe, string session, string timezone) =>
 
 // @variable The `Open` UDTs. 
 var Open open1 = Open.new(
-     name    = getLabelText(nameInput1),
+     name    = nameInput1,
      style   = styleInput1.param(),
      color   = openColorInput1,
      width   = widthInput1,
      display = enableLevel1
      )
 var Open open2 = Open.new(
-     name    = getLabelText(nameInput2),
+     name    = nameInput2,
      style   = styleInput2.param(),
      color   = openColorInput2,
      width   = widthInput2,
      display = enableLevel2
      )
 var Open open3 = Open.new(
-     name    = getLabelText(nameInput3),
+     name    = nameInput3,
      style   = styleInput3.param(),
      color   = openColorInput3,
      width   = widthInput3,
      display = enableLevel3
      )
 var Open open4 = Open.new(
-     name    = getLabelText(nameInput4),
+     name    = nameInput4,
      style   = styleInput4.param(),
      color   = openColorInput4,
      width   = widthInput4,
@@ -382,7 +378,7 @@ var Open open4 = Open.new(
 var array<Open> openArray = array.from(open1, open2, open3, open4)
 
 // @variable The maximum distance to determine if two levels overlap each other.
-float proximityPaddingThreshold = ta.atr(10) /3
+float proximityPaddingThreshold = ta.atr(10) /2
 
 string targetTimeframe = "15"
 
