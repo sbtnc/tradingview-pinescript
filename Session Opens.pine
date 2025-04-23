@@ -212,6 +212,54 @@ getLabelText(string baseString) =>
     baseString + str.repeat("  ", str.length(baseString))
     
 
+// @function Get the padding to apply to the open right position for not overlapping the other open labels.
+// @returns  int
+//method pad(array<Level> this) =>
+//    // @variable The maximum distance to determine if two levels overlap each other.
+//    float _proximityThreshold = ta.atr(10) /2
+//
+//    if barstate.islast
+//        for i = 0 to this.size() -1
+//            _line = this.get(i).line
+//            
+//            if not na(_line)
+//                int _padding = 0
+//
+//                if i > 0
+//                    for j = i -1 to 0
+//                        __line = this.get(j).line
+//
+//                        if not na(__line)
+//                            if math.abs(_line.get_y2() - __line.get_y2()) <= _proximityThreshold
+//                                _padding += 1
+//
+//                int _projectionBarIndex = getRightBarIndex(_padding)
+//                _line.set_x2(_projectionBarIndex)
+//                this.get(i).label.set_x(_projectionBarIndex)
+
+log.error('--')
+// @function Get the padding to apply to the open right position for not overlapping the other open labels.
+// @returns  int
+method padding(array<Open> this, int idx, float proximityThreshold) =>
+    int   _padding = 0
+    float _price   = this.get(idx).price
+    
+    // Compare [1, 2, 3] against 0.
+    if idx >= 1 and this.get(0).display and math.abs(this.get(0).price - _price) <= proximityThreshold
+        _padding += 1
+
+    // Compare [2, 3] against 1.
+    if idx >= 2 and this.get(1).display and math.abs(this.get(1).price - _price) <= proximityThreshold
+        _padding += 1
+
+    // Compare 3 against 2.
+    if idx >= 3 and this.get(2).display and math.abs(this.get(2).price - _price) <= proximityThreshold
+        _padding += 1 
+    
+    log.info("{0}", _padding)
+    _padding
+
+
 // @function Create and update the open level. An open is composed of a line and a label.
 // @returns  void
 draw(bool change, Open openData, int lookback, int padding) =>
@@ -330,6 +378,12 @@ var Open open4 = Open.new(
      display = enableLevel4
      )
 
+// @variable
+var array<Open> openArray = array.from(open1, open2, open3, open4)
+
+// @variable The maximum distance to determine if two levels overlap each other.
+float proximityPaddingThreshold = ta.atr(10) /3
+
 string targetTimeframe = "15"
 
 // @variable The lower timeframe on a higher chart context, otherwise the chart context timeframe.
@@ -354,6 +408,8 @@ bool change3 = if open3.display
 bool change4 = if open4.display
     open4.update(_timeframe, sessionInput4, str.tostring(timezoneInput4)) 
 
+//levelArray.pad()
+
 //#endregion
 
 
@@ -368,7 +424,7 @@ if open1.display
          change1,
          open1,
          10,
-         0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+         0//barstate.islast ? openArray.padding(0, proximityPaddingThreshold) : 0
          )
 
 if open2.display
@@ -376,7 +432,7 @@ if open2.display
          change2,
          open2,
          10,
-         0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+         barstate.islast ? openArray.padding(1, proximityPaddingThreshold) : 0
          )
 
 if open3.display
@@ -384,7 +440,7 @@ if open3.display
          change3,
          open3,
          10,
-         0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+         barstate.islast ? openArray.padding(2, proximityPaddingThreshold) : 0
          )
 
 if open4.display
@@ -392,7 +448,7 @@ if open4.display
          change4,
          open4,
          10,
-         0//barstate.islast ? openArray.padding(4, proximityPaddingThreshold) : 0
+         barstate.islast ? openArray.padding(3, proximityPaddingThreshold) : 0
          )
 
 //#endregion
@@ -445,6 +501,6 @@ plot(
 
 //bgcolor(change1 ? color.new(openColorInput1, 80) : color(na))
 //plot(changeIndex, "changeIndex", editable = false, display = display.status_line)
-//plot(open1, "time1", editable = false, display = display.status_line)
+plot(proximityPaddingThreshold, "proximityPaddingThreshold", editable = false, display = display.status_line)
 
 //#endregion
