@@ -146,6 +146,7 @@ enum LineStyles
 //--------------------------------------------------------------------
 
 string      group1              = "Opens"
+string      lookbackTooltip     = "Display up to 500 historical opens."
 
 bool        enableLevel1        = input.bool    (true,          title = "", inline = "Session #1", group = group1)
 string      nameInput1          = input.string  ("NY",          title = "", inline = "Session #1", group = group1)
@@ -163,6 +164,7 @@ bool        enableLevel4        = input.bool    (true,          title = "", inli
 string      nameInput4          = input.string  ("Midnight",    title = "", inline = "Session #4", group = group1)
 string      sessionInput4       = input.session ("0000-0100",   title = "", inline = "Session #4", group = group1)
 Timezones   timezoneInput4      = input.enum    (Timezones.nyc, title = "", inline = "Session #4", group = group1)
+int         lookbackInput       = input.int     (1,             title = "Lookback", group = group1, tooltip = lookbackTooltip, minval = 1, maxval = 500, display = display.none)
 
 string      group2              = "Style"
 string      rightOffsetTooltip  = "Extend the current opens to the right of the last bar."
@@ -374,28 +376,28 @@ bool change4 = if open4.display
 if open1.display
     open1.draw(
          change1,
-         10,
+         lookbackInput,
          0
          )
 
 if open2.display
     open2.draw(
          change2,
-         10,
+         lookbackInput,
          openArray.padding(1, proximityPaddingThreshold)
          )
 
 if open3.display
     open3.draw(
          change3,
-         10,
+         lookbackInput,
          openArray.padding(2, proximityPaddingThreshold)
          )
 
 if open4.display
     open4.draw(
          change4,
-         10,
+         lookbackInput,
          openArray.padding(3, proximityPaddingThreshold)
          )
 
