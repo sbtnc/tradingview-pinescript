@@ -22,6 +22,7 @@ string  LABEL_STYLE         = label.style_label_left
 string  LABEL_FONT_FAMILY   = font.family_default
 int     LINE_WIDTH          = 1
 int     OFFSET_PADDING      = 4
+string  LOWER_TIMEFRAME     = "15"
 
 //#endregion
 
@@ -189,7 +190,7 @@ int         rightOffsetInput    = input.int     (20,                title = "Off
 
 // @function Produce the line `style` parameter from the given user input.
 // @returns  string
-method param(simple LineStyles input) =>
+method param(LineStyles input) =>
     switch input
         LineStyles.solid  => line.style_solid
         LineStyles.dotted => line.style_dotted
@@ -235,7 +236,7 @@ method draw(Open this, bool change, int lookback, int padding) =>
          )
 
     // @variable The collection of historical open lines.
-    var array<line> _lineArray  = array.new_line()
+    var array<line> _lineArray = array.new_line()
 
     // Finalize the last open and create the new open.
     if change
@@ -336,13 +337,11 @@ var Open open4 = Open.new(
 // @variable The array of current opens. 
 var array<Open> openArray = array.from(open1, open2, open3, open4)
 
+// @variable The lower timeframe precision on a higher chart context, otherwise the chart context timeframe.
+string timeframe = timeframe.in_seconds() > timeframe.in_seconds(LOWER_TIMEFRAME) ? LOWER_TIMEFRAME : ""
+
 // @variable The maximum distance to determine if two levels are too proximate.
 float proximityPaddingThreshold = ta.atr(10) /2
-
-string targetTimeframe = "15"
-
-// @variable The lower timeframe on a higher chart context, otherwise the chart context timeframe.
-string timeframe = timeframe.in_seconds() > timeframe.in_seconds(targetTimeframe) ? targetTimeframe : ""
 
 //#endregion
 
@@ -362,8 +361,6 @@ bool change3 = if open3.display
 
 bool change4 = if open4.display
     open4.update(timeframe, sessionInput4, str.tostring(timezoneInput4)) 
-
-//levelArray.pad()
 
 //#endregion
 
