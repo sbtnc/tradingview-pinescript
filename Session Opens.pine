@@ -149,13 +149,13 @@ string      group1              = "Opens"
 string      lookbackTooltip     = "Display up to 500 historical opens."
 
 bool        enableLevel1        = input.bool    (true,          title = "", inline = "Session #1", group = group1)
-string      nameInput1          = input.string  ("NY",          title = "", inline = "Session #1", group = group1)
+string      nameInput1          = input.string  ("London",      title = "", inline = "Session #1", group = group1)
 string      sessionInput1       = input.session ("0800-1200",   title = "", inline = "Session #1", group = group1)
-Timezones   timezoneInput1      = input.enum    (Timezones.nyc, title = "", inline = "Session #1", group = group1)
+Timezones   timezoneInput1      = input.enum    (Timezones.lon, title = "", inline = "Session #1", group = group1)
 bool        enableLevel2        = input.bool    (true,          title = "", inline = "Session #2", group = group1)
-string      nameInput2          = input.string  ("London",      title = "", inline = "Session #2", group = group1)
+string      nameInput2          = input.string  ("NY",          title = "", inline = "Session #2", group = group1)
 string      sessionInput2       = input.session ("0800-1200",   title = "", inline = "Session #2", group = group1)
-Timezones   timezoneInput2      = input.enum    (Timezones.lon, title = "", inline = "Session #2", group = group1)
+Timezones   timezoneInput2      = input.enum    (Timezones.nyc, title = "", inline = "Session #2", group = group1)
 bool        enableLevel3        = input.bool    (true,          title = "", inline = "Session #3", group = group1)
 string      nameInput3          = input.string  ("Asia",        title = "", inline = "Session #3", group = group1)
 string      sessionInput3       = input.session ("0800-1200",   title = "", inline = "Session #3", group = group1)
