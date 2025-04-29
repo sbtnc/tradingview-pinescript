@@ -238,7 +238,7 @@ method pad(array<Open> this, float proximityThreshold) =>
         for [sortedIdx, originalIdx] in sortedIndices
             Open _open = this.get(originalIdx)
 
-            if not _open.display
+            if not _open.display or na(_open.time)
                 continue
 
             // The most recent open has no padding.
