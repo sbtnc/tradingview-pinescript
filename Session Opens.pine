@@ -35,6 +35,7 @@ string  LOWER_TIMEFRAME     = "15"
 type Open 
     float   price 
     string  name
+    bool    isAtBeginning
     color   color
     string  style
     int     width
@@ -219,6 +220,12 @@ method padding(array<Open> this, int idx, float proximityThreshold) =>
     _padding
 
 
+// @function Check if the time is at the beginning of the session.
+// @returns  (bool) True at the beginning.
+method isAtBeginning(int this, string session, string timezone) =>
+    hour(this, timezone) == str.tonumber(str.substring(session, 0, 2)) and minute(this, timezone) == str.tonumber(str.substring(session, 2, 4))
+
+
 // @function Create and update the open level. The open is composed of a line and a label.
 // @returns  void
 method draw(Open this, bool change, int lookback, int padding) =>
@@ -263,7 +270,20 @@ method draw(Open this, bool change, int lookback, int padding) =>
 
         // Update the current open label.
         _label.set_y(this.price)
-        _label.set_tooltip(str.tostring(this.price, format.mintick))
+        _label.set_text(
+             str.format(
+                 "{0}{1}",
+                 this.name,
+                 this.isAtBeginning ? "" : "*"
+                 )
+             )
+        _label.set_tooltip(
+             str.format(
+                 "{0}{1}",
+                 str.tostring(this.price, format.mintick),
+                 this.isAtBeginning ? "" : "\n*The first bar found is not stricly at the beginning of the session."
+                 )
+             )
 
     // Update the ending bar index of the current open level.
     if barstate.islast
@@ -276,14 +296,14 @@ method draw(Open this, bool change, int lookback, int padding) =>
 // @function Update the `Open` UDT price.
 // @returns  (bool) True on update.
 method update(Open this, string timeframe, string session, string timezone) =>
-    // @variable The time point in the session.  
+    // @variable The time point in the session.
     int _time = time("D", session, timezone = timezone)
 
     // @variable True if the session starts.
     bool _sessionChange = ta.change(nz(_time)) > 0
 
-    // Get the session change and opening price within the chart bar.
-    [_sessionChangeIntrabarArray, _openIntrabarArray] = request.security_lower_tf("", timeframe, [_sessionChange, open])
+    // Get the session change, opening price, and time within the chart bar.
+    [_sessionChangeIntrabarArray, _openIntrabarArray, _timeIntrabarArray] = request.security_lower_tf("", timeframe, [_sessionChange, open, time])
 
     // @variable The lower-timeframe bar index of the last session change occurence.
     int changeIndex = _sessionChangeIntrabarArray.lastindexof(true)
@@ -291,8 +311,12 @@ method update(Open this, string timeframe, string session, string timezone) =>
     // @variable True if the session change was found.
     bool hasChanged = changeIndex != -1
 
-    // Update the open's price.
-    this.price := hasChanged ? _openIntrabarArray.get(changeIndex) : this.price
+    if hasChanged
+        // Update the open's price.
+        this.price := _openIntrabarArray.get(changeIndex)
+
+        // Check if the opening time is at the beginning of the session.
+        this.isAtBeginning := _timeIntrabarArray.get(changeIndex).isAtBeginning(session, timezone)
 
     hasChanged
 
@@ -451,6 +475,6 @@ plot(
 
 //bgcolor(change1 ? color.new(openColorInput1, 80) : color(na))
 //plot(changeIndex, "changeIndex", editable = false, display = display.status_line)
-plot(proximityPaddingThreshold, "proximityPaddingThreshold", editable = false, display = display.status_line)
+//plot(proximityPaddingThreshold, "proximityPaddingThreshold", editable = false, display = display.status_line)
 
 //#endregion
