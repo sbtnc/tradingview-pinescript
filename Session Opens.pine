@@ -492,14 +492,3 @@ plot(
 //#endregion
 
 //#endregion
-
-
-//--------------------------------------------------------------------
-//#region                         Debug
-//--------------------------------------------------------------------
-
-//bgcolor(change1 ? color.new(openColorInput1, 80) : color(na))
-//plot(changeIndex, "changeIndex", editable = false, display = display.status_line)
-//plot(proximityPaddingThreshold, "proximityPaddingThreshold", editable = false, display = display.status_line)
-
-//#endregion
