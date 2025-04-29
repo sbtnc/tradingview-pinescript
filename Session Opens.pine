@@ -35,10 +35,12 @@ string  LOWER_TIMEFRAME     = "15"
 type Open 
     float   price 
     string  name
+    int     time
     bool    isAtBeginning
     color   color
     string  style
     int     width
+    int     padding = 0
     bool    display
 
 
@@ -220,6 +222,40 @@ method padding(array<Open> this, int idx, float proximityThreshold) =>
     _padding
 
 
+// @function Set the padding on proximate opens (the older the most padded).
+// @returns  array<Open> 
+method pad(array<Open> this, float proximityThreshold) =>
+    if barstate.islast
+        // @variable The list of opening times.
+        array<int> startTimeArray = array.from(this.get(0).time, this.get(1).time, this.get(2).time, this.get(3).time)
+        
+        // @variable The list of opening times from the most recent to oldest.
+        array<int> sortedIndices = startTimeArray.sort_indices(order.descending)
+
+        // @variable True after processing the first open. 
+        bool _inited = false
+
+        for [sortedIdx, originalIdx] in sortedIndices
+            Open _open = this.get(originalIdx)
+
+            if not _open.display
+                continue
+
+            // The most recent open has no padding.
+            else if not _inited
+                _inited := true
+
+            // Increase the padding of older opens.
+            else
+                for i = sortedIdx -1 to 0
+                    Open _open2 = this.get(sortedIndices.get(i))
+
+                    if _open2.display and math.abs(_open.price - _open2.price) <= proximityThreshold
+                        _open.padding := math.max(_open.padding, _open2.padding +1)
+    
+    this
+
+
 // @function Check if the time is at the beginning of the session.
 // @returns  (bool) True at the beginning.
 method isAtBeginning(int this, string session, string timezone) =>
@@ -228,7 +264,7 @@ method isAtBeginning(int this, string session, string timezone) =>
 
 // @function Create and update the open level. The open is composed of a line and a label.
 // @returns  void
-method draw(Open this, bool change, int lookback, int padding) =>
+method draw(Open this, bool change, int lookback) =>
     // @variable The reference of the current open line.
     var line _line = na
 
@@ -287,7 +323,7 @@ method draw(Open this, bool change, int lookback, int padding) =>
 
     // Update the ending bar index of the current open level.
     if barstate.islast
-        int _x = getEndingBarIndex(padding)
+        int _x = getEndingBarIndex(this.padding)
 
         _line.set_x2(_x)
         _label.set_x(_x)
@@ -315,8 +351,11 @@ method update(Open this, string timeframe, string session, string timezone) =>
         // Update the open's price.
         this.price := _openIntrabarArray.get(changeIndex)
 
+        // Update the open's time.
+        this.time := _timeIntrabarArray.get(changeIndex)
+
         // Check if the opening time is at the beginning of the session.
-        this.isAtBeginning := _timeIntrabarArray.get(changeIndex).isAtBeginning(session, timezone)
+        this.isAtBeginning := this.time.isAtBeginning(session, timezone)
 
     hasChanged
 
@@ -388,6 +427,8 @@ bool change3 = if open3.display
 bool change4 = if open4.display
     open4.update(timeframe, sessionInput4, str.tostring(timezoneInput4)) 
 
+openArray.pad(proximityPaddingThreshold)
+
 //#endregion
 
 
@@ -398,32 +439,16 @@ bool change4 = if open4.display
 //#region - Draw the open levels.
 
 if open1.display
-    open1.draw(
-         change1,
-         lookbackInput,
-         0
-         )
+    open1.draw(change1, lookbackInput)
 
 if open2.display
-    open2.draw(
-         change2,
-         lookbackInput,
-         openArray.padding(1, proximityPaddingThreshold)
-         )
+    open2.draw(change2, lookbackInput)
 
 if open3.display
-    open3.draw(
-         change3,
-         lookbackInput,
-         openArray.padding(2, proximityPaddingThreshold)
-         )
+    open3.draw(change3, lookbackInput)
 
 if open4.display
-    open4.draw(
-         change4,
-         lookbackInput,
-         openArray.padding(3, proximityPaddingThreshold)
-         )
+    open4.draw(change4, lookbackInput)
 
 //#endregion
 
