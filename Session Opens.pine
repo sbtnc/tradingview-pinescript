@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2025-04-16
-// Last modified: 2025-04-22
+// Last modified: 2025-05-06
 // version 1.0
 
 // @version=6
@@ -202,7 +202,7 @@ method param(LineStyles input) =>
         LineStyles.dashed => line.style_dashed
 
 
-// @function Calculate the bar index of the second point of the level.
+// @function Calculate the bar index of the ending of the level.
 // @returns  (int) The bar index. 
 getEndingBarIndex(int padding = 0) =>
     bar_index + rightOffsetInput + padding * OFFSET_PADDING
@@ -241,7 +241,7 @@ method pad(array<Open> this, float proximityThreshold) =>
             if not _open.display or na(_open.time)
                 continue
 
-            // The most recent open has no padding.
+            // The most recent open gets no padding.
             else if not _inited
                 _inited := true
 
@@ -338,7 +338,7 @@ method update(Open this, string timeframe, string session, string timezone) =>
     // @variable True if the session starts.
     bool _sessionChange = ta.change(nz(_time)) > 0
 
-    // Get the session change, opening price, and time within the chart bar.
+    // Get the session change, open price, and time within the chart bar.
     [_sessionChangeIntrabarArray, _openIntrabarArray, _timeIntrabarArray] = request.security_lower_tf("", timeframe, [_sessionChange, open, time])
 
     // @variable The lower-timeframe bar index of the last session change occurence.
@@ -354,7 +354,7 @@ method update(Open this, string timeframe, string session, string timezone) =>
         // Update the open's time.
         this.time := _timeIntrabarArray.get(changeIndex)
 
-        // Check if the opening time is at the beginning of the session.
+        // Check if the open's time is at the beginning of the session.
         this.isAtBeginning := this.time.isAtBeginning(session, timezone)
 
     hasChanged
