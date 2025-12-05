@@ -102,7 +102,7 @@ color   colorInput5             = input.color       (defval = COLOR5,       titl
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
 bool    showLevelsInput         = input.bool        (defval = true,         title = "Horizontal Levels",            group = g6) 
-int     levelOffsetStartInput   = input.int         (defval = 0,            title = "Offset 1",                     group = g6, minval = 0)
+int     levelOffsetStartInput   = input.int         (defval = 1,            title = "Offset 1",                     group = g6, minval = 0)
 int     levelOffsetEndInput     = input.int         (defval = 50,           title = "Offset 2",                     group = g6, minval = 1)
 
 //#endregion
@@ -131,10 +131,10 @@ canDisplay(string tf) =>
 
 // @function Creates and updates the horizontal levels.
 // @returns  void
-draw(float y, color c) =>
+draw(float y, color c, int offset) =>
     // Draws only when `y` is defined (e.g. when the MA's period exceed the number of bars).
     if not na(y)
-        int _x1 = bar_index + levelOffsetStartInput
+        int _x1 = bar_index + offset + levelOffsetStartInput
         int _x2 = _x1 + levelOffsetEndInput
 
         var _line = line.new(
@@ -196,14 +196,14 @@ plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, lin
 
 if showLevelsInput
     if isVisible1
-        draw(ma1, colorInput1)
+        draw(ma1, colorInput1, offsetInput1)
     if isVisible2
-        draw(ma2, colorInput2)
+        draw(ma2, colorInput2, offsetInput2)
     if isVisible3    
-        draw(ma3, colorInput3)
+        draw(ma3, colorInput3, offsetInput3)
     if isVisible4
-        draw(ma4, colorInput4)
+        draw(ma4, colorInput4, offsetInput4)
     if isVisible5
-        draw(ma5, colorInput5)
+        draw(ma5, colorInput5, offsetInput5)
 
 //#endregion
