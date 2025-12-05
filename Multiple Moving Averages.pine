@@ -25,6 +25,22 @@ int     LINE_WIDTH          = 1
 //#endregion
 
 
+
+//--------------------------------------------------------------------
+//#region                         Types 
+//--------------------------------------------------------------------
+
+enum maType
+    sma     = "SMA" 
+    ema     = "EMA"
+    smma    = "SMMA (RMA)"
+    wma     = "WMA"
+    vwma    = "VWMA"
+
+//#endregion
+
+
+
 //--------------------------------------------------------------------
 //#region                        Inputs
 //--------------------------------------------------------------------
@@ -45,40 +61,40 @@ string tt_timeframe = "You can display a Moving Average from a higher timeframe.
 
 // Inputs
 
-string  i_type_1        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g1)
-int     i_length1       = input.int         (defval = 9,        title = "Length", minval = 1,                                            group = g1)
-float   i_source1       = input.source      (defval = close,    title = "Source",                                               group = g1)
-int     i_offset1       = input.int         (defval = 0,        title = "Offset",                                               group = g1)
-string  i_timeframe1    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g1)
+maType  i_type_1        = input.enum        (defval = maType.ema,   title = "Type",         group = g1)
+int     i_length1       = input.int         (defval = 9,            title = "Length",       group = g1, minval = 1)
+float   i_source1       = input.source      (defval = close,        title = "Source",       group = g1)
+int     i_offset1       = input.int         (defval = 0,            title = "Offset",       group = g1)
+string  i_timeframe1    = input.timeframe   (defval = "",           title = "Timeframe",    group = g1, tooltip = tt_timeframe)
 
-string  i_type_2        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g2)
-int     i_length2       = input.int         (defval = 20,       title = "Length", minval = 1,                                            group = g2)
-float   i_source2       = input.source      (defval = close,    title = "Source",                                               group = g2)
-int     i_offset2       = input.int         (defval = 0,        title = "Offset",                                               group = g2)
-string  i_timeframe2    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g2)
+maType  i_type_2        = input.enum        (defval = maType.ema,   title = "Type",         group = g2)
+int     i_length2       = input.int         (defval = 20,           title = "Length",       group = g2, minval = 1)
+float   i_source2       = input.source      (defval = close,        title = "Source",       group = g2)
+int     i_offset2       = input.int         (defval = 0,            title = "Offset",       group = g2)
+string  i_timeframe2    = input.timeframe   (defval = "",           title = "Timeframe",    group = g2, tooltip = tt_timeframe)
 
-string  i_type_3        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g3)
-int     i_length3       = input.int         (defval = 50,       title = "Length", minval = 1,                                            group = g3)
-float   i_source3       = input.source      (defval = close,    title = "Source",                                               group = g3)
-int     i_offset3       = input.int         (defval = 0,        title = "Offset",                                               group = g3)
-string  i_timeframe3    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g3)
+maType  i_type_3        = input.enum        (defval = maType.ema,   title = "Type",         group = g3)
+int     i_length3       = input.int         (defval = 50,           title = "Length",       group = g3, minval = 1)
+float   i_source3       = input.source      (defval = close,        title = "Source",       group = g3)
+int     i_offset3       = input.int         (defval = 0,            title = "Offset",       group = g3)
+string  i_timeframe3    = input.timeframe   (defval = "",           title = "Timeframe",    group = g3, tooltip = tt_timeframe)
 
-string  i_type_4        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g4)
-int     i_length4       = input.int         (defval = 100,      title = "Length", minval = 1,                                            group = g4)
-float   i_source4       = input.source      (defval = close,    title = "Source",                                               group = g4)
-int     i_offset4       = input.int         (defval = 0,        title = "Offset",                                               group = g4)
-string  i_timeframe4    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g4)
+maType  i_type_4        = input.enum        (defval = maType.ema,   title = "Type",         group = g4)
+int     i_length4       = input.int         (defval = 100,          title = "Length",       group = g4, minval = 1)
+float   i_source4       = input.source      (defval = close,        title = "Source",       group = g4)
+int     i_offset4       = input.int         (defval = 0,            title = "Offset",       group = g4)
+string  i_timeframe4    = input.timeframe   (defval = "",           title = "Timeframe",    group = g4, tooltip = tt_timeframe)
 
-string  i_type_5        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g5)
-int     i_length5       = input.int         (defval = 200,      title = "Length", minval = 1,                                            group = g5)
-float   i_source5       = input.source      (defval = close,    title = "Source",                                               group = g5)
-int     i_offset5       = input.int         (defval = 0,        title = "Offset",                                               group = g5)
-string  i_timeframe5    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g5)
+maType  i_type_5        = input.enum        (defval = maType.ema,   title = "Type",         group = g5)
+int     i_length5       = input.int         (defval = 200,          title = "Length",       group = g5, minval = 1)
+float   i_source5       = input.source      (defval = close,        title = "Source",       group = g5)
+int     i_offset5       = input.int         (defval = 0,            title = "Offset",       group = g5)
+string  i_timeframe5    = input.timeframe   (defval = "",           title = "Timeframe",    group = g5, tooltip = tt_timeframe)
 
-bool    i_enableGaps                = input.bool    (defval = true, title = "Wait for timeframe closes",            group = g6)
-bool    horizontalLevelsInput       = input.bool    (defval = true, title = "Horizontal Levels",                    group = g6) 
-int     horizontalOffsetStartInput  = input.int     (defval = 0,    title = "Offset 1",                             group = g6, minval = 0)
-int     horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2",                             group = g6, minval = 1)
+bool    i_enableGaps                = input.bool    (defval = true, title = "Wait for timeframe closes",    group = g6)
+bool    horizontalLevelsInput       = input.bool    (defval = true, title = "Horizontal Levels",            group = g6) 
+int     horizontalOffsetStartInput  = input.int     (defval = 0,    title = "Offset 1",                     group = g6, minval = 0)
+int     horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2",                     group = g6, minval = 1)
 
 //#endregion
 
@@ -89,13 +105,13 @@ int     horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Off
 
 // @function Get the Moving Average (MA)
 // @returns float
-getMa(string _type, float _source, _length) =>
+getMa(maType _type, float _source, _length) =>
     switch _type
-        "SMA"           => ta.sma(_source, _length)
-        "EMA"           => ta.ema(_source, _length)
-        "SMMA (RMA)"    => ta.rma(_source, _length)
-        "WMA"           => ta.wma(_source, _length)
-        "VWMA"          => ta.vwma(_source, _length)
+        maType.sma  => ta.sma(_source, _length)
+        maType.ema  => ta.ema(_source, _length)
+        maType.smma => ta.rma(_source, _length)
+        maType.wma  => ta.wma(_source, _length)
+        maType.vwma => ta.vwma(_source, _length)
 
 
 // @function Check if a timeframe is higher or equal than the chart's one
