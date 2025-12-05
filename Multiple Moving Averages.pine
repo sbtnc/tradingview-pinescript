@@ -18,7 +18,6 @@ var DEFAULT_COLOR2      = color.new(#a4c2f4, 4)
 var DEFAULT_COLOR3      = color.new(#6d9eeb, 8)
 var DEFAULT_COLOR4      = color.new(#3c78d8, 12)
 var DEFAULT_COLOR5      = color.new(#0b5394, 16)
-i_line_offset           = 0
 LINE_EXTEND             = extend.none
 LINE_STYLE              = line.style_dashed
 LINE_WIDTH              = 1
@@ -79,6 +78,9 @@ i_offset5       = input.int         (0,     "Offset",                           
 i_timeframe5    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g5)
 
 i_enableGaps    = input             (true,  "Wait for timeframe closes",                            group=g6)
+horizontalLevelsInput       = input.bool    (defval = true, title = "Horizontal Levels",                    group = g6) 
+horizontalOffsetStartInput  = input.int     (defval = 0,    title = "Offset 1",                             group = g6, minval = 0)
+horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2",                             group = g6, minval = 1)
 
 //#endregion
 
@@ -107,8 +109,8 @@ f_canDisplay(_tf) =>
 f_draw(_y, _color) =>
     // draw only when the MA price is not `na` (e.g. when MA period exceed the number of bars)
     if not na(_y)
-        _lineX1 = bar_index + i_line_offset
-        _lineX2 = _lineX1 +50
+        _lineX1 = bar_index + horizontalOffsetStartInput
+        _lineX2 = _lineX1 + horizontalOffsetEndInput
 
         var _line = line.new(
              _lineX1,
@@ -153,10 +155,11 @@ plot(f_canDisplay(i_timeframe3) ? ma3 : na, "#3", DEFAULT_COLOR3, DEFAULT_LINEWI
 plot(f_canDisplay(i_timeframe4) ? ma4 : na, "#4", DEFAULT_COLOR4, DEFAULT_LINEWIDTH, offset=i_offset4)
 plot(f_canDisplay(i_timeframe5) ? ma5 : na, "#5", DEFAULT_COLOR5, DEFAULT_LINEWIDTH, offset=i_offset5)
 
-f_draw(ma1, DEFAULT_COLOR1)
-f_draw(ma2, DEFAULT_COLOR2)
-f_draw(ma3, DEFAULT_COLOR3)
-f_draw(ma4, DEFAULT_COLOR4)
-f_draw(ma5, DEFAULT_COLOR5)
+if horizontalLevelsInput
+    f_draw(ma1, DEFAULT_COLOR1)
+    f_draw(ma2, DEFAULT_COLOR2)
+    f_draw(ma3, DEFAULT_COLOR3)
+    f_draw(ma4, DEFAULT_COLOR4)
+    f_draw(ma5, DEFAULT_COLOR5)
 
 //#endregion
