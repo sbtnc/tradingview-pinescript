@@ -61,30 +61,35 @@ string timeframeTooltip = "You can display a Moving Average from a higher timefr
 
 // Inputs.
 
+bool    enableInput1            = input.bool        (defval = true,         title = "Display",                      group = g1)
 maType  typeInput1              = input.enum        (defval = maType.ema,   title = "Type",                         group = g1)
 int     lengthInput1            = input.int         (defval = 9,            title = "Length",                       group = g1, minval = 1)
 float   sourceInput1            = input.source      (defval = close,        title = "Source",                       group = g1)
 int     offsetInput1            = input.int         (defval = 0,            title = "Offset",                       group = g1)
 string  timeframeInput1         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g1, tooltip = timeframeTooltip)
 
+bool    enableInput2            = input.bool        (defval = true,         title = "Display",                      group = g2)
 maType  typeInput2              = input.enum        (defval = maType.ema,   title = "Type",                         group = g2)
 int     lengthInput2            = input.int         (defval = 20,           title = "Length",                       group = g2, minval = 1)
 float   sourceInput2            = input.source      (defval = close,        title = "Source",                       group = g2)
 int     offsetInput2            = input.int         (defval = 0,            title = "Offset",                       group = g2)
 string  timeframeInput2         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g2, tooltip = timeframeTooltip)
 
+bool    enableInput3            = input.bool        (defval = true,         title = "Display",                      group = g3)
 maType  typeInput3              = input.enum        (defval = maType.ema,   title = "Type",                         group = g3)
 int     lengthInput3            = input.int         (defval = 50,           title = "Length",                       group = g3, minval = 1)
 float   sourceInput3            = input.source      (defval = close,        title = "Source",                       group = g3)
 int     offsetInput3            = input.int         (defval = 0,            title = "Offset",                       group = g3)
 string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, tooltip = timeframeTooltip)
 
+bool    enableInput4            = input.bool        (defval = true,         title = "Display",                      group = g4)
 maType  typeInput4              = input.enum        (defval = maType.ema,   title = "Type",                         group = g4)
 int     lengthInput4            = input.int         (defval = 100,          title = "Length",                       group = g4, minval = 1)
 float   sourceInput4            = input.source      (defval = close,        title = "Source",                       group = g4)
 int     offsetInput4            = input.int         (defval = 0,            title = "Offset",                       group = g4)
 string  timeframeInput4         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g4, tooltip = timeframeTooltip)
 
+bool    enableInput5            = input.bool        (defval = true,         title = "Display",                      group = g5)
 maType  typeInput5              = input.enum        (defval = maType.ema,   title = "Type",                         group = g5)
 int     lengthInput5            = input.int         (defval = 200,          title = "Length",                       group = g5, minval = 1)
 float   sourceInput5            = input.source      (defval = close,        title = "Source",                       group = g5)
@@ -151,11 +156,11 @@ draw(float y, color c) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-bool isVisible1 = canDisplay(timeframeInput1)
-bool isVisible2 = canDisplay(timeframeInput2)
-bool isVisible3 = canDisplay(timeframeInput3)
-bool isVisible4 = canDisplay(timeframeInput4)
-bool isVisible5 = canDisplay(timeframeInput5)
+bool isVisible1 = enableInput1 and canDisplay(timeframeInput1)
+bool isVisible2 = enableInput2 and canDisplay(timeframeInput2)
+bool isVisible3 = enableInput3 and canDisplay(timeframeInput3)
+bool isVisible4 = enableInput4 and canDisplay(timeframeInput4)
+bool isVisible5 = enableInput5 and canDisplay(timeframeInput5)
 
 //#endregion
 
@@ -179,11 +184,11 @@ float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expressio
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(series = isVisible1 ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput1)
-plot(series = isVisible2 ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput2)
-plot(series = isVisible3 ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput3)
-plot(series = isVisible4 ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput4)
-plot(series = isVisible5 ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput5)
+plot(series = isVisible1 ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput1, display = enableInput1 ? display.all : display.none)
+plot(series = isVisible2 ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput2, display = enableInput2 ? display.all : display.none)
+plot(series = isVisible3 ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput3, display = enableInput3 ? display.all : display.none)
+plot(series = isVisible4 ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput4, display = enableInput4 ? display.all : display.none)
+plot(series = isVisible5 ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput5, display = enableInput5 ? display.all : display.none)
 
 if showLevelsInput
     if isVisible1
