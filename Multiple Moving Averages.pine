@@ -61,40 +61,40 @@ string tt_timeframe = "You can display a Moving Average from a higher timeframe.
 
 // Inputs
 
-maType  i_type_1        = input.enum        (defval = maType.ema,   title = "Type",         group = g1)
-int     i_length1       = input.int         (defval = 9,            title = "Length",       group = g1, minval = 1)
-float   i_source1       = input.source      (defval = close,        title = "Source",       group = g1)
-int     i_offset1       = input.int         (defval = 0,            title = "Offset",       group = g1)
-string  i_timeframe1    = input.timeframe   (defval = "",           title = "Timeframe",    group = g1, tooltip = tt_timeframe)
+maType  typeInput1              = input.enum        (defval = maType.ema,   title = "Type",                         group = g1)
+int     lengthInput1            = input.int         (defval = 9,            title = "Length",                       group = g1, minval = 1)
+float   sourceInput1            = input.source      (defval = close,        title = "Source",                       group = g1)
+int     offsetInput1            = input.int         (defval = 0,            title = "Offset",                       group = g1)
+string  timeframeInput1         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g1, tooltip = tt_timeframe)
 
-maType  i_type_2        = input.enum        (defval = maType.ema,   title = "Type",         group = g2)
-int     i_length2       = input.int         (defval = 20,           title = "Length",       group = g2, minval = 1)
-float   i_source2       = input.source      (defval = close,        title = "Source",       group = g2)
-int     i_offset2       = input.int         (defval = 0,            title = "Offset",       group = g2)
-string  i_timeframe2    = input.timeframe   (defval = "",           title = "Timeframe",    group = g2, tooltip = tt_timeframe)
+maType  typeInput2              = input.enum        (defval = maType.ema,   title = "Type",                         group = g2)
+int     lengthInput2            = input.int         (defval = 20,           title = "Length",                       group = g2, minval = 1)
+float   sourceInput2            = input.source      (defval = close,        title = "Source",                       group = g2)
+int     offsetInput2            = input.int         (defval = 0,            title = "Offset",                       group = g2)
+string  timeframeInput2         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g2, tooltip = tt_timeframe)
 
-maType  i_type_3        = input.enum        (defval = maType.ema,   title = "Type",         group = g3)
-int     i_length3       = input.int         (defval = 50,           title = "Length",       group = g3, minval = 1)
-float   i_source3       = input.source      (defval = close,        title = "Source",       group = g3)
-int     i_offset3       = input.int         (defval = 0,            title = "Offset",       group = g3)
-string  i_timeframe3    = input.timeframe   (defval = "",           title = "Timeframe",    group = g3, tooltip = tt_timeframe)
+maType  typeInput3              = input.enum        (defval = maType.ema,   title = "Type",                         group = g3)
+int     lengthInput3            = input.int         (defval = 50,           title = "Length",                       group = g3, minval = 1)
+float   sourceInput3            = input.source      (defval = close,        title = "Source",                       group = g3)
+int     offsetInput3            = input.int         (defval = 0,            title = "Offset",                       group = g3)
+string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, tooltip = tt_timeframe)
 
-maType  i_type_4        = input.enum        (defval = maType.ema,   title = "Type",         group = g4)
-int     i_length4       = input.int         (defval = 100,          title = "Length",       group = g4, minval = 1)
-float   i_source4       = input.source      (defval = close,        title = "Source",       group = g4)
-int     i_offset4       = input.int         (defval = 0,            title = "Offset",       group = g4)
-string  i_timeframe4    = input.timeframe   (defval = "",           title = "Timeframe",    group = g4, tooltip = tt_timeframe)
+maType  typeInput4              = input.enum        (defval = maType.ema,   title = "Type",                         group = g4)
+int     lengthInput4            = input.int         (defval = 100,          title = "Length",                       group = g4, minval = 1)
+float   sourceInput4            = input.source      (defval = close,        title = "Source",                       group = g4)
+int     offsetInput4            = input.int         (defval = 0,            title = "Offset",                       group = g4)
+string  timeframeInput4         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g4, tooltip = tt_timeframe)
 
-maType  i_type_5        = input.enum        (defval = maType.ema,   title = "Type",         group = g5)
-int     i_length5       = input.int         (defval = 200,          title = "Length",       group = g5, minval = 1)
-float   i_source5       = input.source      (defval = close,        title = "Source",       group = g5)
-int     i_offset5       = input.int         (defval = 0,            title = "Offset",       group = g5)
-string  i_timeframe5    = input.timeframe   (defval = "",           title = "Timeframe",    group = g5, tooltip = tt_timeframe)
+maType  typeInput5              = input.enum        (defval = maType.ema,   title = "Type",                         group = g5)
+int     lengthInput5            = input.int         (defval = 200,          title = "Length",                       group = g5, minval = 1)
+float   sourceInput5            = input.source      (defval = close,        title = "Source",                       group = g5)
+int     offsetInput5            = input.int         (defval = 0,            title = "Offset",                       group = g5)
+string  timeframeInput5         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g5, tooltip = tt_timeframe)
 
-bool    i_enableGaps                = input.bool    (defval = true, title = "Wait for timeframe closes",    group = g6)
-bool    horizontalLevelsInput       = input.bool    (defval = true, title = "Horizontal Levels",            group = g6) 
-int     horizontalOffsetStartInput  = input.int     (defval = 0,    title = "Offset 1",                     group = g6, minval = 0)
-int     horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2",                     group = g6, minval = 1)
+bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
+bool    showLevelsInput         = input.bool        (defval = true,         title = "Horizontal Levels",            group = g6) 
+int     levelOffsetStartInput   = input.int         (defval = 0,            title = "Offset 1",                     group = g6, minval = 0)
+int     levelOffsetEndInput     = input.int         (defval = 50,           title = "Offset 2",                     group = g6, minval = 1)
 
 //#endregion
 
@@ -123,8 +123,8 @@ canDisplay(string tf) =>
 draw(float y, color c) =>
     // draw only when the MA price is not `na` (e.g. when MA period exceed the number of bars)
     if not na(y)
-        int _x1 = bar_index + horizontalOffsetStartInput
-        int _x2 = _x1 + horizontalOffsetEndInput
+        int _x1 = bar_index + levelOffsetStartInput
+        int _x2 = _x1 + levelOffsetEndInput
 
         var _line = line.new(
              x1     = _x1,
@@ -149,13 +149,13 @@ draw(float y, color c) =>
 //#region                         Logic
 //--------------------------------------------------------------------
 
-var gaps = i_enableGaps ? barmerge.gaps_on : barmerge.gaps_off
+var gaps = enableGapsInput ? barmerge.gaps_on : barmerge.gaps_off
 
-float ma1 = request.security(symbol = "", timeframe = i_timeframe1, expression = getMa(i_type_1, i_source1, i_length1), gaps = gaps)
-float ma2 = request.security(symbol = "", timeframe = i_timeframe2, expression = getMa(i_type_2, i_source2, i_length2), gaps = gaps)
-float ma3 = request.security(symbol = "", timeframe = i_timeframe3, expression = getMa(i_type_3, i_source3, i_length3), gaps = gaps)
-float ma4 = request.security(symbol = "", timeframe = i_timeframe4, expression = getMa(i_type_4, i_source4, i_length4), gaps = gaps)
-float ma5 = request.security(symbol = "", timeframe = i_timeframe5, expression = getMa(i_type_5, i_source5, i_length5), gaps = gaps)
+float ma1 = request.security(symbol = "", timeframe = timeframeInput1, expression = getMa(typeInput1, sourceInput1, lengthInput1), gaps = gaps)
+float ma2 = request.security(symbol = "", timeframe = timeframeInput2, expression = getMa(typeInput2, sourceInput2, lengthInput2), gaps = gaps)
+float ma3 = request.security(symbol = "", timeframe = timeframeInput3, expression = getMa(typeInput3, sourceInput3, lengthInput3), gaps = gaps)
+float ma4 = request.security(symbol = "", timeframe = timeframeInput4, expression = getMa(typeInput4, sourceInput4, lengthInput4), gaps = gaps)
+float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expression = getMa(typeInput5, sourceInput5, lengthInput5), gaps = gaps)
 
 //#endregion
 
@@ -164,13 +164,13 @@ float ma5 = request.security(symbol = "", timeframe = i_timeframe5, expression =
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(series = canDisplay(i_timeframe1) ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = i_offset1)
-plot(series = canDisplay(i_timeframe2) ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = i_offset2)
-plot(series = canDisplay(i_timeframe3) ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = i_offset3)
-plot(series = canDisplay(i_timeframe4) ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = i_offset4)
-plot(series = canDisplay(i_timeframe5) ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = i_offset5)
+plot(series = canDisplay(timeframeInput1) ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput1)
+plot(series = canDisplay(timeframeInput2) ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput2)
+plot(series = canDisplay(timeframeInput3) ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput3)
+plot(series = canDisplay(timeframeInput4) ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput4)
+plot(series = canDisplay(timeframeInput5) ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput5)
 
-if horizontalLevelsInput
+if showLevelsInput
     draw(ma1, DEFAULT_COLOR1)
     draw(ma2, DEFAULT_COLOR2)
     draw(ma3, DEFAULT_COLOR3)
