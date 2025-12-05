@@ -148,6 +148,19 @@ draw(float y, color c) =>
 
 
 //--------------------------------------------------------------------
+//#region                 Variables declarations
+//--------------------------------------------------------------------
+
+bool isVisible1 = canDisplay(timeframeInput1)
+bool isVisible2 = canDisplay(timeframeInput2)
+bool isVisible3 = canDisplay(timeframeInput3)
+bool isVisible4 = canDisplay(timeframeInput4)
+bool isVisible5 = canDisplay(timeframeInput5)
+
+//#endregion
+
+
+//--------------------------------------------------------------------
 //#region                         Logic
 //--------------------------------------------------------------------
 
@@ -166,17 +179,22 @@ float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expressio
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(series = canDisplay(timeframeInput1) ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput1)
-plot(series = canDisplay(timeframeInput2) ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput2)
-plot(series = canDisplay(timeframeInput3) ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput3)
-plot(series = canDisplay(timeframeInput4) ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput4)
-plot(series = canDisplay(timeframeInput5) ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput5)
+plot(series = isVisible1 ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput1)
+plot(series = isVisible2 ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput2)
+plot(series = isVisible3 ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput3)
+plot(series = isVisible4 ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput4)
+plot(series = isVisible5 ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput5)
 
 if showLevelsInput
-    draw(ma1, DEFAULT_COLOR1)
-    draw(ma2, DEFAULT_COLOR2)
-    draw(ma3, DEFAULT_COLOR3)
-    draw(ma4, DEFAULT_COLOR4)
-    draw(ma5, DEFAULT_COLOR5)
+    if isVisible1
+        draw(ma1, DEFAULT_COLOR1)
+    if isVisible2
+        draw(ma2, DEFAULT_COLOR2)
+    if isVisible3    
+        draw(ma3, DEFAULT_COLOR3)
+    if isVisible4
+        draw(ma4, DEFAULT_COLOR4)
+    if isVisible5
+        draw(ma5, DEFAULT_COLOR5)
 
 //#endregion
