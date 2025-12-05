@@ -12,15 +12,15 @@ indicator(title = "Multiple Moving Averages", shorttitle = "MAs", overlay = true
 //#region                      Constants
 //--------------------------------------------------------------------
 
-int     DEFAULT_LINEWIDTH   = 1
-color   DEFAULT_COLOR1      = color.new(#c9daf8, 0)
-color   DEFAULT_COLOR2      = color.new(#a4c2f4, 4)
-color   DEFAULT_COLOR3      = color.new(#6d9eeb, 8)
-color   DEFAULT_COLOR4      = color.new(#3c78d8, 12)
-color   DEFAULT_COLOR5      = color.new(#0b5394, 16)
-string  LINE_EXTEND         = extend.none
-string  LINE_STYLE          = line.style_dashed
-int     LINE_WIDTH          = 1
+color   COLOR1          = color.new(#c9daf8, 0)
+color   COLOR2          = color.new(#a4c2f4, 4)
+color   COLOR3          = color.new(#6d9eeb, 8)
+color   COLOR4          = color.new(#3c78d8, 12)
+color   COLOR5          = color.new(#0b5394, 16)
+int     PLOT_LINEWIDTH  = 1
+string  LINE_EXTEND     = extend.none
+string  LINE_STYLE      = line.style_dashed
+int     LINE_WIDTH      = 1
 
 //#endregion
 
@@ -38,7 +38,6 @@ enum maType
     vwma    = "VWMA"
 
 //#endregion
-
 
 
 //--------------------------------------------------------------------
@@ -67,6 +66,7 @@ int     lengthInput1            = input.int         (defval = 9,            titl
 float   sourceInput1            = input.source      (defval = close,        title = "Source",                       group = g1, active = enableInput1)
 int     offsetInput1            = input.int         (defval = 0,            title = "Offset",                       group = g1, active = enableInput1)
 string  timeframeInput1         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g1, active = enableInput1, tooltip = timeframeTooltip)
+color   colorInput1             = input.color       (defval = COLOR1,       title = "Color",                        group = g1, active = enableInput1)
 
 bool    enableInput2            = input.bool        (defval = true,         title = "Display",                      group = g2)
 maType  typeInput2              = input.enum        (defval = maType.ema,   title = "Type",                         group = g2, active = enableInput2)
@@ -74,6 +74,7 @@ int     lengthInput2            = input.int         (defval = 20,           titl
 float   sourceInput2            = input.source      (defval = close,        title = "Source",                       group = g2, active = enableInput2)
 int     offsetInput2            = input.int         (defval = 0,            title = "Offset",                       group = g2, active = enableInput2)
 string  timeframeInput2         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g2, active = enableInput2, tooltip = timeframeTooltip)
+color   colorInput2             = input.color       (defval = COLOR2,       title = "Color",                        group = g2, active = enableInput2)
 
 bool    enableInput3            = input.bool        (defval = true,         title = "Display",                      group = g3)
 maType  typeInput3              = input.enum        (defval = maType.ema,   title = "Type",                         group = g3, active = enableInput3)
@@ -81,6 +82,7 @@ int     lengthInput3            = input.int         (defval = 50,           titl
 float   sourceInput3            = input.source      (defval = close,        title = "Source",                       group = g3, active = enableInput3)
 int     offsetInput3            = input.int         (defval = 0,            title = "Offset",                       group = g3, active = enableInput3)
 string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, active = enableInput3, tooltip = timeframeTooltip)
+color   colorInput3             = input.color       (defval = COLOR3,       title = "Color",                        group = g3, active = enableInput3)
 
 bool    enableInput4            = input.bool        (defval = true,         title = "Display",                      group = g4)
 maType  typeInput4              = input.enum        (defval = maType.ema,   title = "Type",                         group = g4, active = enableInput4)
@@ -88,6 +90,7 @@ int     lengthInput4            = input.int         (defval = 100,          titl
 float   sourceInput4            = input.source      (defval = close,        title = "Source",                       group = g4, active = enableInput4)
 int     offsetInput4            = input.int         (defval = 0,            title = "Offset",                       group = g4, active = enableInput4)
 string  timeframeInput4         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g4, active = enableInput4, tooltip = timeframeTooltip)
+color   colorInput4             = input.color       (defval = COLOR4,       title = "Color",                        group = g4, active = enableInput4)
 
 bool    enableInput5            = input.bool        (defval = true,         title = "Display",                      group = g5)
 maType  typeInput5              = input.enum        (defval = maType.ema,   title = "Type",                         group = g5, active = enableInput5)
@@ -95,6 +98,7 @@ int     lengthInput5            = input.int         (defval = 200,          titl
 float   sourceInput5            = input.source      (defval = close,        title = "Source",                       group = g5, active = enableInput5)
 int     offsetInput5            = input.int         (defval = 0,            title = "Offset",                       group = g5, active = enableInput5)
 string  timeframeInput5         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g5, active = enableInput5, tooltip = timeframeTooltip)
+color   colorInput5             = input.color       (defval = COLOR5,       title = "Color",                        group = g5, active = enableInput5)
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
 bool    showLevelsInput         = input.bool        (defval = true,         title = "Horizontal Levels",            group = g6) 
@@ -184,22 +188,22 @@ float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expressio
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(series = isVisible1 ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput1, display = enableInput1 ? display.all : display.none)
-plot(series = isVisible2 ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput2, display = enableInput2 ? display.all : display.none)
-plot(series = isVisible3 ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput3, display = enableInput3 ? display.all : display.none)
-plot(series = isVisible4 ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput4, display = enableInput4 ? display.all : display.none)
-plot(series = isVisible5 ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = offsetInput5, display = enableInput5 ? display.all : display.none)
+plot(series = isVisible1 ? ma1 : na, title = "Plot #1", color = colorInput1, linewidth = PLOT_LINEWIDTH, offset = offsetInput1, display = enableInput1 ? display.all : display.none)
+plot(series = isVisible2 ? ma2 : na, title = "Plot #2", color = colorInput2, linewidth = PLOT_LINEWIDTH, offset = offsetInput2, display = enableInput2 ? display.all : display.none)
+plot(series = isVisible3 ? ma3 : na, title = "Plot #3", color = colorInput3, linewidth = PLOT_LINEWIDTH, offset = offsetInput3, display = enableInput3 ? display.all : display.none)
+plot(series = isVisible4 ? ma4 : na, title = "Plot #4", color = colorInput4, linewidth = PLOT_LINEWIDTH, offset = offsetInput4, display = enableInput4 ? display.all : display.none)
+plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, linewidth = PLOT_LINEWIDTH, offset = offsetInput5, display = enableInput5 ? display.all : display.none)
 
 if showLevelsInput
     if isVisible1
-        draw(ma1, DEFAULT_COLOR1)
+        draw(ma1, colorInput1)
     if isVisible2
-        draw(ma2, DEFAULT_COLOR2)
+        draw(ma2, colorInput2)
     if isVisible3    
-        draw(ma3, DEFAULT_COLOR3)
+        draw(ma3, colorInput3)
     if isVisible4
-        draw(ma4, DEFAULT_COLOR4)
+        draw(ma4, colorInput4)
     if isVisible5
-        draw(ma5, DEFAULT_COLOR5)
+        draw(ma5, colorInput5)
 
 //#endregion
