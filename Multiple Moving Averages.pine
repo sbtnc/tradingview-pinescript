@@ -5,22 +5,22 @@
 // Version 3.0
 
 // @version=6
-indicator("Multiple Moving Averages", "MAs", true)
+indicator(title = "Multiple Moving Averages", shorttitle = "MAs", overlay = true)
 
 
 //--------------------------------------------------------------------
 //#region                      Constants
 //--------------------------------------------------------------------
 
-var DEFAULT_LINEWIDTH   = 1
-var DEFAULT_COLOR1      = color.new(#c9daf8, 0)
-var DEFAULT_COLOR2      = color.new(#a4c2f4, 4)
-var DEFAULT_COLOR3      = color.new(#6d9eeb, 8)
-var DEFAULT_COLOR4      = color.new(#3c78d8, 12)
-var DEFAULT_COLOR5      = color.new(#0b5394, 16)
-LINE_EXTEND             = extend.none
-LINE_STYLE              = line.style_dashed
-LINE_WIDTH              = 1
+int     DEFAULT_LINEWIDTH   = 1
+color   DEFAULT_COLOR1      = color.new(#c9daf8, 0)
+color   DEFAULT_COLOR2      = color.new(#a4c2f4, 4)
+color   DEFAULT_COLOR3      = color.new(#6d9eeb, 8)
+color   DEFAULT_COLOR4      = color.new(#3c78d8, 12)
+color   DEFAULT_COLOR5      = color.new(#0b5394, 16)
+string  LINE_EXTEND         = extend.none
+string  LINE_STYLE          = line.style_dashed
+int     LINE_WIDTH          = 1
 
 //#endregion
 
@@ -31,56 +31,54 @@ LINE_WIDTH              = 1
 
 // Groups
 
-g1 = "#1"
-g2 = "#2"
-g3 = "#3"
-g4 = "#4"
-g5 = "#5"
-g6 = "Preferences"
-
+string g1 = "#1"
+string g2 = "#2"
+string g3 = "#3"
+string g4 = "#4"
+string g5 = "#5"
+string g6 = "Preferences"
 
 // Tooltips
 
-tt_timeframe    = "You can display a Moving Average from a higher timeframe. " +
+string tt_timeframe = "You can display a Moving Average from a higher timeframe. " +
                      "Note: It will be automatically hidden when switching the chart to a timeframe higher than its timeframe."
-
 
 // Inputs
 
-i_type_1        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g1)
-i_length1       = input.int         (9,     "Length", 1,                                            group=g1)
-i_source1       = input             (close, "Source",                                               group=g1)
-i_offset1       = input.int         (0,     "Offset",                                               group=g1)
-i_timeframe1    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g1)
+string  i_type_1        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g1)
+int     i_length1       = input.int         (defval = 9,        title = "Length", minval = 1,                                            group = g1)
+float   i_source1       = input.source      (defval = close,    title = "Source",                                               group = g1)
+int     i_offset1       = input.int         (defval = 0,        title = "Offset",                                               group = g1)
+string  i_timeframe1    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g1)
 
-i_type_2        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g2)
-i_length2       = input.int         (20,    "Length", 1,                                            group=g2)
-i_source2       = input             (close, "Source",                                               group=g2)
-i_offset2       = input.int         (0,     "Offset",                                               group=g2)
-i_timeframe2    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g2)
+string  i_type_2        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g2)
+int     i_length2       = input.int         (defval = 20,       title = "Length", minval = 1,                                            group = g2)
+float   i_source2       = input.source      (defval = close,    title = "Source",                                               group = g2)
+int     i_offset2       = input.int         (defval = 0,        title = "Offset",                                               group = g2)
+string  i_timeframe2    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g2)
 
-i_type_3        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g3)
-i_length3       = input.int         (50,    "Length", 1,                                            group=g3)
-i_source3       = input             (close, "Source",                                               group=g3)
-i_offset3       = input.int         (0,     "Offset",                                               group=g3)
-i_timeframe3    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g3)
+string  i_type_3        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g3)
+int     i_length3       = input.int         (defval = 50,       title = "Length", minval = 1,                                            group = g3)
+float   i_source3       = input.source      (defval = close,    title = "Source",                                               group = g3)
+int     i_offset3       = input.int         (defval = 0,        title = "Offset",                                               group = g3)
+string  i_timeframe3    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g3)
 
-i_type_4        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g4)
-i_length4       = input.int         (100,   "Length", 1,                                            group=g4)
-i_source4       = input             (close, "Source",                                               group=g4)
-i_offset4       = input.int         (0,     "Offset",                                               group=g4)
-i_timeframe4    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g4)
+string  i_type_4        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g4)
+int     i_length4       = input.int         (defval = 100,      title = "Length", minval = 1,                                            group = g4)
+float   i_source4       = input.source      (defval = close,    title = "Source",                                               group = g4)
+int     i_offset4       = input.int         (defval = 0,        title = "Offset",                                               group = g4)
+string  i_timeframe4    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g4)
 
-i_type_5        = input.string      ("EMA", "Type", ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group=g5)
-i_length5       = input.int         (200,   "Length", 1,                                            group=g5)
-i_source5       = input             (close, "Source",                                               group=g5)
-i_offset5       = input.int         (0,     "Offset",                                               group=g5)
-i_timeframe5    = input.timeframe   ("",    "Timeframe", tooltip=tt_timeframe,                      group=g5)
+string  i_type_5        = input.string      (defval = "EMA",    title = "Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"],    group = g5)
+int     i_length5       = input.int         (defval = 200,      title = "Length", minval = 1,                                            group = g5)
+float   i_source5       = input.source      (defval = close,    title = "Source",                                               group = g5)
+int     i_offset5       = input.int         (defval = 0,        title = "Offset",                                               group = g5)
+string  i_timeframe5    = input.timeframe   (defval = "",       title = "Timeframe", tooltip = tt_timeframe,                    group = g5)
 
-i_enableGaps    = input             (true,  "Wait for timeframe closes",                            group=g6)
-horizontalLevelsInput       = input.bool    (defval = true, title = "Horizontal Levels",                    group = g6) 
-horizontalOffsetStartInput  = input.int     (defval = 0,    title = "Offset 1",                             group = g6, minval = 0)
-horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2",                             group = g6, minval = 1)
+bool    i_enableGaps                = input.bool    (defval = true, title = "Wait for timeframe closes",            group = g6)
+bool    horizontalLevelsInput       = input.bool    (defval = true, title = "Horizontal Levels",                    group = g6) 
+int     horizontalOffsetStartInput  = input.int     (defval = 0,    title = "Offset 1",                             group = g6, minval = 0)
+int     horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2",                             group = g6, minval = 1)
 
 //#endregion
 
@@ -91,7 +89,7 @@ horizontalOffsetEndInput    = input.int     (defval = 50,   title = "Offset 2", 
 
 // @function Get the Moving Average (MA)
 // @returns float
-f_getMa(string _type, float _source, _length) =>
+getMa(string _type, float _source, _length) =>
     switch _type
         "SMA"           => ta.sma(_source, _length)
         "EMA"           => ta.ema(_source, _length)
@@ -102,30 +100,31 @@ f_getMa(string _type, float _source, _length) =>
 
 // @function Check if a timeframe is higher or equal than the chart's one
 // @returns bool
-f_canDisplay(_tf) =>
-    timeframe.in_seconds(_tf) >= timeframe.in_seconds()
+canDisplay(string tf) =>
+    timeframe.in_seconds(tf) >= timeframe.in_seconds()
 
 
-f_draw(_y, _color) =>
+draw(float y, color c) =>
     // draw only when the MA price is not `na` (e.g. when MA period exceed the number of bars)
-    if not na(_y)
-        _lineX1 = bar_index + horizontalOffsetStartInput
-        _lineX2 = _lineX1 + horizontalOffsetEndInput
+    if not na(y)
+        int _x1 = bar_index + horizontalOffsetStartInput
+        int _x2 = _x1 + horizontalOffsetEndInput
 
         var _line = line.new(
-             _lineX1,
-             _y, 
-             _lineX2, 
-             _y, 
-             xloc.bar_index, 
-             LINE_EXTEND, 
-             _color, 
-             LINE_STYLE, 
-             LINE_WIDTH)
+             x1     = _x1,
+             y1     = y, 
+             x2     = _x2, 
+             y2     = y, 
+             xloc   = xloc.bar_index, 
+             extend = LINE_EXTEND, 
+             color  = c, 
+             style  = LINE_STYLE, 
+             width  = LINE_WIDTH
+             )
         
         if barstate.islast
-            line.set_xy1(_line, _lineX1, _y)
-            line.set_xy2(_line, _lineX2, _y)
+            line.set_xy1(_line, _x1, y)
+            line.set_xy2(_line, _x2, y)
 
 //#endregion
 
@@ -136,11 +135,11 @@ f_draw(_y, _color) =>
 
 var gaps = i_enableGaps ? barmerge.gaps_on : barmerge.gaps_off
 
-ma1 = request.security(syminfo.tickerid, i_timeframe1, f_getMa(i_type_1, i_source1, i_length1), gaps=gaps)
-ma2 = request.security(syminfo.tickerid, i_timeframe2, f_getMa(i_type_2, i_source2, i_length2), gaps=gaps)
-ma3 = request.security(syminfo.tickerid, i_timeframe3, f_getMa(i_type_3, i_source3, i_length3), gaps=gaps)
-ma4 = request.security(syminfo.tickerid, i_timeframe4, f_getMa(i_type_4, i_source4, i_length4), gaps=gaps)
-ma5 = request.security(syminfo.tickerid, i_timeframe5, f_getMa(i_type_5, i_source5, i_length5), gaps=gaps)
+float ma1 = request.security(symbol = "", timeframe = i_timeframe1, expression = getMa(i_type_1, i_source1, i_length1), gaps = gaps)
+float ma2 = request.security(symbol = "", timeframe = i_timeframe2, expression = getMa(i_type_2, i_source2, i_length2), gaps = gaps)
+float ma3 = request.security(symbol = "", timeframe = i_timeframe3, expression = getMa(i_type_3, i_source3, i_length3), gaps = gaps)
+float ma4 = request.security(symbol = "", timeframe = i_timeframe4, expression = getMa(i_type_4, i_source4, i_length4), gaps = gaps)
+float ma5 = request.security(symbol = "", timeframe = i_timeframe5, expression = getMa(i_type_5, i_source5, i_length5), gaps = gaps)
 
 //#endregion
 
@@ -149,17 +148,17 @@ ma5 = request.security(syminfo.tickerid, i_timeframe5, f_getMa(i_type_5, i_sourc
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(f_canDisplay(i_timeframe1) ? ma1 : na, "#1", DEFAULT_COLOR1, DEFAULT_LINEWIDTH, offset=i_offset1)
-plot(f_canDisplay(i_timeframe2) ? ma2 : na, "#2", DEFAULT_COLOR2, DEFAULT_LINEWIDTH, offset=i_offset2)
-plot(f_canDisplay(i_timeframe3) ? ma3 : na, "#3", DEFAULT_COLOR3, DEFAULT_LINEWIDTH, offset=i_offset3)
-plot(f_canDisplay(i_timeframe4) ? ma4 : na, "#4", DEFAULT_COLOR4, DEFAULT_LINEWIDTH, offset=i_offset4)
-plot(f_canDisplay(i_timeframe5) ? ma5 : na, "#5", DEFAULT_COLOR5, DEFAULT_LINEWIDTH, offset=i_offset5)
+plot(series = canDisplay(i_timeframe1) ? ma1 : na, title = "#1", color = DEFAULT_COLOR1, linewidth = DEFAULT_LINEWIDTH, offset = i_offset1)
+plot(series = canDisplay(i_timeframe2) ? ma2 : na, title = "#2", color = DEFAULT_COLOR2, linewidth = DEFAULT_LINEWIDTH, offset = i_offset2)
+plot(series = canDisplay(i_timeframe3) ? ma3 : na, title = "#3", color = DEFAULT_COLOR3, linewidth = DEFAULT_LINEWIDTH, offset = i_offset3)
+plot(series = canDisplay(i_timeframe4) ? ma4 : na, title = "#4", color = DEFAULT_COLOR4, linewidth = DEFAULT_LINEWIDTH, offset = i_offset4)
+plot(series = canDisplay(i_timeframe5) ? ma5 : na, title = "#5", color = DEFAULT_COLOR5, linewidth = DEFAULT_LINEWIDTH, offset = i_offset5)
 
 if horizontalLevelsInput
-    f_draw(ma1, DEFAULT_COLOR1)
-    f_draw(ma2, DEFAULT_COLOR2)
-    f_draw(ma3, DEFAULT_COLOR3)
-    f_draw(ma4, DEFAULT_COLOR4)
-    f_draw(ma5, DEFAULT_COLOR5)
+    draw(ma1, DEFAULT_COLOR1)
+    draw(ma2, DEFAULT_COLOR2)
+    draw(ma3, DEFAULT_COLOR3)
+    draw(ma4, DEFAULT_COLOR4)
+    draw(ma5, DEFAULT_COLOR5)
 
 //#endregion
