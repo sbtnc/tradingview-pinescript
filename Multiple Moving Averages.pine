@@ -45,7 +45,7 @@ enum maType
 //#region                        Inputs
 //--------------------------------------------------------------------
 
-// Groups
+// Groups.
 
 string g1 = "#1"
 string g2 = "#2"
@@ -54,12 +54,12 @@ string g4 = "#4"
 string g5 = "#5"
 string g6 = "Preferences"
 
-// Tooltips
+// Tooltips.
 
 string timeframeTooltip = "You can display a Moving Average from a higher timeframe. " +
                      "Note: It will be automatically hidden when switching the chart to a timeframe higher than its timeframe."
 
-// Inputs
+// Inputs.
 
 maType  typeInput1              = input.enum        (defval = maType.ema,   title = "Type",                         group = g1)
 int     lengthInput1            = input.int         (defval = 9,            title = "Length",                       group = g1, minval = 1)
@@ -103,9 +103,9 @@ int     levelOffsetEndInput     = input.int         (defval = 50,           titl
 //#region                       Functions 
 //--------------------------------------------------------------------
 
-// @function Get the Moving Average (MA)
-// @returns float
-method get(simple maType this, float source, length) =>
+// @function Gets the selected Moving Average (MA).
+// @returns  float
+method get(simple maType this, series float source, simple int length) =>
     switch this
         maType.sma  => ta.sma (source, length)
         maType.ema  => ta.ema (source, length)
@@ -114,14 +114,16 @@ method get(simple maType this, float source, length) =>
         maType.vwma => ta.vwma(source, length)
 
 
-// @function Check if a timeframe is higher or equal than the chart's one
-// @returns bool
+// @function Checks if the specified timeframe is higher or equal than the chart context.
+// @returns  bool
 canDisplay(string tf) =>
     timeframe.in_seconds(tf) >= timeframe.in_seconds()
 
 
+// @function Creates and updates the horizontal levels.
+// @returns  void
 draw(float y, color c) =>
-    // draw only when the MA price is not `na` (e.g. when MA period exceed the number of bars)
+    // Draws only when `y` is defined (e.g. when the MA's period exceed the number of bars).
     if not na(y)
         int _x1 = bar_index + levelOffsetStartInput
         int _x2 = _x1 + levelOffsetEndInput
