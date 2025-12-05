@@ -56,7 +56,7 @@ string g6 = "Preferences"
 
 // Tooltips
 
-string tt_timeframe = "You can display a Moving Average from a higher timeframe. " +
+string timeframeTooltip = "You can display a Moving Average from a higher timeframe. " +
                      "Note: It will be automatically hidden when switching the chart to a timeframe higher than its timeframe."
 
 // Inputs
@@ -65,31 +65,31 @@ maType  typeInput1              = input.enum        (defval = maType.ema,   titl
 int     lengthInput1            = input.int         (defval = 9,            title = "Length",                       group = g1, minval = 1)
 float   sourceInput1            = input.source      (defval = close,        title = "Source",                       group = g1)
 int     offsetInput1            = input.int         (defval = 0,            title = "Offset",                       group = g1)
-string  timeframeInput1         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g1, tooltip = tt_timeframe)
+string  timeframeInput1         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g1, tooltip = timeframeTooltip)
 
 maType  typeInput2              = input.enum        (defval = maType.ema,   title = "Type",                         group = g2)
 int     lengthInput2            = input.int         (defval = 20,           title = "Length",                       group = g2, minval = 1)
 float   sourceInput2            = input.source      (defval = close,        title = "Source",                       group = g2)
 int     offsetInput2            = input.int         (defval = 0,            title = "Offset",                       group = g2)
-string  timeframeInput2         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g2, tooltip = tt_timeframe)
+string  timeframeInput2         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g2, tooltip = timeframeTooltip)
 
 maType  typeInput3              = input.enum        (defval = maType.ema,   title = "Type",                         group = g3)
 int     lengthInput3            = input.int         (defval = 50,           title = "Length",                       group = g3, minval = 1)
 float   sourceInput3            = input.source      (defval = close,        title = "Source",                       group = g3)
 int     offsetInput3            = input.int         (defval = 0,            title = "Offset",                       group = g3)
-string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, tooltip = tt_timeframe)
+string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, tooltip = timeframeTooltip)
 
 maType  typeInput4              = input.enum        (defval = maType.ema,   title = "Type",                         group = g4)
 int     lengthInput4            = input.int         (defval = 100,          title = "Length",                       group = g4, minval = 1)
 float   sourceInput4            = input.source      (defval = close,        title = "Source",                       group = g4)
 int     offsetInput4            = input.int         (defval = 0,            title = "Offset",                       group = g4)
-string  timeframeInput4         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g4, tooltip = tt_timeframe)
+string  timeframeInput4         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g4, tooltip = timeframeTooltip)
 
 maType  typeInput5              = input.enum        (defval = maType.ema,   title = "Type",                         group = g5)
 int     lengthInput5            = input.int         (defval = 200,          title = "Length",                       group = g5, minval = 1)
 float   sourceInput5            = input.source      (defval = close,        title = "Source",                       group = g5)
 int     offsetInput5            = input.int         (defval = 0,            title = "Offset",                       group = g5)
-string  timeframeInput5         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g5, tooltip = tt_timeframe)
+string  timeframeInput5         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g5, tooltip = timeframeTooltip)
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
 bool    showLevelsInput         = input.bool        (defval = true,         title = "Horizontal Levels",            group = g6) 
@@ -105,13 +105,13 @@ int     levelOffsetEndInput     = input.int         (defval = 50,           titl
 
 // @function Get the Moving Average (MA)
 // @returns float
-getMa(maType _type, float _source, _length) =>
-    switch _type
-        maType.sma  => ta.sma(_source, _length)
-        maType.ema  => ta.ema(_source, _length)
-        maType.smma => ta.rma(_source, _length)
-        maType.wma  => ta.wma(_source, _length)
-        maType.vwma => ta.vwma(_source, _length)
+method get(simple maType this, float source, length) =>
+    switch this
+        maType.sma  => ta.sma (source, length)
+        maType.ema  => ta.ema (source, length)
+        maType.smma => ta.rma (source, length)
+        maType.wma  => ta.wma (source, length)
+        maType.vwma => ta.vwma(source, length)
 
 
 // @function Check if a timeframe is higher or equal than the chart's one
@@ -151,11 +151,11 @@ draw(float y, color c) =>
 
 var gaps = enableGapsInput ? barmerge.gaps_on : barmerge.gaps_off
 
-float ma1 = request.security(symbol = "", timeframe = timeframeInput1, expression = getMa(typeInput1, sourceInput1, lengthInput1), gaps = gaps)
-float ma2 = request.security(symbol = "", timeframe = timeframeInput2, expression = getMa(typeInput2, sourceInput2, lengthInput2), gaps = gaps)
-float ma3 = request.security(symbol = "", timeframe = timeframeInput3, expression = getMa(typeInput3, sourceInput3, lengthInput3), gaps = gaps)
-float ma4 = request.security(symbol = "", timeframe = timeframeInput4, expression = getMa(typeInput4, sourceInput4, lengthInput4), gaps = gaps)
-float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expression = getMa(typeInput5, sourceInput5, lengthInput5), gaps = gaps)
+float ma1 = request.security(symbol = "", timeframe = timeframeInput1, expression = typeInput1.get(sourceInput1, lengthInput1), gaps = gaps)
+float ma2 = request.security(symbol = "", timeframe = timeframeInput2, expression = typeInput2.get(sourceInput2, lengthInput2), gaps = gaps)
+float ma3 = request.security(symbol = "", timeframe = timeframeInput3, expression = typeInput3.get(sourceInput3, lengthInput3), gaps = gaps)
+float ma4 = request.security(symbol = "", timeframe = timeframeInput4, expression = typeInput4.get(sourceInput4, lengthInput4), gaps = gaps)
+float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expression = typeInput5.get(sourceInput5, lengthInput5), gaps = gaps)
 
 //#endregion
 
