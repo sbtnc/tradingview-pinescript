@@ -129,7 +129,7 @@ method get(simple maType this, series float source, simple int length) =>
 
 // @function Checks if the specified timeframe is higher or equal than the chart context.
 // @returns  bool
-canDisplay(string tf) =>
+isVisible(string tf) =>
     timeframe.in_seconds(tf) >= timeframe.in_seconds()
 
 
@@ -164,11 +164,11 @@ draw(float y, color c, int offset, int width) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-bool isVisible1 = enableInput1 and canDisplay(timeframeInput1)
-bool isVisible2 = enableInput2 and canDisplay(timeframeInput2)
-bool isVisible3 = enableInput3 and canDisplay(timeframeInput3)
-bool isVisible4 = enableInput4 and canDisplay(timeframeInput4)
-bool isVisible5 = enableInput5 and canDisplay(timeframeInput5)
+bool isVisible1 = isVisible(timeframeInput1)
+bool isVisible2 = isVisible(timeframeInput2)
+bool isVisible3 = isVisible(timeframeInput3)
+bool isVisible4 = isVisible(timeframeInput4)
+bool isVisible5 = isVisible(timeframeInput5)
 
 //#endregion
 
@@ -189,29 +189,32 @@ float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expressio
 
 
 //--------------------------------------------------------------------
-//#region                   Plotting & styling
+//#region                        Visuals
 //--------------------------------------------------------------------
+
+// Plots.
 
 displayOption1  = display.all
 displayOption2  = display.all - display.pane
-displayControls = showPlotsInput ? displayOption1 : displayOption2
 
-plot(series = isVisible1 ? ma1 : na, title = "Plot #1", color = colorInput1, linewidth = linewidth1, offset = offsetInput1, display = enableInput1 ? displayControls : display.none)
-plot(series = isVisible2 ? ma2 : na, title = "Plot #2", color = colorInput2, linewidth = linewidth2, offset = offsetInput2, display = enableInput2 ? displayControls : display.none)
-plot(series = isVisible3 ? ma3 : na, title = "Plot #3", color = colorInput3, linewidth = linewidth3, offset = offsetInput3, display = enableInput3 ? displayControls : display.none)
-plot(series = isVisible4 ? ma4 : na, title = "Plot #4", color = colorInput4, linewidth = linewidth4, offset = offsetInput4, display = enableInput4 ? displayControls : display.none)
-plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, linewidth = linewidth5, offset = offsetInput5, display = enableInput5 ? displayControls : display.none)
+plot(series = isVisible1 ? ma1 : na, title = "Plot #1", color = colorInput1, linewidth = linewidth1, offset = offsetInput1, display = enableInput1 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
+plot(series = isVisible2 ? ma2 : na, title = "Plot #2", color = colorInput2, linewidth = linewidth2, offset = offsetInput2, display = enableInput2 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
+plot(series = isVisible3 ? ma3 : na, title = "Plot #3", color = colorInput3, linewidth = linewidth3, offset = offsetInput3, display = enableInput3 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
+plot(series = isVisible4 ? ma4 : na, title = "Plot #4", color = colorInput4, linewidth = linewidth4, offset = offsetInput4, display = enableInput4 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
+plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, linewidth = linewidth5, offset = offsetInput5, display = enableInput5 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
+
+// Lines.
 
 if showLevelsInput
-    if isVisible1
+    if enableInput1 and isVisible1
         draw(ma1, colorInput1, offsetInput1, linewidth1)
-    if isVisible2
+    if enableInput2 and isVisible2
         draw(ma2, colorInput2, offsetInput2, linewidth2)
-    if isVisible3    
+    if enableInput3 and isVisible3    
         draw(ma3, colorInput3, offsetInput3, linewidth3)
-    if isVisible4
+    if enableInput4 and isVisible4
         draw(ma4, colorInput4, offsetInput4, linewidth4)
-    if isVisible5
+    if enableInput5 and isVisible5
         draw(ma5, colorInput5, offsetInput5, linewidth5)
 
 //#endregion
