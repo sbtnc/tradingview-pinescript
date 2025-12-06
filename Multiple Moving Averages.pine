@@ -83,7 +83,7 @@ float   sourceInput3            = input.source      (defval = close,        titl
 int     offsetInput3            = input.int         (defval = 0,            title = "Offset",                       group = g3, active = enableInput3)
 string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, active = enableInput3, tooltip = timeframeTooltip)
 color   colorInput3             = input.color       (defval = COLOR3,       title = "Color",                        group = g3, active = enableInput3)
-int     linewidth3              = input.int         (defval = 3,            title = "Width",                        group = g3, active = enableInput3)
+int     linewidth3              = input.int         (defval = 1,            title = "Width",                        group = g3, active = enableInput3)
 
 bool    enableInput4            = input.bool        (defval = true,         title = "Display",                      group = g4)
 maType  typeInput4              = input.enum        (defval = maType.ema,   title = "Type",                         group = g4, active = enableInput4)
@@ -105,8 +105,8 @@ int     linewidth5              = input.int         (defval = 1,            titl
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
 bool    showLevelsInput         = input.bool        (defval = true,         title = "Show Horizontal Levels",       group = g6) 
-int     levelOffsetStartInput   = input.int         (defval = 1,            title = "Offset 1",                     group = g6, minval = 0)
-int     levelOffsetEndInput     = input.int         (defval = 50,           title = "Offset 2",                     group = g6, minval = 1)
+int     levelOffsetStartInput   = input.int         (defval = 5,            title = "Offset 1",                     group = g6, minval = 0)
+int     levelOffsetEndInput     = input.int         (defval = 20,           title = "Offset 2",                     group = g6, minval = 1)
 
 //#endregion
 
