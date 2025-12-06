@@ -116,6 +116,12 @@ int     levelOffsetEndInput     = input.int         (defval = 20,           titl
 //#region                       Functions 
 //--------------------------------------------------------------------
 
+// @function Checks if the specified timeframe is higher or equal than the chart context.
+// @returns  bool
+isVisible(string tf) =>
+    timeframe.in_seconds(tf) >= timeframe.in_seconds()
+
+
 // @function Gets the selected Moving Average (MA).
 // @returns  float
 method get(simple maType this, series float source, simple int length) =>
@@ -127,10 +133,17 @@ method get(simple maType this, series float source, simple int length) =>
         maType.vwma => ta.vwma(source, length)
 
 
-// @function Checks if the specified timeframe is higher or equal than the chart context.
-// @returns  bool
-isVisible(string tf) =>
-    timeframe.in_seconds(tf) >= timeframe.in_seconds()
+// @function Fetches the expression from the timeframe's context.
+// @returns  float
+method request(string this, float expression) =>
+    _gaps = enableGapsInput ? barmerge.gaps_on : barmerge.gaps_off
+
+    request.security(
+         symbol     = "",
+         timeframe  = this,
+         expression = expression,
+         gaps       = _gaps
+         )
 
 
 // @function Creates and updates the horizontal levels.
@@ -170,20 +183,11 @@ bool isVisible3 = isVisible(timeframeInput3)
 bool isVisible4 = isVisible(timeframeInput4)
 bool isVisible5 = isVisible(timeframeInput5)
 
-//#endregion
-
-
-//--------------------------------------------------------------------
-//#region                         Logic
-//--------------------------------------------------------------------
-
-var gaps = enableGapsInput ? barmerge.gaps_on : barmerge.gaps_off
-
-float ma1 = request.security(symbol = "", timeframe = timeframeInput1, expression = typeInput1.get(sourceInput1, lengthInput1), gaps = gaps)
-float ma2 = request.security(symbol = "", timeframe = timeframeInput2, expression = typeInput2.get(sourceInput2, lengthInput2), gaps = gaps)
-float ma3 = request.security(symbol = "", timeframe = timeframeInput3, expression = typeInput3.get(sourceInput3, lengthInput3), gaps = gaps)
-float ma4 = request.security(symbol = "", timeframe = timeframeInput4, expression = typeInput4.get(sourceInput4, lengthInput4), gaps = gaps)
-float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expression = typeInput5.get(sourceInput5, lengthInput5), gaps = gaps)
+float ma1 = timeframeInput1.request(typeInput1.get(sourceInput1, lengthInput1))
+float ma2 = timeframeInput2.request(typeInput2.get(sourceInput2, lengthInput2))
+float ma3 = timeframeInput3.request(typeInput3.get(sourceInput3, lengthInput3))
+float ma4 = timeframeInput4.request(typeInput4.get(sourceInput4, lengthInput4))
+float ma5 = timeframeInput5.request(typeInput5.get(sourceInput5, lengthInput5))
 
 //#endregion
 
