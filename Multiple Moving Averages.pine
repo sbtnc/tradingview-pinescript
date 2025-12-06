@@ -149,8 +149,7 @@ method request(string this, float expression) =>
 // @function Creates and updates the horizontal levels.
 // @returns  void
 draw(float y, color c, int offset, int width) =>
-    // Draws only when `y` is defined (e.g. when the MA's period exceed the number of bars).
-    if not na(y)
+    if barstate.islast
         int _x1 = bar_index + offset + levelOffsetStartInput
         int _x2 = _x1 + levelOffsetEndInput
 
@@ -166,9 +165,8 @@ draw(float y, color c, int offset, int width) =>
              width  = width
              )
         
-        if barstate.islast
-            line.set_xy1(_line, _x1, y)
-            line.set_xy2(_line, _x2, y)
+        line.set_xy1(_line, _x1, y)
+        line.set_xy2(_line, _x2, y)
 
 //#endregion
 
