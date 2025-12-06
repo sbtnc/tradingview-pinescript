@@ -104,6 +104,7 @@ color   colorInput5             = input.color       (defval = COLOR5,       titl
 int     linewidth5              = input.int         (defval = 1,            title = "Width",                        group = g5, active = enableInput5)
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
+bool    showPlotsInput          = input.bool        (defval = true,         title = "Show Plots",                   group = g6)
 bool    showLevelsInput         = input.bool        (defval = true,         title = "Show Horizontal Levels",       group = g6) 
 int     levelOffsetStartInput   = input.int         (defval = 5,            title = "Offset 1",                     group = g6, minval = 0)
 int     levelOffsetEndInput     = input.int         (defval = 20,           title = "Offset 2",                     group = g6, minval = 1)
@@ -191,11 +192,15 @@ float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expressio
 //#region                   Plotting & styling
 //--------------------------------------------------------------------
 
-plot(series = isVisible1 ? ma1 : na, title = "Plot #1", color = colorInput1, linewidth = linewidth1, offset = offsetInput1, display = enableInput1 ? display.all : display.none)
-plot(series = isVisible2 ? ma2 : na, title = "Plot #2", color = colorInput2, linewidth = linewidth2, offset = offsetInput2, display = enableInput2 ? display.all : display.none)
-plot(series = isVisible3 ? ma3 : na, title = "Plot #3", color = colorInput3, linewidth = linewidth3, offset = offsetInput3, display = enableInput3 ? display.all : display.none)
-plot(series = isVisible4 ? ma4 : na, title = "Plot #4", color = colorInput4, linewidth = linewidth4, offset = offsetInput4, display = enableInput4 ? display.all : display.none)
-plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, linewidth = linewidth5, offset = offsetInput5, display = enableInput5 ? display.all : display.none)
+displayOption1  = display.all
+displayOption2  = display.all - display.pane
+displayControls = showPlotsInput ? displayOption1 : displayOption2
+
+plot(series = isVisible1 ? ma1 : na, title = "Plot #1", color = colorInput1, linewidth = linewidth1, offset = offsetInput1, display = enableInput1 ? displayControls : display.none)
+plot(series = isVisible2 ? ma2 : na, title = "Plot #2", color = colorInput2, linewidth = linewidth2, offset = offsetInput2, display = enableInput2 ? displayControls : display.none)
+plot(series = isVisible3 ? ma3 : na, title = "Plot #3", color = colorInput3, linewidth = linewidth3, offset = offsetInput3, display = enableInput3 ? displayControls : display.none)
+plot(series = isVisible4 ? ma4 : na, title = "Plot #4", color = colorInput4, linewidth = linewidth4, offset = offsetInput4, display = enableInput4 ? displayControls : display.none)
+plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, linewidth = linewidth5, offset = offsetInput5, display = enableInput5 ? displayControls : display.none)
 
 if showLevelsInput
     if isVisible1
