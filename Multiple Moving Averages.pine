@@ -118,8 +118,8 @@ int     levelOffsetEndInput     = input.int         (defval = 20,           titl
 
 // @function Checks if the specified timeframe is higher or equal than the chart context.
 // @returns  bool
-isVisible(string tf) =>
-    timeframe.in_seconds(tf) >= timeframe.in_seconds()
+isVisible(string timeframe) =>
+    timeframe.in_seconds(timeframe) >= timeframe.in_seconds()
 
 
 // @function Gets the selected Moving Average (MA).
@@ -177,11 +177,11 @@ draw(float y, color c, int offset, int width) =>
 //#region                 Variables declarations
 //--------------------------------------------------------------------
 
-bool isVisible1 = isVisible(timeframeInput1)
-bool isVisible2 = isVisible(timeframeInput2)
-bool isVisible3 = isVisible(timeframeInput3)
-bool isVisible4 = isVisible(timeframeInput4)
-bool isVisible5 = isVisible(timeframeInput5)
+var bool isVisible1 = isVisible(timeframeInput1)
+var bool isVisible2 = isVisible(timeframeInput2)
+var bool isVisible3 = isVisible(timeframeInput3)
+var bool isVisible4 = isVisible(timeframeInput4)
+var bool isVisible5 = isVisible(timeframeInput5)
 
 float ma1 = timeframeInput1.request(typeInput1.get(sourceInput1, lengthInput1))
 float ma2 = timeframeInput2.request(typeInput2.get(sourceInput2, lengthInput2))
