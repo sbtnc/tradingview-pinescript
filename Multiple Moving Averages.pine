@@ -197,11 +197,46 @@ float ma5 = request.security(symbol = "", timeframe = timeframeInput5, expressio
 displayOption1  = display.all
 displayOption2  = display.all - display.pane
 
-plot(series = isVisible1 ? ma1 : na, title = "Plot #1", color = colorInput1, linewidth = linewidth1, offset = offsetInput1, display = enableInput1 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
-plot(series = isVisible2 ? ma2 : na, title = "Plot #2", color = colorInput2, linewidth = linewidth2, offset = offsetInput2, display = enableInput2 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
-plot(series = isVisible3 ? ma3 : na, title = "Plot #3", color = colorInput3, linewidth = linewidth3, offset = offsetInput3, display = enableInput3 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
-plot(series = isVisible4 ? ma4 : na, title = "Plot #4", color = colorInput4, linewidth = linewidth4, offset = offsetInput4, display = enableInput4 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
-plot(series = isVisible5 ? ma5 : na, title = "Plot #5", color = colorInput5, linewidth = linewidth5, offset = offsetInput5, display = enableInput5 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none)
+plot(
+     series     = isVisible1 ? ma1 : na,
+     title      = "Plot #1",
+     color      = colorInput1,
+     linewidth  = linewidth1,
+     offset     = offsetInput1,
+     display    = enableInput1 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
+     )
+plot(
+     series     = isVisible2 ? ma2 : na,
+     title      = "Plot #2",
+     color      = colorInput2,
+     linewidth  = linewidth2,
+     offset     = offsetInput2,
+     display    = enableInput2 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
+     )
+plot(
+     series     = isVisible3 ? ma3 : na,
+     title      = "Plot #3",
+     color      = colorInput3,
+     linewidth  = linewidth3,
+     offset     = offsetInput3,
+     display    = enableInput3 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
+     )
+plot(
+     series     = isVisible4 ? ma4 : na,
+     title      = "Plot #4",
+     color      = colorInput4,
+     linewidth  = linewidth4,
+     offset     = offsetInput4,
+     display    = enableInput4 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
+     )
+plot(
+     series     = isVisible5 ? ma5 : na,
+     title      = "Plot #5",
+     color      = colorInput5,
+     linewidth  = linewidth5,
+     offset     = offsetInput5,
+     display    = enableInput5 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
+     )
 
 // Lines.
 
