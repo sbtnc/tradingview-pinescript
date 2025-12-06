@@ -1,7 +1,7 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © sbtnc
 // Created: 2019-01-05
-// Last modified: 2025-12-05
+// Last modified: 2025-12-06
 // Version 3.0
 
 // @version=6
@@ -21,7 +21,6 @@ string  LINE_EXTEND     = extend.none
 string  LINE_STYLE      = line.style_dashed
 
 //#endregion
-
 
 
 //--------------------------------------------------------------------
@@ -62,7 +61,7 @@ bool    enableInput1            = input.bool        (defval = true,         titl
 maType  typeInput1              = input.enum        (defval = maType.ema,   title = "Type",                         group = g1, active = enableInput1)
 int     lengthInput1            = input.int         (defval = 9,            title = "Length",                       group = g1, active = enableInput1, minval = 1)
 float   sourceInput1            = input.source      (defval = close,        title = "Source",                       group = g1, active = enableInput1)
-int     offsetInput1            = input.int         (defval = 0,            title = "Offset",                       group = g1, active = enableInput1)
+int     plotOffsetInput1        = input.int         (defval = 0,            title = "Offset",                       group = g1, active = enableInput1)
 string  timeframeInput1         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g1, active = enableInput1, tooltip = timeframeTooltip)
 color   colorInput1             = input.color       (defval = COLOR1,       title = "Color",                        group = g1, active = enableInput1)
 int     linewidth1              = input.int         (defval = 1,            title = "Width",                        group = g1, active = enableInput1)
@@ -71,7 +70,7 @@ bool    enableInput2            = input.bool        (defval = true,         titl
 maType  typeInput2              = input.enum        (defval = maType.ema,   title = "Type",                         group = g2, active = enableInput2)
 int     lengthInput2            = input.int         (defval = 20,           title = "Length",                       group = g2, active = enableInput2, minval = 1)
 float   sourceInput2            = input.source      (defval = close,        title = "Source",                       group = g2, active = enableInput2)
-int     offsetInput2            = input.int         (defval = 0,            title = "Offset",                       group = g2, active = enableInput2)
+int     plotOffsetInput2        = input.int         (defval = 0,            title = "Offset",                       group = g2, active = enableInput2)
 string  timeframeInput2         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g2, active = enableInput2, tooltip = timeframeTooltip)
 color   colorInput2             = input.color       (defval = COLOR2,       title = "Color",                        group = g2, active = enableInput2)
 int     linewidth2              = input.int         (defval = 1,            title = "Width",                        group = g2, active = enableInput2)
@@ -80,7 +79,7 @@ bool    enableInput3            = input.bool        (defval = true,         titl
 maType  typeInput3              = input.enum        (defval = maType.ema,   title = "Type",                         group = g3, active = enableInput3)
 int     lengthInput3            = input.int         (defval = 50,           title = "Length",                       group = g3, active = enableInput3, minval = 1)
 float   sourceInput3            = input.source      (defval = close,        title = "Source",                       group = g3, active = enableInput3)
-int     offsetInput3            = input.int         (defval = 0,            title = "Offset",                       group = g3, active = enableInput3)
+int     plotOffsetInput3        = input.int         (defval = 0,            title = "Offset",                       group = g3, active = enableInput3)
 string  timeframeInput3         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g3, active = enableInput3, tooltip = timeframeTooltip)
 color   colorInput3             = input.color       (defval = COLOR3,       title = "Color",                        group = g3, active = enableInput3)
 int     linewidth3              = input.int         (defval = 1,            title = "Width",                        group = g3, active = enableInput3)
@@ -89,7 +88,7 @@ bool    enableInput4            = input.bool        (defval = true,         titl
 maType  typeInput4              = input.enum        (defval = maType.ema,   title = "Type",                         group = g4, active = enableInput4)
 int     lengthInput4            = input.int         (defval = 100,          title = "Length",                       group = g4, active = enableInput4, minval = 1)
 float   sourceInput4            = input.source      (defval = close,        title = "Source",                       group = g4, active = enableInput4)
-int     offsetInput4            = input.int         (defval = 0,            title = "Offset",                       group = g4, active = enableInput4)
+int     plotOffsetInput4        = input.int         (defval = 0,            title = "Offset",                       group = g4, active = enableInput4)
 string  timeframeInput4         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g4, active = enableInput4, tooltip = timeframeTooltip)
 color   colorInput4             = input.color       (defval = COLOR4,       title = "Color",                        group = g4, active = enableInput4)
 int     linewidth4              = input.int         (defval = 1,            title = "Width",                        group = g4, active = enableInput4)
@@ -98,16 +97,16 @@ bool    enableInput5            = input.bool        (defval = true,         titl
 maType  typeInput5              = input.enum        (defval = maType.ema,   title = "Type",                         group = g5, active = enableInput5)
 int     lengthInput5            = input.int         (defval = 200,          title = "Length",                       group = g5, active = enableInput5, minval = 1)
 float   sourceInput5            = input.source      (defval = close,        title = "Source",                       group = g5, active = enableInput5)
-int     offsetInput5            = input.int         (defval = 0,            title = "Offset",                       group = g5, active = enableInput5)
+int     plotOffsetInput5        = input.int         (defval = 0,            title = "Offset",                       group = g5, active = enableInput5)
 string  timeframeInput5         = input.timeframe   (defval = "",           title = "Timeframe",                    group = g5, active = enableInput5, tooltip = timeframeTooltip)
 color   colorInput5             = input.color       (defval = COLOR5,       title = "Color",                        group = g5, active = enableInput5)
 int     linewidth5              = input.int         (defval = 1,            title = "Width",                        group = g5, active = enableInput5)
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
 bool    showPlotsInput          = input.bool        (defval = true,         title = "Show Plots",                   group = g6)
-bool    showLevelsInput         = input.bool        (defval = true,         title = "Show Horizontal Levels",       group = g6) 
-int     levelOffsetStartInput   = input.int         (defval = 5,            title = "Offset 1",                     group = g6, minval = 0)
-int     levelOffsetEndInput     = input.int         (defval = 20,           title = "Offset 2",                     group = g6, minval = 1)
+bool    showLinesInput          = input.bool        (defval = true,         title = "Show Horizontal Levels",       group = g6) 
+int     lineStartOffsetInput    = input.int         (defval = 5,            title = "Offset 1",                     group = g6, minval = 0)
+int     lineLengthInput         = input.int         (defval = 20,           title = "Offset 2",                     group = g6, minval = 1)
 
 //#endregion
 
@@ -116,7 +115,7 @@ int     levelOffsetEndInput     = input.int         (defval = 20,           titl
 //#region                       Functions 
 //--------------------------------------------------------------------
 
-// @function Checks if the specified timeframe is higher or equal than the chart context.
+// @function Checks if the specified timeframe is equal or higher than the chart context.
 // @returns  bool
 isVisible(string timeframe) =>
     timeframe.in_seconds(timeframe) >= timeframe.in_seconds()
@@ -150,8 +149,8 @@ method request(string this, float expression) =>
 // @returns  void
 draw(float y, color c, int offset, int width) =>
     if barstate.islast
-        int _x1 = bar_index + offset + levelOffsetStartInput
-        int _x2 = _x1 + levelOffsetEndInput
+        int _x1 = bar_index + offset + lineStartOffsetInput
+        int _x2 = _x1 + lineLengthInput
 
         var _line = line.new(
              x1     = _x1,
@@ -204,7 +203,7 @@ plot(
      title      = "Plot #1",
      color      = colorInput1,
      linewidth  = linewidth1,
-     offset     = offsetInput1,
+     offset     = plotOffsetInput1,
      display    = enableInput1 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
      )
 plot(
@@ -212,7 +211,7 @@ plot(
      title      = "Plot #2",
      color      = colorInput2,
      linewidth  = linewidth2,
-     offset     = offsetInput2,
+     offset     = plotOffsetInput2,
      display    = enableInput2 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
      )
 plot(
@@ -220,7 +219,7 @@ plot(
      title      = "Plot #3",
      color      = colorInput3,
      linewidth  = linewidth3,
-     offset     = offsetInput3,
+     offset     = plotOffsetInput3,
      display    = enableInput3 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
      )
 plot(
@@ -228,7 +227,7 @@ plot(
      title      = "Plot #4",
      color      = colorInput4,
      linewidth  = linewidth4,
-     offset     = offsetInput4,
+     offset     = plotOffsetInput4,
      display    = enableInput4 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
      )
 plot(
@@ -236,22 +235,26 @@ plot(
      title      = "Plot #5",
      color      = colorInput5,
      linewidth  = linewidth5,
-     offset     = offsetInput5,
+     offset     = plotOffsetInput5,
      display    = enableInput5 ? (showPlotsInput ? displayOption1 : displayOption2) : display.none
      )
 
 // Lines.
 
-if showLevelsInput
+if showLinesInput
     if enableInput1 and isVisible1
-        draw(ma1, colorInput1, offsetInput1, linewidth1)
+        draw(ma1, colorInput1, plotOffsetInput1, linewidth1)
+
     if enableInput2 and isVisible2
-        draw(ma2, colorInput2, offsetInput2, linewidth2)
+        draw(ma2, colorInput2, plotOffsetInput2, linewidth2)
+
     if enableInput3 and isVisible3    
-        draw(ma3, colorInput3, offsetInput3, linewidth3)
+        draw(ma3, colorInput3, plotOffsetInput3, linewidth3)
+
     if enableInput4 and isVisible4
-        draw(ma4, colorInput4, offsetInput4, linewidth4)
+        draw(ma4, colorInput4, plotOffsetInput4, linewidth4)
+        
     if enableInput5 and isVisible5
-        draw(ma5, colorInput5, offsetInput5, linewidth5)
+        draw(ma5, colorInput5, plotOffsetInput5, linewidth5)
 
 //#endregion
