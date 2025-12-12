@@ -103,10 +103,10 @@ int     linewidth5              = input.int         (defval = 1,            titl
 color   colorInput5             = input.color       (defval = COLOR5,       title = "Color",                        group = g5, active = enableInput5)
 
 bool    enableGapsInput         = input.bool        (defval = true,         title = "Wait for timeframe closes",    group = g6)
-bool    showPlotsInput          = input.bool        (defval = true,         title = "Show Plots",                   group = g6)
-bool    showLinesInput          = input.bool        (defval = true,         title = "Show Horizontal Levels",       group = g6) 
-int     lineStartOffsetInput    = input.int         (defval = 5,            title = "Offset 1",                     group = g6, minval = 0)
-int     lineLengthInput         = input.int         (defval = 20,           title = "Offset 2",                     group = g6, minval = 1)
+bool    showPlotsInput          = input.bool        (defval = true,         title = "Show Plots",                   group = g6, inline = "Drawings")
+bool    showLinesInput          = input.bool        (defval = true,         title = "Show Lines",                   group = g6, inline = "Drawings") 
+int     lineStartOffsetInput    = input.int         (defval = 5,            title = "Lines Offset",                 group = g6, minval = 0)
+int     lineLengthInput         = input.int         (defval = 20,           title = "Lines Length",                 group = g6, minval = 1)
 
 //#endregion
 
