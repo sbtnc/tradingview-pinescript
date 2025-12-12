@@ -147,8 +147,8 @@ method request(string this, float expression) =>
 
 // @function Creates and updates the horizontal levels.
 // @returns  void
-draw(float y, color c, int offset, int width) =>
-    int _x1 = bar_index + offset + lineStartOffsetInput
+draw(float y, color c, int width) =>
+    int _x1 = bar_index + lineStartOffsetInput
     int _x2 = _x1 + lineLengthInput
 
     var _line = line.new(
@@ -247,18 +247,18 @@ plot(
 
 if showLinesInput
     if enableInput1 and isVisible1
-        draw(ma1, colorInput1, plotOffsetInput1, linewidth1)
+        draw(ma1, colorInput1, linewidth1)
 
     if enableInput2 and isVisible2
-        draw(ma2, colorInput2, plotOffsetInput2, linewidth2)
+        draw(ma2, colorInput2, linewidth2)
 
     if enableInput3 and isVisible3    
-        draw(ma3, colorInput3, plotOffsetInput3, linewidth3)
+        draw(ma3, colorInput3, linewidth3)
 
     if enableInput4 and isVisible4
-        draw(ma4, colorInput4, plotOffsetInput4, linewidth4)
+        draw(ma4, colorInput4, linewidth4)
         
     if enableInput5 and isVisible5
-        draw(ma5, colorInput5, plotOffsetInput5, linewidth5)
+        draw(ma5, colorInput5, linewidth5)
 
 //#endregion
